@@ -1,0 +1,17 @@
+syntax="proto3";
+
+option go_package="github.com/fdymylja/cosmos-os/examples/bank";
+
+package example.bank;
+
+message MsgSendCoins {
+
+}
+
+message QueryBalanceRequest {
+  string address = 1;
+}
+
+message QueryBalanceResponse {
+  string coins = 1;
+}

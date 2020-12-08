@@ -1,0 +1,9 @@
+syntax="proto3";
+
+option go_package="github.com/fdymylja/cosmos-os/pkg/apis/test/v1";
+
+package test.v1;
+
+message TestMessage {
+  string Data = 1;
+}
