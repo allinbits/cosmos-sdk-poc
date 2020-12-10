@@ -40,7 +40,7 @@ func (q appClient) Query(request codec.Object, response codec.Object) error {
 	resp, err := querier.do(application.QueryRequest{
 		Request: reqBytes,
 		Client:  q.copy(),
-		DB: appStore{
+		Store: appStore{
 			db:     q.db,
 			prefix: []byte(querier.applicationID),
 		},

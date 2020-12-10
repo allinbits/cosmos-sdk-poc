@@ -15,7 +15,7 @@ func queryAuthor() application.QueryFunc {
 
 		// query author
 		author := new(Author)
-		err = req.DB.Get([]byte(query.Name), author)
+		err = req.Store.Get([]byte(query.Name), author)
 		if err != nil {
 			return application.QueryResponse{}, err
 		}

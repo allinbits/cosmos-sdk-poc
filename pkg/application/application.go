@@ -50,7 +50,7 @@ type DeliverResponse struct {
 type QueryRequest struct {
 	Request []byte
 	Client  QueryClient
-	DB      QueryDB
+	Store   QueryDB
 }
 
 type QueryResponse struct {

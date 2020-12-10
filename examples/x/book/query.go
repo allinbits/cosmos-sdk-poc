@@ -15,7 +15,7 @@ func queryBook() application.QueryFunc {
 		}
 		// get book
 		book := new(Book)
-		err = req.DB.Get([]byte(bookRequest.Name), book)
+		err = req.Store.Get([]byte(bookRequest.Name), book)
 		if err != nil {
 			return application.QueryResponse{}, err
 		}

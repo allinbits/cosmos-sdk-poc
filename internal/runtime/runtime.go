@@ -62,7 +62,7 @@ func (r Runtime) Query(rawQuery types.RequestQuery) types.ResponseQuery {
 	resp, err := querier.do(application.QueryRequest{
 		Request: query.Query.Value,
 		Client:  newAppClient(hStore, r.deliverRouter, r.queryRouter),
-		DB:      store,
+		Store:   store,
 	})
 	if err != nil {
 		panic(err)
