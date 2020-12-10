@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	store2 "github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/iavl"
 	"github.com/fdymylja/cosmos-os/pkg/apis/core/v1alpha1"
@@ -8,7 +9,7 @@ import (
 	"github.com/fdymylja/cosmos-os/pkg/codec"
 	"github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
-	"log"
+	"k8s.io/klog/v2"
 )
 
 func NewRuntime() Runtime {
@@ -16,15 +17,19 @@ func NewRuntime() Runtime {
 	if err != nil {
 		panic(err)
 	}
-	return Runtime{store: store.(*iavl.Store)}
+	return Runtime{
+		store:         store.(*iavl.Store),
+		deliverRouter: make(map[string]deliverer),
+		checkRouter:   make(map[string]checker),
+		queryRouter:   make(map[string]querier),
+	}
 }
 
 type Runtime struct {
-	store *iavl.Store
-	cdc codec.Codec
+	store         *iavl.Store
 	deliverRouter map[string]deliverer
-	checkRouter map[string]checker
-	queryRouter map[string]querier
+	checkRouter   map[string]checker
+	queryRouter   map[string]querier
 }
 
 func (r Runtime) Info(info types.RequestInfo) types.ResponseInfo {
@@ -44,7 +49,7 @@ func (r Runtime) Query(rawQuery types.RequestQuery) types.ResponseQuery {
 		panic(err)
 	}
 	query := new(v1alpha1.Query)
-	err = r.cdc.Unmarshal(rawQuery.Data, query)
+	err = codec.Unmarshal(rawQuery.Data, query)
 	if err != nil {
 		panic(err)
 	}
@@ -53,17 +58,17 @@ func (r Runtime) Query(rawQuery types.RequestQuery) types.ResponseQuery {
 	if !exists {
 		panic("not exist duh")
 	}
-	store := newAppStore(r.cdc, hStore, querier.applicationID)
+	store := newAppStore(hStore, querier.applicationID)
 	resp, err := querier.do(application.QueryRequest{
 		Request: query.Query.Value,
-		Client:  newAppClient(r.cdc, hStore, r.deliverRouter, r.queryRouter),
+		Client:  newAppClient(hStore, r.deliverRouter, r.queryRouter),
 		DB:      store,
 	})
 	if err != nil {
 		panic(err)
 	}
 	return types.ResponseQuery{
-		Value:     resp.Response,
+		Value: resp.Response,
 	}
 }
 
@@ -81,7 +86,7 @@ func (r Runtime) BeginBlock(block types.RequestBeginBlock) types.ResponseBeginBl
 
 func (r Runtime) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDeliverTx {
 	tx := new(v1alpha1.Transaction)
-	err := r.cdc.Unmarshal(tmTx.Tx, tx)
+	err := codec.Unmarshal(tmTx.Tx, tx)
 	if err != nil {
 		panic(err)
 	}
@@ -89,14 +94,13 @@ func (r Runtime) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDeliverTx 
 	objectName := tx.Messages.TypeUrl
 	deliverer, exists := r.deliverRouter[objectName]
 	if !exists {
-		panic(err)
+		panic(fmt.Sprintf("%s does not exist", objectName))
 	}
-	resp, err := deliverer.do(application.DeliverRequest{
+	_, err = deliverer.do(application.DeliverRequest{
 		Request: tx.Messages.Value,
-		Client:  newAppClient(r.cdc, r.store, r.deliverRouter, r.queryRouter),
-		Store:   newAppStore(r.cdc, r.store, deliverer.applicationID),
+		Client:  newAppClient(r.store, r.deliverRouter, r.queryRouter),
+		Store:   newAppStore(r.store, deliverer.applicationID),
 	})
-	log.Printf("%#v", resp)
 	if err != nil {
 		panic(err)
 	}
@@ -108,7 +112,11 @@ func (r Runtime) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {
 }
 
 func (r Runtime) Commit() types.ResponseCommit {
-	panic("implement me")
+	resp := r.store.Commit()
+	return types.ResponseCommit{
+		Data:         resp.Hash,
+		RetainHeight: resp.Version,
+	}
 }
 
 func (r Runtime) ListSnapshots(snapshots types.RequestListSnapshots) types.ResponseListSnapshots {
@@ -127,3 +135,23 @@ func (r Runtime) ApplySnapshotChunk(chunk types.RequestApplySnapshotChunk) types
 	panic("implement me")
 }
 
+func (r Runtime) LoadApplication(app application.Application) {
+	app.RegisterDeliverers(func(message codec.Object, handler application.DeliverFunc) {
+		handlerName := codec.Name(message)
+		klog.InfoS("registering handler", "context", "handler", "message-name", handlerName)
+		r.deliverRouter[handlerName] = deliverer{
+			do:            handler,
+			applicationID: app.ID(),
+		}
+	})
+
+	app.RegisterQueriers(func(request codec.Object, response codec.Object, handler application.QueryFunc) {
+		reqName := codec.Name(request)
+		respName := codec.Name(response)
+		klog.InfoS("registering handler", "context", "querier", "request-name", reqName, "response", respName)
+		r.queryRouter[codec.Name(request)] = querier{
+			do:            handler,
+			applicationID: app.ID(),
+		}
+	})
+}

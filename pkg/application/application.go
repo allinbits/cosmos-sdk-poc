@@ -17,6 +17,7 @@ type Application interface {
 	// TODO
 	InitGenesis()
 	ExportGenesis()
+	RegisterInvariant()
 }
 
 type RegisterDelivererFn func(message codec.Object, handler DeliverFunc)
@@ -39,18 +40,17 @@ type CheckRequest struct {
 
 type DeliverRequest struct {
 	Request []byte
-	Client Client
-	Store DB
+	Client  Client
+	Store   DB
 }
 
 type DeliverResponse struct {
-
 }
 
 type QueryRequest struct {
 	Request []byte
-	Client QueryClient
-	DB QueryDB
+	Client  QueryClient
+	DB      QueryDB
 }
 
 type QueryResponse struct {

@@ -1,0 +1,23 @@
+syntax="proto3";
+
+option go_package = "github.com/fdymylja/cosmos-os/examples/x/book";
+
+package v1alpha1.book;
+
+message Book {
+  string author = 1;
+  string name = 2;
+}
+
+message MsgRegisterBook {
+  string author = 1;
+  string name = 2;
+}
+
+message QueryBookRequest {
+  string name = 1;
+}
+
+message QueryBookResponse {
+  Book book = 1;
+}

@@ -5,32 +5,44 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/iavl"
 	"github.com/fdymylja/cosmos-os/pkg/application"
 	"github.com/fdymylja/cosmos-os/pkg/codec"
+	"k8s.io/klog/v2"
 )
 
-func newAppStore(cdc codec.Codec, db *iavl.Store, id application.ID) application.DB {
-	return appStore{cdc: cdc, db: db, prefix: []byte(id)}
+func newAppStore(db *iavl.Store, id application.ID) application.DB {
+	return appStore{db: db, prefix: []byte(id)}
 }
 
 type appStore struct {
-	db *iavl.Store
+	db     *iavl.Store
 	prefix []byte
-	cdc codec.Codec
 }
 
 func (d appStore) Get(key []byte, object codec.Object) error {
-	value := d.db.Get(d.key(key))
+	if len(key) == 0 {
+		panic("empty key")
+	}
+	key = d.key(key)
+	klog.InfoS("querying store", "key", fmt.Sprintf("%s", key), "object", fmt.Sprintf("%#v", object))
+
+	value := d.db.Get(key)
 	if value == nil {
 		return fmt.Errorf("not found") // todo change
 	}
-	return d.cdc.Unmarshal(value, object)
+	return codec.Unmarshal(value, object)
 }
 
 func (d appStore) Set(key []byte, object codec.Object) error {
-	b, err := d.cdc.Marshal(object)
+	if len(key) == 0 {
+		panic("empty key")
+	}
+	key = d.key(key)
+	klog.InfoS("saving to store", "key", fmt.Sprintf("%s", key), "object", fmt.Sprintf("%#v", object))
+	b, err := codec.Marshal(object)
 	if err != nil {
 		return fmt.Errorf("marshal error: %w", err) // todo change
 	}
-	d.db.Set(d.key(key), b)
+	d.db.Set(key, b)
+
 	return nil
 }
 
