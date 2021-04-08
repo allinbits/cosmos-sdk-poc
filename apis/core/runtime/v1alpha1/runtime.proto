@@ -1,0 +1,21 @@
+syntax="proto3";
+
+package core.runtime.v1alpha1;
+
+import "google/protobuf/any.proto";
+
+// Tx defines the transaction that can be forwarded to the tendermint Check/DeliverTx endpoints
+message Tx {
+  // body is the actual transaction body
+  // now... why is this an google.protobuf.Any instead of being a strongly defined type?
+  // backwards compatibility and clear deprecation policies. We could have a core.tx.v1beta1.Tx
+  // that we'd like to support but at the same time create a new core.tx.v2alpha1.Tx which we intend
+  // to test and maybe deprecate the v1beta version in favor of this one, and not deal with them concurrently
+  // as in the sdk!
+  google.protobuf.Any body = 1;
+}
+
+// Query defines the query model that can be forwarded to
+message Query {
+
+}

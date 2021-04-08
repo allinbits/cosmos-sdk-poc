@@ -1,79 +1,113 @@
 package application
 
-import "github.com/fdymylja/cosmos-os/pkg/codec"
+import "github.com/fdymylja/tmos/pkg/codec"
 
-// Application defines an application running on the runtime
-type Application interface {
-	// ID is the applications unique ID
-	ID() ID
-	// RegisterDeliverers registers handlers that do state transitions
-	RegisterDeliverers(register RegisterDelivererFn)
-	// RegisterCheckers registers functions that do check state
-	// transitions messages in a stateless way (ADMISSION POLICY)
-	RegisterCheckers(register RegisterCheckerFn)
-	// RegisterQueriers registers functions that handle queries
-	// coming from outside and within modules
-	RegisterQueriers(register RegisterQuerierFn)
-	// TODO
-	InitGenesis()
-	ExportGenesis()
-	RegisterInvariant()
+// HandlerPolicy defines handler options
+type HandlerPolicy struct {
+	// Internal if true will make the state transition invalid if called externally
+	Internal bool
 }
 
-type RegisterDelivererFn func(message codec.Object, handler DeliverFunc)
-type RegisterCheckerFn func(message codec.Object, handler CheckFunc)
-type RegisterQuerierFn func(request codec.Object, response codec.Object, handler QueryFunc)
-
-// CheckFunc is the function applications use to check requests in a stateless way
-type CheckFunc func(CheckRequest) error
-
-// DeliverFunc is the function applications use to deliver state changing requests
-type DeliverFunc func(DeliverRequest) (DeliverResponse, error)
-
-// QueryFunc is the function used by applications to query state
-type QueryFunc func(QueryRequest) (QueryResponse, error)
-
-// CheckRequest
-type CheckRequest struct {
-	Request []byte
+// StateObject defines an object that can be saved inside the state
+type StateObject interface {
+	codec.DeterministicObject
 }
 
+// StateObjectRegisterer defines an object that takes care of registering
+// state objects for the given application
+type StateObjectRegisterer interface {
+	// RegisterStateObject registers a state object
+	// which is going to belong to the Application's namespace
+	RegisterStateObject(object StateObject)
+}
+
+// StateTransitionObject defines an object that handles state transitions
+type StateTransitionObject interface {
+	codec.DeterministicObject
+}
+
+// DeliverClient defines an application client that can be used
+// to get or store information in state
+type DeliverClient interface {
+	// Deliver can be used to deliver state transitions to other applications
+	// from within an application (instead of externally).
+	// NOTE: RBAC policies apply.
+	Deliver(object StateTransitionObject) error
+	// Get gets a state object, it can be used to fetch
+	// StateObject from other applications
+	Get(id string, object StateObject) (exists bool)
+	// Set sets a state object which belongs to the application.
+	// it cannot be used to modify state of other applications.
+	Set(id string, object StateObject) error
+	// Delete deletes a state object which belongs to the application
+	// it cannot be used to modify state of other applications.
+	Delete(id string)
+}
+
+// DeliverRequest defines the request used to
 type DeliverRequest struct {
-	Request []byte
-	Client  Client
-	Store   DB
+	StateTransitionObject StateTransitionObject
+	Client                DeliverClient
 }
 
-type DeliverResponse struct {
+// DeliverHandler defines a handler which should handle delivering state transitions requests
+type DeliverHandler interface {
+	Deliver(DeliverRequest) error
 }
 
-type QueryRequest struct {
-	Request []byte
-	Client  QueryClient
-	Store   QueryDB
+type CheckRequest struct {
+	StateTransitionObject StateTransitionObject
 }
 
-type QueryResponse struct {
-	Response []byte
+// CheckHandler defines a handler which should check for correctness of state transitions
+type CheckHandler interface {
+	Check(CheckRequest) error
 }
 
-// Client is the client used to interact with other applications
-type Client interface {
-	QueryClient
-	Deliver(request codec.Object) (DeliverResponse, error)
+// HandlerRegisterer defines an object that takes care of registering handlers
+// for the given application
+type HandlerRegisterer interface {
+	// RegisterDeliverHandler registers a deliver handler
+	RegisterDeliverHandler(StateTransitionObject, DeliverHandler, CheckHandler)
+	// RegisterBeginBlockHandler registers the begin block handler
+	RegisterBeginBlockHandler(BeginBlockHandler)
+	// RegisterEndBlockHandler registers the end block handler
+	RegisterEndBlockHandler(EndBlockHandler)
+	// RegisterHandlerHook registers hooks that can be used to execute actions
+	// after a certain state transition is processed
+	RegisterHandlerHook(StateTransitionObject, HookHandler)
 }
 
-type QueryClient interface {
-	Query(request codec.Object, response codec.Object) error
+type BeginBlockHandler interface {
 }
 
-type DB interface {
-	QueryDB
-	Set(key []byte, object codec.Object) error
+type EndBlockHandler interface {
 }
 
-type QueryDB interface {
-	Get(key []byte, object codec.Object) error
+// HookHandler is used to handle StateTransitionObject hooks
+type HookHandler interface {
 }
 
-type ID string
+type HookExecutionPolicy struct {
+	ExecuteBefore bool
+	ExecuteAfter  bool
+}
+
+type HandlerHookRegisterer interface {
+	RegisterHandlerHook(StateTransitionObject, HookHandler, HookExecutionPolicy)
+}
+
+type InvariantsHandlerRegisterer interface {
+}
+
+// Application defines an application of the tendermint operating system
+type Application interface {
+	// Identifier identifies an application in the runtime
+	Identifier() string
+	// RegisterStateObjects is used by applications to register the
+	// objects which will be saved in the state
+	RegisterStateObjects(StateObjectRegisterer)
+	// RegisterHandlers is used by the application to register DeliverTx,
+	// CheckTx, BeginBlock, EndBlock, Hook and Invariance handlers
+	RegisterHandlers(HandlerRegisterer)
+}
