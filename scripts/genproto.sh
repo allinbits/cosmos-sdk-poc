@@ -2,12 +2,12 @@
 
 set -e
 
-proto_files=$(find ./proto -regex ".*\.\(proto\)")
+proto_files=$(find ./apis -regex ".*\.\(proto\)")
 
 for file in $proto_files; do
   echo "building proto file $file"
-  protoc -I=. --go_out=. --go-grpc_out=. "$file"
+  protoc -I=. -I=./third_party/proto --go_out=. --go-grpc_out=. "$file"
 done
 
-cp -r github.com/fdymylja/cosmos-os/* ./
+cp -r github.com/fdymylja/tmos/* ./
 rm -rf github.com

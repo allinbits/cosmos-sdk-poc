@@ -2,10 +2,12 @@ syntax="proto3";
 
 package core.runtime.v1alpha1;
 
+option go_package = "github.com/fdymylja/tmos/apis/core/runtime/v1alpha1";
+
 import "google/protobuf/any.proto";
 
-// Tx defines the transaction that can be forwarded to the tendermint Check/DeliverTx endpoints
-message Tx {
+// RawTx defines the transaction that can be forwarded to the tendermint Check/DeliverTx endpoints
+message RawTx {
   // body is the actual transaction body
   // now... why is this an google.protobuf.Any instead of being a strongly defined type?
   // backwards compatibility and clear deprecation policies. We could have a core.tx.v1beta1.Tx
@@ -15,7 +17,10 @@ message Tx {
   google.protobuf.Any body = 1;
 }
 
-// Query defines the query model that can be forwarded to
+// Query defines the query model that can be forwarded to make queries to the application
 message Query {
-
+  // id is the unique identifier for the object
+  string id = 1;
+  // type defines the object type
+  string type = 2;
 }

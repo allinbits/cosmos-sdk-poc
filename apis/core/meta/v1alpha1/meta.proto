@@ -1,0 +1,12 @@
+syntax="proto3";
+
+package core.meta.v1alpha1;
+
+option go_package = "github.com/fdymylja/tmos/apis/core/meta/v1alpha1";
+
+// Meta defines the metadata each object must embed
+// in order to be saved in the state
+message Meta {
+  // id identifies the object uniquely
+  string id = 1;
+}

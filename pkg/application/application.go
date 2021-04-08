@@ -1,6 +1,9 @@
 package application
 
-import "github.com/fdymylja/tmos/pkg/codec"
+import (
+	metav1alpha1 "github.com/fdymylja/tmos/apis/core/meta/v1alpha1"
+	"github.com/fdymylja/tmos/pkg/codec"
+)
 
 // HandlerPolicy defines handler options
 type HandlerPolicy struct {
@@ -10,6 +13,9 @@ type HandlerPolicy struct {
 
 // StateObject defines an object that can be saved inside the state
 type StateObject interface {
+	// GetMeta comes from implementing proto.Messages in .proto files
+	// and adding the field core.meta.v1alpha1 wth name meta
+	GetMeta() *metav1alpha1.Meta
 	codec.DeterministicObject
 }
 
@@ -26,22 +32,28 @@ type StateTransitionObject interface {
 	codec.DeterministicObject
 }
 
+// StateObjectClient defines a client that allows to
+// get, set, delete StateObject in the state
+type StateObjectClient interface {
+	// Get gets a state object, it can be used to fetch
+	// StateObject from other applications
+	Get(object StateObject) (exists bool)
+	// Set sets a state object which belongs to the application.
+	// it cannot be used to modify state of other applications.
+	Set(object StateObject)
+	// Delete deletes a state object which belongs to the application
+	// it cannot be used to modify state of other applications.
+	Delete(object StateObject)
+}
+
 // DeliverClient defines an application client that can be used
 // to get or store information in state
 type DeliverClient interface {
+	StateObjectClient
 	// Deliver can be used to deliver state transitions to other applications
 	// from within an application (instead of externally).
 	// NOTE: RBAC policies apply.
 	Deliver(object StateTransitionObject) error
-	// Get gets a state object, it can be used to fetch
-	// StateObject from other applications
-	Get(id string, object StateObject) (exists bool)
-	// Set sets a state object which belongs to the application.
-	// it cannot be used to modify state of other applications.
-	Set(id string, object StateObject) error
-	// Delete deletes a state object which belongs to the application
-	// it cannot be used to modify state of other applications.
-	Delete(id string)
 }
 
 // DeliverRequest defines the request used to
@@ -55,6 +67,13 @@ type DeliverHandler interface {
 	Deliver(DeliverRequest) error
 }
 
+// DeliverHandlerFn implements DeliverHandler but allows to define DeliverHandler via function instead of a struct
+type DeliverHandlerFn func(DeliverRequest) error
+
+func (d DeliverHandlerFn) Deliver(request DeliverRequest) error {
+	return d(request)
+}
+
 type CheckRequest struct {
 	StateTransitionObject StateTransitionObject
 }
@@ -64,11 +83,19 @@ type CheckHandler interface {
 	Check(CheckRequest) error
 }
 
+// CheckHandlerFn implements CheckHandler but allows to define a CheckHandler via function instead of a struct
+type CheckHandlerFn func(CheckRequest) error
+
+func (f CheckHandlerFn) Check(request CheckRequest) error {
+	return f(request)
+}
+
 // HandlerRegisterer defines an object that takes care of registering handlers
 // for the given application
 type HandlerRegisterer interface {
-	// RegisterDeliverHandler registers a deliver handler
-	RegisterDeliverHandler(StateTransitionObject, DeliverHandler, CheckHandler)
+	// RegisterDeliverHandler registers a deliver handler, if CheckHandler is nil
+	// a no-op CheckHandler will be used
+	RegisterDeliverHandler(StateTransitionObject, DeliverHandler, CheckHandler, HandlerPolicy)
 	// RegisterBeginBlockHandler registers the begin block handler
 	RegisterBeginBlockHandler(BeginBlockHandler)
 	// RegisterEndBlockHandler registers the end block handler
