@@ -4,9 +4,12 @@ package core.meta.v1alpha1;
 
 option go_package = "github.com/fdymylja/tmos/apis/core/meta/v1alpha1";
 
-// Meta defines the metadata each object must embed
-// in order to be saved in the state
-message Meta {
+// State defines an object which is saved in state
+message State {
   // id identifies the object uniquely
   string id = 1;
 }
+
+// Transition defines an object which is used to change state
+// but is not saved in the state unless wrapped in a state object
+message Transition {}

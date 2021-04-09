@@ -15,7 +15,7 @@ type HandlerPolicy struct {
 type StateObject interface {
 	// GetMeta comes from implementing proto.Messages in .proto files
 	// and adding the field core.meta.v1alpha1 wth name meta
-	GetMeta() *metav1alpha1.Meta
+	GetState() *metav1alpha1.State
 	codec.DeterministicObject
 }
 
@@ -29,6 +29,7 @@ type StateObjectRegisterer interface {
 
 // StateTransitionObject defines an object that handles state transitions
 type StateTransitionObject interface {
+	GetTransition() *metav1alpha1.Transition
 	codec.DeterministicObject
 }
 

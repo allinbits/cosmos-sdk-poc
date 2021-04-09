@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2011.1
-	github.com/hashicorp/go-immutable-radix v1.3.0
 	github.com/stretchr/testify v1.6.1
 	github.com/tendermint/tendermint v0.34.0
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect

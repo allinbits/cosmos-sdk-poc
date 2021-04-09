@@ -5,7 +5,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	runtime "github.com/fdymylja/tmos/apis/core/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/pkg/application"
 )
 
 func (r *Runtime) Info(info types.RequestInfo) types.ResponseInfo {
@@ -45,15 +44,7 @@ func (r *Runtime) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDeliverTx
 	}
 	// after we get the state transitions we route them to the correct handlers
 	for _, stateTransition := range stateTransitions {
-		// we find the handler for this request
-		handler, err := r.deliverHandler(stateTransition)
-		if err != nil {
-			panic(err)
-		}
-		err = handler.handler.Deliver(application.DeliverRequest{
-			StateTransitionObject: nil,
-			Client:                nil,
-		})
+		err = r.routeTransition(stateTransition)
 		if err != nil {
 			panic(err)
 		}

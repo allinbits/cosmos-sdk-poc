@@ -65,7 +65,7 @@ func (s *Store) keyFor(object application.StateObject) []byte {
 	if !ok {
 		panic("unregistered state object: " + name)
 	}
-	meta := object.GetMeta()
+	meta := object.GetState()
 	// TODO(fdymylja): should we panic or return nil ?
 	if meta == nil {
 		panic("state object with nil meta")
