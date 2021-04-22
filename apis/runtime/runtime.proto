@@ -1,0 +1,22 @@
+syntax="proto3";
+
+package tmos.runtime;
+
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/fdymylja/tmos/apis/runtime";
+
+// Tx defines a raw transaction in the runtime
+message Tx {
+  Intent intent = 1;
+  AuthInfo auth_info = 2;
+}
+
+message Intent {
+  repeated google.protobuf.Any transitions = 1;
+  // todo add fees
+}
+
+message AuthInfo {
+
+}

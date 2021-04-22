@@ -1,57 +1,38 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 
-	"google.golang.org/protobuf/reflect/protoreflect"
-
-	"github.com/fdymylja/tmos/pkg/application"
+	"github.com/fdymylja/tmos/apis/meta"
+	basicctrl "github.com/fdymylja/tmos/pkg/controller/basic"
 )
 
+var ErrAlreadyRegistered = errors.New("router: transition already registered")
+var ErrNotFound = errors.New("router: transition handler not found")
+
 func NewRouter() *Router {
-	return &Router{
-		deliver: make(map[protoreflect.FullName]application.DeliverHandler),
-		check:   make(map[protoreflect.FullName]application.CheckHandler),
-	}
+	return &Router{transitionHandlers: map[string]basicctrl.StateTransitionHandler{}}
 }
 
-// Router provides application.DeliverHandler and application.CheckHandler
 type Router struct {
-	deliver map[protoreflect.FullName]application.DeliverHandler
-	check   map[protoreflect.FullName]application.CheckHandler
+	transitionHandlers map[string]basicctrl.StateTransitionHandler
 }
 
-func (r *Router) DeliverHandlerFor(object application.StateTransitionObject) application.DeliverHandler {
-	name := r.getName(object)
-	deliver, exists := r.deliver[name]
+func (r *Router) AddHandler(transition meta.StateTransition, handler basicctrl.StateTransitionHandler) error {
+	name := meta.Name(transition)
+	if _, exists := r.transitionHandlers[name]; exists {
+		return fmt.Errorf("%w: %s", ErrAlreadyRegistered, name)
+	}
+	r.transitionHandlers[name] = handler
+	return nil
+}
+
+func (r *Router) Handler(transition meta.StateTransition) (basicctrl.StateTransitionHandler, error) {
+	name := meta.Name(transition)
+	handler, exists := r.transitionHandlers[name]
 	if !exists {
-		return nil
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, name)
 	}
-	return deliver
-}
-
-func (r *Router) RegisterDeliverHandler(object application.StateTransitionObject, deliverer application.DeliverHandler, checker application.CheckHandler, policy application.HandlerPolicy) {
-	name := r.getName(object)
-	_, exists := r.deliver[name]
-	if exists {
-		panic(fmt.Sprintf("registering multiple handlers for the same state transition object is not allowed: %s", name))
-	}
-	r.deliver[name] = deliverer
-	// tODo checker
-}
-
-func (r *Router) RegisterBeginBlockHandler(handler application.BeginBlockHandler) {
-	panic("implement me")
-}
-
-func (r *Router) RegisterEndBlockHandler(handler application.EndBlockHandler) {
-	panic("implement me")
-}
-
-func (r *Router) RegisterHandlerHook(object application.StateTransitionObject, handler application.HookHandler) {
-	panic("implement me")
-}
-
-func (r *Router) getName(object application.StateTransitionObject) protoreflect.FullName {
-	return object.ProtoReflect().Descriptor().FullName()
+	return handler, nil
 }

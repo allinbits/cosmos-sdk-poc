@@ -1,6 +1,8 @@
-package store
+package orm
 
 import (
+	"errors"
+
 	"github.com/dgraph-io/badger/v3"
 )
 
@@ -45,8 +47,8 @@ func (b *Badger) get(k []byte) (v []byte, exists bool) {
 		return nil
 	})
 
-	if err != nil {
-		panic(err)
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return nil, false
 	}
 	return v, true
 }

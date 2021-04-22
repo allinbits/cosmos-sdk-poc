@@ -1,4 +1,4 @@
-package store_test
+package orm_test
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestStore(t *testing.T) {
-	s := store.NewStore()
+	s := orm.NewStore()
 	s.RegisterStateObject(&accounting.Balance{})
 
 	require.Panics(t, func() {

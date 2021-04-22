@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package tmos.x.accounting.v1alpha1;
+
+import "apis/meta/v1alpha1/meta.proto";
+
+option go_package = "github.com/fdymylja/tmos/apis/x/accounting/v1alpha1";
+
+// MsgSend is used to send coins from an account to another
+message MsgSend {
+  tmos.meta.v1alpha1.TransitionMeta transition_meta = 50;
+  string sender = 2;
+  string receiver = 3;
+  int64 amount = 4;
+}
+
+// Balance stores balance state for users
+message Balance {
+  tmos.meta.v1alpha1.ObjectMeta object_meta = 1;
+  int64 amount = 2;
+}
