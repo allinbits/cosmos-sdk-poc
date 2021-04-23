@@ -34,14 +34,16 @@ func (r ABCIRuntime) InitChain(chain abci.RequestInitChain) abci.ResponseInitCha
 	panic("implement me")
 }
 
+// BeginBlock implements the tendermint abci application
 func (r ABCIRuntime) BeginBlock(block abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// we deliver a request on behalf of ABCI to the runtime
 	// so that begin block information is stored and provided
 	// to controllers which wish to access the given data.
-	err := r.rt.Deliver(nil, &rtabci.MsgSetBeginBlockState{BeginBlock: &block})
+	err := r.rt.Deliver([]string{ABCIIdentity}, &rtabci.MsgSetBeginBlockState{BeginBlock: convBeginBlock(block)})
 	if err != nil {
 		panic(err)
 	}
+	// TODO handle begin block
 	return abci.ResponseBeginBlock{
 		Events: nil,
 	}

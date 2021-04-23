@@ -1,0 +1,21 @@
+package abci
+
+import (
+	"github.com/fdymylja/tmos/apis/abci/v1alpha1"
+	basicctrl "github.com/fdymylja/tmos/pkg/controller/basic"
+)
+
+type Controller struct {
+}
+
+func (c Controller) Name() string {
+	return "abci"
+}
+
+func (c Controller) RegisterStateTransitions(client basicctrl.Client, register basicctrl.RegisterTransitionFn) {
+	register(&v1alpha1.MsgSetBeginBlockState{}, newBeginBlockHandler(client))
+}
+
+func (c Controller) RegisterStateObjects(register basicctrl.RegisterStateObjectsFn) {
+	register(&v1alpha1.BeginBlockState{})
+}
