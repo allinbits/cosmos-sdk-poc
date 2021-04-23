@@ -1,0 +1,26 @@
+syntax="proto3";
+
+package tmos.x.authn.v1alpha1;
+import "google/protobuf/any.proto";
+import "apis/meta/v1alpha1/meta.proto";
+
+option go_package = "github.com/fdymylja/tmos/apis/x/authn/v1alpha1";
+
+// Account defines an account
+message Account {
+  string              address = 1;
+  google.protobuf.Any pub_key = 2;
+  uint64 account_number = 3;
+  uint64 sequence       = 4;
+
+  tmos.meta.v1alpha1.ObjectMeta object_meta = 50;
+}
+
+// Params defines the parameters for the auth module.
+message Params {
+  uint64 max_memo_characters     = 1;
+  uint64 tx_sig_limit            = 2;
+  uint64 tx_size_cost_per_byte   = 3;
+  uint64 sig_verify_cost_ed25519 = 4;
+  uint64 sig_verify_cost_secp256k1 = 5;
+}

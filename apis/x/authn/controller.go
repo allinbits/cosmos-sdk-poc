@@ -2,8 +2,10 @@ package authn
 
 import (
 	"github.com/fdymylja/tmos/apis/meta"
+	"github.com/fdymylja/tmos/apis/x/authn/tx"
 	"github.com/fdymylja/tmos/pkg/controller/authentication"
 	"github.com/fdymylja/tmos/pkg/controller/basic"
+	"k8s.io/klog/v2"
 )
 
 // Controller implements the authentication.Controller
@@ -27,5 +29,14 @@ func (c Controller) RegisterStateObjects(register basic.RegisterStateObjectsFn) 
 }
 
 func (c Controller) DecodeTx(txBytes []byte) (transitions []meta.StateTransition, authenticatedAccounts []string, err error) {
-	panic("implement me")
+	panic("implement")
+}
+
+func (c Controller) DecodeTransaction(txBytes []byte) error {
+	t, err := tx.DecodeTx(txBytes)
+	if err != nil {
+		return err
+	}
+	klog.Infof("%s", t)
+	return nil
 }

@@ -1,0 +1,14 @@
+syntax="proto3";
+
+package unknown.test;
+
+option go_package = "github.com/fdymylja/tmos/apis/x/authn/tx/testdata";
+
+message HasUnknowns {
+  string a = 1;
+}
+
+message WithoutUnknowns {
+  string a = 1;
+  string b = 2;
+}

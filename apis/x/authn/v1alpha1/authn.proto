@@ -1,6 +1,0 @@
-syntax="proto3";
-
-package tmos.x.authn.v1alpha1;
-
-import "apis/meta/v1alpha1/meta.proto";
-
