@@ -1,7 +1,6 @@
 package abciruntime
 
 import (
-	"github.com/cosmos/cosmos-sdk/store"
 	rtabci "github.com/fdymylja/tmos/apis/abci/v1alpha1"
 	"github.com/fdymylja/tmos/pkg/runtime"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -32,7 +31,7 @@ func (r ABCIRuntime) CheckTx(tx abci.RequestCheckTx) abci.ResponseCheckTx {
 }
 
 func (r ABCIRuntime) InitChain(req abci.RequestInitChain) abci.ResponseInitChain {
-	r.cs.
+	panic("implement me")
 }
 
 // BeginBlock implements the tendermint abci application interface
