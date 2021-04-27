@@ -8,7 +8,7 @@ type ID interface {
 	Bytes()
 }
 
-type Client interface {
+type Store interface {
 	Get(ID) error
 	Create(ID, StateObject) error
 	Update(ID, StateObject) error
