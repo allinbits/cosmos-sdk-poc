@@ -12,11 +12,14 @@ var ErrAlreadyRegistered = errors.New("router: transition already registered")
 var ErrNotFound = errors.New("router: transition handler not found")
 
 func NewRouter() *Router {
-	return &Router{stateTransitionHandlers: map[string]controller.StateTransition{}}
+	return &Router{
+		stateTransitionHandlers:     map[string]controller.StateTransition{},
+		admissionControllerHandlers: map[string][]controller.Admission{}}
 }
 
 type Router struct {
-	stateTransitionHandlers map[string]controller.StateTransition
+	stateTransitionHandlers     map[string]controller.StateTransition
+	admissionControllerHandlers map[string][]controller.Admission
 }
 
 func (r *Router) AddStateTransitionHandler(transition meta.StateTransition, handler controller.StateTransition) error {
@@ -35,4 +38,21 @@ func (r *Router) GetStateTransitionController(transition meta.StateTransition) (
 		return nil, fmt.Errorf("%w: %s", ErrNotFound, name)
 	}
 	return handler, nil
+}
+
+func (r *Router) AddAdmissionController(transition meta.StateTransition, handler controller.Admission) error {
+	name := meta.Name(transition)
+	if _, exists := r.admissionControllerHandlers[name]; !exists {
+		r.admissionControllerHandlers[name] = nil
+	}
+	r.admissionControllerHandlers[name] = append(r.admissionControllerHandlers[name], handler)
+	return nil
+}
+
+func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]controller.Admission, error) {
+	ctrls, exists := r.admissionControllerHandlers[meta.Name(transition)]
+	if !exists {
+		return nil, nil
+	}
+	return ctrls, nil
 }

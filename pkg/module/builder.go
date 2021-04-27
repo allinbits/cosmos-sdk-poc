@@ -49,8 +49,13 @@ func (b *Builder) Named(name string) *Builder {
 	return b
 }
 
-func (b *Builder) HandleStateTransition(transition meta.StateTransition, ctrl controller.StateTransition) *Builder {
+func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition) *Builder {
 	b.Descriptor.StateTransitionControllers = append(b.Descriptor.StateTransitionControllers, stateTransitionController{transition, ctrl})
+	return b
+}
+
+func (b *Builder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *Builder {
+	b.Descriptor.AdmissionControllers = append(b.Descriptor.AdmissionControllers, admissionController{transition, ctrl})
 	return b
 }
 

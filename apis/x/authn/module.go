@@ -18,7 +18,8 @@ func NewModule() module.Module {
 func (m Module) Initialize(c module.Client, builder *module.Builder) {
 	builder.
 		Named("authn").
-		HandleStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c)).
+		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c)).
+		HandlesAdmission(&v1alpha1.MsgCreateAccount{}, NewCreateAccountAdmissionController()).
 		OwnsStateObject(&v1alpha1.Account{}).
 		OwnsStateObject(&v1alpha1.Params{}).
 		OwnsStateObject(&v1alpha1.CurrentAccountNumber{})

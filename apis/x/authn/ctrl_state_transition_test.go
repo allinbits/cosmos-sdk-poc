@@ -18,7 +18,8 @@ func TestCreateAccountController(t *testing.T) {
 		AccountNumber: 0,
 		Sequence:      0,
 		ObjectMeta:    &meta.ObjectMeta{Id: "test"},
-	}})
+	}}, false)
+
 	if err != nil {
 		t.Fatal(err)
 	}

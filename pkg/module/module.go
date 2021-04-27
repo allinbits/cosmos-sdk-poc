@@ -7,6 +7,7 @@ import (
 type Client interface {
 	Get(object meta.StateObject) error
 	Create(object meta.StateObject) error
+	Update(object meta.StateObject) error
 }
 
 // Module defines a basic module which handles changes

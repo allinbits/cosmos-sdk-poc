@@ -46,13 +46,14 @@ func (b *Badger) get(k []byte) (v []byte, exists bool) {
 		}
 		return nil
 	})
-
-	if errors.Is(err, badger.ErrKeyNotFound) {
+	switch {
+	case err == nil:
+		return v, true
+	case errors.Is(err, badger.ErrKeyNotFound):
 		return nil, false
-	} else {
+	default:
 		panic(err)
 	}
-	return v, true
 }
 
 func (b *Badger) has(k []byte) bool {

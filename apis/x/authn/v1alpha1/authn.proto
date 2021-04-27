@@ -25,11 +25,6 @@ message MsgDeleteAccount {
   Account account = 2;
 }
 
-// MsgIncreaseAccountNumber increases CurrentAccountNumber by 1
-message MsgIncreaseAccountNumber {
-  tmos.meta.v1alpha1.TransitionMeta transition_meta = 1;
-}
-
 // STATE OBJECTS
 
 // Account defines an account
@@ -44,7 +39,6 @@ message Account {
 
 // CurrentAccountNumber is the state object containing the current account number
 message CurrentAccountNumber {
-  tmos.meta.v1alpha1.ObjectMeta object_meta = 1;
   // number is the current account number
   uint64 number = 2;
 }
