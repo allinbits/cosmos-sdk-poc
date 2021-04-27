@@ -49,8 +49,15 @@ func (b *Badger) get(k []byte) (v []byte, exists bool) {
 
 	if errors.Is(err, badger.ErrKeyNotFound) {
 		return nil, false
+	} else {
+		panic(err)
 	}
 	return v, true
+}
+
+func (b *Badger) has(k []byte) bool {
+	_, exists := b.get(k)
+	return exists
 }
 
 func (b *Badger) delete(k []byte) {

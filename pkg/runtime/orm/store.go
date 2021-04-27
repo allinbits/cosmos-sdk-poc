@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	ErrUnauthorized  = errors.New("store: user does not own object")
+	ErrNotFound      = errors.New("store: object not found")
 	ErrAlreadyExists = errors.New("store: object already registered")
 )
 
 type kvStore interface {
+	has(k []byte) bool
 	get(k []byte) (v []byte, exists bool)
 	set(k []byte, v []byte)
 	delete(k []byte)
@@ -23,37 +24,35 @@ func NewStore() *Store {
 	db := NewBadger()
 	return &Store{
 		objectPrefixes: make(map[string][]byte),
-		objectOwners:   make(map[string]map[string]struct{}),
 		kv:             db,
 	}
 }
 
 // Store defines the state object store
 type Store struct {
-	objectPrefixes map[string][]byte              // objectPrefixes maps object to their prefixes
-	objectOwners   map[string]map[string]struct{} // objectOwners defines which identities own the given object
+	objectPrefixes map[string][]byte // objectPrefixes maps object to their prefixes
 	kv             kvStore
 }
 
-func (s *Store) Get(object meta.StateObject) (exists bool) {
+func (s *Store) Get(object meta.StateObject) error {
 	key := s.keyFor(object)
 	o, exists := s.kv.get(key)
 	if !exists {
-		return false
+		return fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	v := o
 	err := proto.Unmarshal(v, object)
 	if err != nil {
 		panic(err)
 	}
-	return true
+	return nil
 }
 
-func (s *Store) Set(user string, object meta.StateObject) error {
-	if !s.owns(user, object) {
-		return fmt.Errorf("%w: %s does not own the object", ErrUnauthorized, user)
-	}
+func (s *Store) Create(object meta.StateObject) error {
 	key := s.keyFor(object)
+	if s.kv.has(key) {
+		return ErrAlreadyExists
+	}
 	b, err := proto.Marshal(object)
 	if err != nil {
 		panic(err)
@@ -62,10 +61,20 @@ func (s *Store) Set(user string, object meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) Delete(user string, object meta.StateObject) error {
-	if !s.owns(user, object) {
-		return fmt.Errorf("%w: %s does not own the object", ErrUnauthorized, user)
+func (s *Store) Update(object meta.StateObject) error {
+	k := s.keyFor(object)
+	if !s.kv.has(k) {
+		return fmt.Errorf("%w: %s", ErrNotFound, k)
 	}
+	b, err := proto.Marshal(object)
+	if err != nil {
+		panic(err)
+	}
+	s.kv.set(k, b)
+	return nil
+}
+
+func (s *Store) Delete(object meta.StateObject) error {
 	key := s.keyFor(object)
 	s.kv.delete(key)
 
@@ -90,7 +99,7 @@ func (s *Store) keyFor(object meta.StateObject) []byte {
 	return append(pfx, []byte(metadata.Id)...)
 }
 
-func (s *Store) RegisterStateObject(owner string, object meta.StateObject) error {
+func (s *Store) RegisterStateObject(object meta.StateObject) error {
 	name := meta.Name(object)
 	// check if registered
 	_, exists := s.objectPrefixes[name]
@@ -99,20 +108,5 @@ func (s *Store) RegisterStateObject(owner string, object meta.StateObject) error
 	}
 	// register object
 	s.objectPrefixes[name] = []byte(name)
-	// register owner
-	if _, exists := s.objectOwners[owner]; !exists {
-		s.objectOwners[owner] = make(map[string]struct{})
-	}
-	s.objectOwners[owner][name] = struct{}{}
 	return nil
-}
-
-// owns asserts if the given user owns the provided object
-func (s *Store) owns(user string, object meta.StateObject) bool {
-	ownedObjects, exists := s.objectOwners[user]
-	if !exists {
-		return false
-	}
-	_, owned := ownedObjects[meta.Name(object)]
-	return owned
 }

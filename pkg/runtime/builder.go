@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/apis/meta"
-	basicctrl "github.com/fdymylja/tmos/pkg/controller/basic"
+	"github.com/fdymylja/tmos/pkg/module"
 	"github.com/fdymylja/tmos/pkg/runtime/client"
 	"github.com/fdymylja/tmos/pkg/runtime/orm"
 	"github.com/fdymylja/tmos/pkg/runtime/router"
@@ -14,51 +14,67 @@ import (
 // NewBuilder creates a new Builder for the Runtime
 func NewBuilder() *Builder {
 	return &Builder{
-		registeredApps: make(map[string]struct{}),
-		router:         router.NewRouter(),
-		store:          orm.NewStore(),
-		rt:             &Runtime{},
+		router: router.NewRouter(),
+		store:  orm.NewStore(),
+		rt:     &Runtime{},
 	}
 }
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	registeredApps map[string]struct{}
-	router         *router.Router
-	store          *orm.Store
-	rt             *Runtime
+	modules []*module.Descriptor
+	router  *router.Router
+	store   *orm.Store
+	rt      *Runtime
 }
 
-// MountApplication mounts a new basic onto the Runtime
-func (b *Builder) MountApplication(app basicctrl.Controller) {
-	identity := app.Name()
-	if _, exists := b.registeredApps[identity]; exists {
-		panic(fmt.Errorf("basic already registered: %s", identity))
-	}
-
-	appClient := client.NewClient(identity, b.store, b.rt)
-	app.RegisterStateTransitions(appClient, func(transition meta.StateTransition, handler basicctrl.StateTransitionHandler) {
-		err := b.router.AddHandler(transition, handler)
-		if err != nil {
-			panic(err)
-		}
-		klog.Infof("registered state transition %s owned by %s", meta.Name(transition), identity)
-	})
-
-	app.RegisterStateObjects(func(object meta.StateObject) {
-		err := b.store.RegisterStateObject(app.Name(), object)
-		if err != nil {
-			panic(err)
-		}
-		klog.Infof("registered state object %s owned by %s", meta.Name(object), app.Name())
-	})
-
-	b.registeredApps[identity] = struct{}{}
+// AddModule adds a new module.Module to the list of modules to install
+func (b *Builder) AddModule(m module.Module) {
+	mb := module.NewBuilder()
+	mc := client.NewClient(b.rt)
+	m.Initialize(mc, mb)
+	mc.SetUser(mb.Descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
+	b.modules = append(b.modules, mb.Descriptor)
 }
 
-// Build returns the built *Runtime
+// Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() *Runtime {
+	for _, m := range b.modules {
+		if err := b.install(m); err != nil {
+			panic(fmt.Errorf("error while installing module %s: %w", m.Name, err))
+		}
+	}
 	b.rt.store = b.store
 	b.rt.router = b.router
 	return b.rt
+}
+
+func (b *Builder) install(m *module.Descriptor) error {
+	// check name
+	if !validModuleName(m.Name) {
+		return fmt.Errorf("invalid module name: %s", m.Name)
+	}
+	// install state transition controllers
+	for _, ctrl := range m.StateTransitionControllers {
+		err := b.router.AddStateTransitionHandler(ctrl.StateTransition, ctrl.Controller)
+		if err != nil {
+			return err
+		}
+		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+	}
+	// register state objects
+	for _, so := range m.StateObjects {
+		err := b.store.RegisterStateObject(so.StateObject)
+		if err != nil {
+			return err
+		}
+		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
+	}
+	// TODO register admission + mutating admission + hooks
+	// TODO register roles and dependencies
+	return nil
+}
+
+func validModuleName(name string) bool {
+	return name != ""
 }
