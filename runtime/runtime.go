@@ -48,16 +48,19 @@ func (r *Runtime) Deliver(identities []string, transition StateTransition, skipA
 			return err
 		}
 	}
+
 	// get the handler
 	handler, err := r.router.GetStateTransitionController(transition)
 	if err != nil {
 		return err
 	}
+
 	// deliver the request
 	_, err = handler.Deliver(controller.StateTransitionRequest{Transition: transition})
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
