@@ -3,6 +3,7 @@ package badger
 import (
 	"errors"
 	"fmt"
+	"github.com/fdymylja/tmos/runtime"
 
 	"github.com/fdymylja/tmos/module/meta"
 	"google.golang.org/protobuf/proto"
@@ -83,7 +84,7 @@ func (s *Store) Delete(object meta.StateObject) error {
 
 func (s *Store) keyFor(object meta.StateObject) []byte {
 	// get prefix for object
-	name := meta.Name(object)
+	name := runtime.Name(object)
 	pfx, ok := s.objectPrefixes[name]
 	if !ok {
 		panic("unregistered state object: " + name)
@@ -100,7 +101,7 @@ func (s *Store) keyFor(object meta.StateObject) []byte {
 }
 
 func (s *Store) RegisterStateObject(object meta.StateObject) error {
-	name := meta.Name(object)
+	name := runtime.Name(object)
 	// check if registered
 	_, exists := s.objectPrefixes[name]
 	if exists {

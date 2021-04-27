@@ -1,11 +1,13 @@
 package controller
 
-import "github.com/fdymylja/tmos/module/meta"
+import (
+	"github.com/fdymylja/tmos/runtime"
+)
 
 // AdmissionRequest is the request sent to admission controllers
 type AdmissionRequest struct {
 	// Transition defines the meta.StateTransition that needs to be validated
-	Transition meta.StateTransition
+	Transition runtime.StateTransition
 }
 
 // AdmissionResponse is the response returned by Admission controler

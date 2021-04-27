@@ -13,7 +13,7 @@ type RuntimeServer interface {
 	Update(user string, object meta.StateObject) error
 	Delete(user string, object meta.StateObject) error
 	// Deliver delivers a meta.StateTransition to the handling controller
-	Deliver(identities []string, transition meta.StateTransition, skipAdmissionControllers bool) error
+	Deliver(identities []string, transition StateTransition, skipAdmissionControllers bool) error
 }
 
 var _ module.Client = (*Client)(nil)
@@ -45,7 +45,7 @@ func (c *Client) Delete(object meta.StateObject) error {
 	return c.runtime.Delete(c.user, object)
 }
 
-func (c Client) Deliver(transition meta.StateTransition) error {
+func (c Client) Deliver(transition StateTransition) error {
 	return c.runtime.Deliver([]string{c.user}, transition, false)
 }
 

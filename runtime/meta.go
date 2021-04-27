@@ -1,4 +1,4 @@
-package meta
+package runtime
 
 import (
 	"github.com/fdymylja/tmos/module/meta/v1alpha1"

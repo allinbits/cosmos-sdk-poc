@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/fdymylja/tmos/module/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/store/badger"
 	"k8s.io/klog/v2"
@@ -57,7 +56,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+		klog.Infof("registered state transition %s for module %s", Name(ctrl.StateTransition), m.Name)
 	}
 	// register admission controllers
 	for _, ctrl := range m.AdmissionControllers {
@@ -65,7 +64,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+		klog.Infof("registered admission controller %s for module %s", Name(ctrl.StateTransition), m.Name)
 	}
 	// register state objects
 	for _, so := range m.StateObjects {
@@ -73,7 +72,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
+		klog.Infof("registered state object %s for module %s", Name(so.StateObject), m.Name)
 	}
 	// TODO register admission + mutating admission + hooks
 	// TODO register roles and dependencies

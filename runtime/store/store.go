@@ -1,8 +1,8 @@
 package store
 
 import (
-	"github.com/fdymylja/tmos/module/meta"
 	"github.com/fdymylja/tmos/module/meta/v1alpha1"
+	"github.com/fdymylja/tmos/runtime"
 )
 
 type ID interface {
@@ -18,7 +18,7 @@ type Client interface {
 
 // StateObject defines an object which is saved in the state
 type StateObject interface {
-	meta.Type
+	runtime.Type
 	GetObjectMeta() *v1alpha1.ObjectMeta
 }
 

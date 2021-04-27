@@ -2,6 +2,7 @@ package module
 
 import (
 	"github.com/fdymylja/tmos/module/meta"
+	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
 )
 
@@ -13,11 +14,11 @@ type Descriptor struct {
 	StateTransitionControllers     []stateTransitionController
 	PostStateTransitionControllers []postStateTransitionController
 	StateObjects                   []stateObject
-	Needs                          []meta.StateTransition
+	Needs                          []runtime.StateTransition
 }
 
 type admissionController struct {
-	StateTransition meta.StateTransition
+	StateTransition runtime.StateTransition
 	Controller      controller.Admission
 }
 
@@ -25,7 +26,7 @@ type mutatingAdmissionController struct {
 }
 
 type stateTransitionController struct {
-	StateTransition meta.StateTransition
+	StateTransition runtime.StateTransition
 	Controller      controller.StateTransition
 }
 
@@ -50,12 +51,12 @@ func (b *Builder) Named(name string) *Builder {
 	return b
 }
 
-func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition) *Builder {
+func (b *Builder) HandlesStateTransition(transition runtime.StateTransition, ctrl controller.StateTransition) *Builder {
 	b.Descriptor.StateTransitionControllers = append(b.Descriptor.StateTransitionControllers, stateTransitionController{transition, ctrl})
 	return b
 }
 
-func (b *Builder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *Builder {
+func (b *Builder) HandlesAdmission(transition runtime.StateTransition, ctrl controller.Admission) *Builder {
 	b.Descriptor.AdmissionControllers = append(b.Descriptor.AdmissionControllers, admissionController{transition, ctrl})
 	return b
 }
