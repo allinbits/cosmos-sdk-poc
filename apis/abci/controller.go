@@ -2,7 +2,6 @@ package abci
 
 import (
 	"github.com/fdymylja/tmos/apis/abci/v1alpha1"
-	basicctrl "github.com/fdymylja/tmos/pkg/controller/basic"
 )
 
 type Controller struct {

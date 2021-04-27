@@ -39,7 +39,7 @@ func (r ABCIRuntime) BeginBlock(block abci.RequestBeginBlock) abci.ResponseBegin
 	// we deliver a request on behalf of ABCI to the runtime
 	// so that begin block information is stored and provided
 	// to controllers which wish to access the given data.
-	err := r.rt.Deliver([]string{ABCIIdentity}, &rtabci.MsgSetBeginBlockState{BeginBlock: convBeginBlock(block)})
+	err := r.rt.Deliver([]string{ABCIIdentity}, &rtabci.MsgSetBeginBlockState{BeginBlock: convBeginBlock(block)}, false)
 	if err != nil {
 		panic(err)
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/apis/meta"
+	"github.com/fdymylja/tmos/pkg/authorization"
 	"github.com/fdymylja/tmos/pkg/controller"
 	rterr "github.com/fdymylja/tmos/pkg/runtime/errors"
 	"github.com/fdymylja/tmos/pkg/runtime/orm"
@@ -12,8 +13,9 @@ import (
 )
 
 type Runtime struct {
-	router *router.Router
-	store  *orm.Store
+	authorizer authorization.Authorizer
+	router     *router.Router
+	store      *orm.Store
 }
 
 func (r *Runtime) Get(object meta.StateObject) error {

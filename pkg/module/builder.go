@@ -13,6 +13,7 @@ type Descriptor struct {
 	StateTransitionControllers     []stateTransitionController
 	PostStateTransitionControllers []postStateTransitionController
 	StateObjects                   []stateObject
+	Needs                          []meta.StateTransition
 }
 
 type admissionController struct {
