@@ -23,5 +23,6 @@ func (b beginBlockHandler) Deliver(request basicctrl.DeliverRequest) basicctrl.D
 	b.c.Set(&v1alpha1.BeginBlockState{
 		BeginBlock: msg.BeginBlock,
 	})
+	//
 	return basicctrl.DeliverResponse{}
 }

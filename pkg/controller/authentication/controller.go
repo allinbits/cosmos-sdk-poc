@@ -10,5 +10,5 @@ type Controller interface {
 	basic.Controller
 	// DecodeTx takes raw transaction bytes and returns the state transitions, the accounts which have
 	// authenticated the transitions, and an error
-	DecodeTx(txBytes []byte) (transitions []meta.StateTransition, authenticatedAccounts []string, err error)
+	Authenticate(txBytes []byte) (transitions []meta.StateTransition, authenticatedAccounts []string, err error)
 }
