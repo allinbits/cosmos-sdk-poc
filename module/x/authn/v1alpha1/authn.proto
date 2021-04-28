@@ -2,26 +2,22 @@ syntax="proto3";
 
 package tmos.x.authn.v1alpha1;
 import "google/protobuf/any.proto";
-import "module/meta/v1alpha1/meta.proto";
 
 option go_package = "github.com/fdymylja/tmos/module/x/authn/v1alpha1";
 
 // - STATE TRANSITIONS -
 // MsgCreateAccount is used to create a new account
 message MsgCreateAccount {
-  tmos.meta.v1alpha1.TransitionMeta transition_meta = 1;
   Account account = 2;
 }
 
 // MsgUpdateAccount is used to update an existing account
 message MsgUpdateAccount {
-  tmos.meta.v1alpha1.TransitionMeta transition_meta = 1;
   Account account = 2;
 }
 
 // MsgDeleteAccount is used to remove an account
 message MsgDeleteAccount {
-  tmos.meta.v1alpha1.TransitionMeta transition_meta = 1;
   Account account = 2;
 }
 
@@ -33,8 +29,6 @@ message Account {
   google.protobuf.Any pub_key = 2;
   uint64 account_number = 3;
   uint64 sequence       = 4;
-
-  tmos.meta.v1alpha1.ObjectMeta object_meta = 50;
 }
 
 // CurrentAccountNumber is the state object containing the current account number
@@ -50,6 +44,4 @@ message Params {
   uint64 tx_size_cost_per_byte   = 3;
   uint64 sig_verify_cost_ed25519 = 4;
   uint64 sig_verify_cost_secp256k1 = 5;
-
-  tmos.meta.v1alpha1.ObjectMeta object_meta = 50;
 }

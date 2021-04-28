@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"github.com/fdymylja/tmos/runtime"
+	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // StateTransitionRequest is the request forwarded to the StateTransition controller
 type StateTransitionRequest struct {
-	Transition runtime.StateTransition
+	Transition meta.StateTransition
 }
 
 // StateTransitionResponse is the response returned by StateTransition controller

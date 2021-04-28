@@ -1,32 +1,35 @@
 package authn
 
 import (
-	meta "github.com/fdymylja/tmos/module/meta/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
-	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func NewCreateAccountController(c module.Client) *CreateAccountController {
+func NewCreateAccountController(c runtime.ModuleClient) *CreateAccountController {
 	return &CreateAccountController{c: c}
 }
 
 type CreateAccountController struct {
-	c module.Client
+	c runtime.ModuleClient
 }
 
 func (m *CreateAccountController) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateAccount)
 	// get last account number
 	lastAccNum := new(v1alpha1.CurrentAccountNumber)
-	err = m.c.Get(lastAccNum)
+	err = m.c.Get(v1alpha1.CurrentAccountNumberID, lastAccNum)
 	// if it does not exist we create it
-	if runtime.IsNotFound(err) {
+	switch {
+	case err == nil:
+		break
+	case runtime.IsNotFound(err):
 		err = m.c.Create(&v1alpha1.CurrentAccountNumber{Number: 0})
 		if err != nil {
 			return resp, err
 		}
+	default:
+		return resp, err
 	}
 	// create account
 	account := &v1alpha1.Account{
@@ -34,7 +37,6 @@ func (m *CreateAccountController) Deliver(req controller.StateTransitionRequest)
 		PubKey:        msg.Account.PubKey,
 		AccountNumber: lastAccNum.Number,
 		Sequence:      0,
-		ObjectMeta:    &meta.ObjectMeta{Id: msg.Account.Address},
 	}
 	err = m.c.Create(account)
 	if err != nil {

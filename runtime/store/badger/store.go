@@ -3,9 +3,10 @@ package badger
 import (
 	"errors"
 	"fmt"
-	"github.com/fdymylja/tmos/runtime"
 
-	"github.com/fdymylja/tmos/module/meta"
+	"github.com/fdymylja/tmos/runtime/meta"
+	"k8s.io/klog/v2"
+
 	"google.golang.org/protobuf/proto"
 )
 
@@ -35,8 +36,8 @@ type Store struct {
 	kv             kvStore
 }
 
-func (s *Store) Get(object meta.StateObject) error {
-	key := s.keyFor(object)
+func (s *Store) Get(id meta.ID, object meta.StateObject) error {
+	key := s.keyForWithID(id, object)
 	o, exists := s.kv.get(key)
 	if !exists {
 		return fmt.Errorf("%w: %s", ErrNotFound, key)
@@ -54,6 +55,7 @@ func (s *Store) Create(object meta.StateObject) error {
 	if s.kv.has(key) {
 		return ErrAlreadyExists
 	}
+	klog.Infof("creating: %s %s", key, object)
 	b, err := proto.Marshal(object)
 	if err != nil {
 		panic(err)
@@ -82,32 +84,33 @@ func (s *Store) Delete(object meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) keyFor(object meta.StateObject) []byte {
+func (s *Store) keyForWithID(id meta.ID, object meta.StateObject) []byte {
 	// get prefix for object
-	name := runtime.Name(object)
+	name := meta.Name(object)
 	pfx, ok := s.objectPrefixes[name]
 	if !ok {
 		panic("unregistered state object: " + name)
 	}
-	metadata := object.GetObjectMeta()
 	// TODO(fdymylja): should we panic or return nil ?
-	if metadata == nil {
-		panic("state object with nil meta")
+	key := id.Bytes()
+	if len(key) == 0 {
+		panic("object key returned an empty length byte array")
 	}
-	if metadata.Id == "" {
-		panic("state object with empty meta.ID")
-	}
-	return append(pfx, []byte(metadata.Id)...)
+	return append(pfx, key...)
+}
+
+func (s *Store) keyFor(object meta.StateObject) []byte {
+	return s.keyForWithID(object.GetID(), object)
 }
 
 func (s *Store) RegisterStateObject(object meta.StateObject) error {
-	name := runtime.Name(object)
+	name := meta.Name(object)
 	// check if registered
 	_, exists := s.objectPrefixes[name]
 	if exists {
 		return fmt.Errorf("%w: %s", ErrAlreadyExists, name)
 	}
 	// register object
-	s.objectPrefixes[name] = []byte(name)
+	s.objectPrefixes[name] = []byte(name + "/")
 	return nil
 }

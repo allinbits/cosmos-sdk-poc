@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"github.com/fdymylja/tmos/runtime"
+	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 type MutatingAdmissionRequest struct {
-	Transition runtime.StateTransition
+	Transition meta.StateTransition
 }
 
 type MutatingAdmissionResponse struct {

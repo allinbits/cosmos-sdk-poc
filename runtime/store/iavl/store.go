@@ -2,28 +2,28 @@ package iavl
 
 import (
 	runtime2 "github.com/fdymylja/tmos/runtime"
-	runtime "github.com/fdymylja/tmos/runtime/store"
+	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-func NewStore() runtime.Store {
+func NewStore() runtime2.Store {
 	return store{}
 }
 
 type store struct {
 }
 
-func (s store) Get(id runtime2.ID) error {
+func (s store) Get(id meta.ID) error {
 	panic("implement me")
 }
 
-func (s store) Create(id runtime2.ID, object runtime2.StateObject) error {
+func (s store) Create(id meta.ID, object meta.StateObject) error {
 	panic("implement me")
 }
 
-func (s store) Update(id runtime2.ID, object runtime2.StateObject) error {
+func (s store) Update(id meta.ID, object meta.StateObject) error {
 	panic("implement me")
 }
 
-func (s store) List(object runtime2.StateObject) error {
+func (s store) List(object meta.StateObject) error {
 	panic("implement me")
 }

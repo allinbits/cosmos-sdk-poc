@@ -3,7 +3,7 @@ package authn
 import (
 	"github.com/fdymylja/tmos/module/x/authn/tx"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime"
 	"k8s.io/klog/v2"
 )
 
@@ -11,11 +11,11 @@ import (
 type Module struct {
 }
 
-func NewModule() module.Module {
+func NewModule() runtime.Module {
 	return Module{}
 }
 
-func (m Module) Initialize(c module.Client, builder *module.Builder) {
+func (m Module) Initialize(c runtime.ModuleClient, builder *runtime.ModuleBuilder) {
 	builder.
 		Named("authn").
 		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c)).

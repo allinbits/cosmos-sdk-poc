@@ -1,53 +1,53 @@
 package runtime
 
-import (
-	"github.com/fdymylja/tmos/runtime/module"
-)
+import "github.com/fdymylja/tmos/runtime/meta"
 
-// RuntimeServer defines runtime functionalities needed by clients
-type RuntimeServer interface {
-	Get(object StateObject) error
+// server defines runtime functionalities needed by clients
+type server interface {
+	Get(id meta.ID, object meta.StateObject) error
 	List() // TBD
-	Create(user string, object StateObject) error
-	Update(user string, object StateObject) error
-	Delete(user string, object StateObject) error
+	Create(user string, object meta.StateObject) error
+	Update(user string, object meta.StateObject) error
+	Delete(user string, id meta.ID, object meta.StateObject) error
 	// Deliver delivers a meta.StateTransition to the handling controller
-	Deliver(identities []string, transition StateTransition, skipAdmissionControllers bool) error
+	Deliver(identities []string, transition meta.StateTransition, skipAdmissionControllers bool) error
 }
 
-var _ module.Client = (*Client)(nil)
+var _ ModuleClient = (*client)(nil)
 
-func NewClient(runtime RuntimeServer) *Client {
-	return &Client{
+func newClient(runtime server) *client {
+	return &client{
 		runtime: runtime,
 	}
 }
 
-type Client struct {
+type client struct {
 	user    string
-	runtime RuntimeServer
+	runtime server
 }
 
-func (c *Client) Get(object StateObject) error {
-	return c.runtime.Get(object)
+func (c *client) Get(id meta.ID, object meta.StateObject) error {
+	return c.runtime.Get(id, object)
 }
 
-func (c *Client) Create(object StateObject) error {
+func (c *client) Create(object meta.StateObject) error {
 	return c.runtime.Create(c.user, object)
 }
 
-func (c *Client) Update(object StateObject) error {
+func (c *client) Update(object meta.StateObject) error {
 	return c.runtime.Update(c.user, object)
 }
 
-func (c *Client) Delete(object StateObject) error {
-	return c.runtime.Delete(c.user, object)
+func (c *client) Delete(id meta.ID, object meta.StateObject) error {
+	return c.runtime.Delete(c.user, id, object)
 }
 
-func (c Client) Deliver(transition StateTransition) error {
+func (c client) Deliver(transition meta.StateTransition) error {
 	return c.runtime.Deliver([]string{c.user}, transition, false)
 }
 
-func (c *Client) SetUser(user string) {
+func (c client) List(obj meta.StateObject) error { panic("not impl") }
+
+func (c *client) SetUser(user string) {
 	c.user = user
 }

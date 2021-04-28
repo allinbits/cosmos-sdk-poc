@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"github.com/fdymylja/tmos/runtime"
+	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 type PostStateTransitionRequest struct {
-	Transition runtime.StateTransition
+	Transition meta.StateTransition
 }
 
 type PostStateTransitionResponse struct {

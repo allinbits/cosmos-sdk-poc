@@ -2,8 +2,6 @@ syntax="proto3";
 
 package tmos.rbac.v1alpha1;
 
-import "module/meta/v1alpha1/meta.proto";
-
 option go_package = "github.com/fdymylja/tmos/module/rbac/v1alpha1";
 
 // Role defines a role, which defines what resources

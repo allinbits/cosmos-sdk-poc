@@ -2,7 +2,8 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/fdymylja/tmos/runtime/module"
+
+	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/store/badger"
 	"k8s.io/klog/v2"
 )
@@ -18,16 +19,16 @@ func NewBuilder() *Builder {
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	modules []*module.Descriptor
+	modules []*ModuleDescriptor
 	router  *Router
 	store   *badger.Store
 	rt      *Runtime
 }
 
 // AddModule adds a new module.Module to the list of modules to install
-func (b *Builder) AddModule(m module.Module) {
-	mb := module.NewBuilder()
-	mc := NewClient(b.rt)
+func (b *Builder) AddModule(m Module) {
+	mb := NewModuleBuilder()
+	mc := newClient(b.rt)
 	m.Initialize(mc, mb)
 	mc.SetUser(mb.Descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
 	b.modules = append(b.modules, mb.Descriptor)
@@ -45,7 +46,7 @@ func (b *Builder) Build() *Runtime {
 	return b.rt
 }
 
-func (b *Builder) install(m *module.Descriptor) error {
+func (b *Builder) install(m *ModuleDescriptor) error {
 	// check name
 	if !validModuleName(m.Name) {
 		return fmt.Errorf("invalid module name: %s", m.Name)
@@ -56,7 +57,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state transition %s for module %s", Name(ctrl.StateTransition), m.Name)
+		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
 	// register admission controllers
 	for _, ctrl := range m.AdmissionControllers {
@@ -64,7 +65,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered admission controller %s for module %s", Name(ctrl.StateTransition), m.Name)
+		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
 	// register state objects
 	for _, so := range m.StateObjects {
@@ -72,7 +73,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state object %s for module %s", Name(so.StateObject), m.Name)
+		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
 	}
 	// TODO register admission + mutating admission + hooks
 	// TODO register roles and dependencies
