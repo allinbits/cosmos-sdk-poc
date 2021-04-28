@@ -50,7 +50,9 @@ func (r ABCIRuntime) BeginBlock(block abci.RequestBeginBlock) abci.ResponseBegin
 }
 
 func (r ABCIRuntime) DeliverTx(tx abci.RequestDeliverTx) abci.ResponseDeliverTx {
-	panic("implement me")
+	// TODO store caching
+	// TODO check if block is out of gas
+	r.rt.DecodeTx()
 }
 
 func (r ABCIRuntime) EndBlock(block abci.RequestEndBlock) abci.ResponseEndBlock {

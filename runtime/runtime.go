@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -16,9 +17,10 @@ type Runtime struct {
 	modules     []*ModuleDescriptor
 	initialized uint32
 
-	authorizer authorization.Authorizer
-	router     *Router
-	store      *badger.Store
+	authenticator authentication.Authenticator
+	authorizer    authorization.Authorizer
+	router        *Router
+	store         *badger.Store
 }
 
 // Initialize initializes the runtime with default state from modules which have genesis
