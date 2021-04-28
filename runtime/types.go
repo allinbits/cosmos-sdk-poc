@@ -20,7 +20,7 @@ type StateObject interface {
 	ID
 }
 
-
+// ID defines the unique identification of an StateObject.
 type ID interface {
 	Bytes()
 }

@@ -1,7 +1,6 @@
 package module
 
 import (
-	"github.com/fdymylja/tmos/module/meta"
 	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
 )
