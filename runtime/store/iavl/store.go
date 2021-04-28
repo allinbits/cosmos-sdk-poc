@@ -1,6 +1,9 @@
 package iavl
 
-import runtime "github.com/fdymylja/tmos/runtime/store"
+import (
+	runtime2 "github.com/fdymylja/tmos/runtime"
+	runtime "github.com/fdymylja/tmos/runtime/store"
+)
 
 func NewStore() runtime.Store {
 	return store{}
@@ -9,18 +12,18 @@ func NewStore() runtime.Store {
 type store struct {
 }
 
-func (s store) Get(id runtime.ID) error {
+func (s store) Get(id runtime2.ID) error {
 	panic("implement me")
 }
 
-func (s store) Create(id runtime.ID, object runtime.StateObject) error {
+func (s store) Create(id runtime2.ID, object runtime2.StateObject) error {
 	panic("implement me")
 }
 
-func (s store) Update(id runtime.ID, object runtime.StateObject) error {
+func (s store) Update(id runtime2.ID, object runtime2.StateObject) error {
 	panic("implement me")
 }
 
-func (s store) List(object runtime.StateObject) error {
+func (s store) List(object runtime2.StateObject) error {
 	panic("implement me")
 }

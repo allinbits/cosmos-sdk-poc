@@ -4,19 +4,9 @@ import (
 	"github.com/fdymylja/tmos/runtime"
 )
 
-type ID interface {
-	Bytes()
-}
-
 type Store interface {
-	Get(ID) error
-	Create(ID, StateObject) error
-	Update(ID, StateObject) error
-	List(object StateObject) error
-}
-
-// StateObject defines an object which is saved in the state
-type StateObject interface {
-	runtime.Type
-	Bytes() []byte
+	Get(runtime.ID) error
+	Create(runtime.ID, runtime.StateObject) error
+	Update(runtime.ID, runtime.StateObject) error
+	List(object runtime.StateObject) error
 }

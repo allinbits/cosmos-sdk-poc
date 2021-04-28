@@ -14,6 +14,17 @@ type StateTransition interface {
 	Type
 }
 
+// StateObject defines an object which is saved in the state
+type StateObject interface {
+	Type
+	ID
+}
+
+
+type ID interface {
+	Bytes()
+}
+
 // Name returns the unique name for the Type
 func Name(t Type) string {
 	return (string)(t.ProtoReflect().Descriptor().FullName())
