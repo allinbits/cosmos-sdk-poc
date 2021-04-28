@@ -18,3 +18,9 @@ type StateTransition interface {
 	// Deliver forwards a request for state change
 	Deliver(req StateTransitionRequest) (StateTransitionResponse, error)
 }
+
+type StateTransitionFn func(req StateTransitionRequest) (resp StateTransitionResponse, err error)
+
+func (s StateTransitionFn) Deliver(req StateTransitionRequest) (StateTransitionResponse, error) {
+	return s(req)
+}

@@ -1,4 +1,4 @@
-package abciruntime
+package abci
 
 import (
 	abcialias "github.com/fdymylja/tmos/module/abci/tendermint/abci"

@@ -1,4 +1,4 @@
-package abciruntime
+package abci
 
 import (
 	rtabci "github.com/fdymylja/tmos/module/abci/v1alpha1"

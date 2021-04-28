@@ -6,10 +6,41 @@ import "module/abci/tendermint/abci/types.proto";
 
 option go_package = "github.com/fdymylja/tmos/module/abci/v1alpha1";
 
+enum ABCIStage {
+  Unknown = 0;
+  InitChain = 1;
+  BeginBlock = 2;
+  CheckTx = 3;
+  ReCheckTx = 4;
+  DeliverTx = 5;
+  EndBlock = 6;
+  Commit = 7;
+}
+
+message Stage {
+  ABCIStage stage = 1;
+}
+
 message BeginBlockState {
-  tendermint.abci.RequestBeginBlock begin_block = 2;
+  tendermint.abci.RequestBeginBlock begin_block = 1;
+}
+
+message CheckTxState {
+  tendermint.abci.RequestCheckTx check_tx = 1;
+}
+
+message DeliverTxState {
+  tendermint.abci.RequestDeliverTx deliver_tx = 1;
 }
 
 message MsgSetBeginBlockState {
-  tendermint.abci.RequestBeginBlock begin_block = 2;
+  tendermint.abci.RequestBeginBlock begin_block = 1;
+}
+
+message MsgSetCheckTxState {
+  tendermint.abci.RequestCheckTx check_tx = 1;
+}
+
+message MsgSetDeliverTxState {
+  tendermint.abci.RequestDeliverTx deliver_tx = 1;
 }

@@ -3,17 +3,41 @@ package runtime
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/store/badger"
+	"k8s.io/klog/v2"
 )
 
 type Runtime struct {
+	modules     []*ModuleDescriptor
+	initialized uint32
+
 	authorizer authorization.Authorizer
 	router     *Router
 	store      *badger.Store
+}
+
+// Initialize initializes the runtime with default state from modules which have genesis
+func (r *Runtime) Initialize() error {
+	const notInitialized uint32 = 0
+	const initialized uint32 = 1
+	if !atomic.CompareAndSwapUint32(&r.initialized, notInitialized, initialized) {
+		return fmt.Errorf("already initialized")
+	}
+	klog.Infof("initializing default genesis state for modules")
+	// iterate through modules and call the genesis
+	for _, m := range r.modules {
+		klog.Infof("initializing genesis state for %s", m.Name)
+		if err := m.Genesis.Handler.SetDefault(); err != nil {
+			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
+		}
+	}
+	klog.Infof("default genesis initialization completed")
+	return nil
 }
 
 func (r *Runtime) Get(id meta.ID, object meta.StateObject) error {

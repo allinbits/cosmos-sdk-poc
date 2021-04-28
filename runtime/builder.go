@@ -43,6 +43,7 @@ func (b *Builder) Build() *Runtime {
 	}
 	b.rt.store = b.store
 	b.rt.router = b.router
+	b.rt.modules = b.modules
 	return b.rt
 }
 

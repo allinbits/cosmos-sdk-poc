@@ -8,12 +8,17 @@ import (
 // ModuleDescriptor describes the full functionality set of a Module
 type ModuleDescriptor struct {
 	Name                           string
+	Genesis                        genesisController
 	AdmissionControllers           []admissionController
 	MutatingAdmissionControllers   []mutatingAdmissionController
 	StateTransitionControllers     []stateTransitionController
 	PostStateTransitionControllers []postStateTransitionController
 	StateObjects                   []stateObject
 	Needs                          []meta.StateTransition
+}
+
+type genesisController struct {
+	Handler controller.Genesis
 }
 
 type admissionController struct {
@@ -62,5 +67,10 @@ func (b *ModuleBuilder) HandlesAdmission(transition meta.StateTransition, ctrl c
 
 func (b *ModuleBuilder) OwnsStateObject(object meta.StateObject) *ModuleBuilder {
 	b.Descriptor.StateObjects = append(b.Descriptor.StateObjects, stateObject{object})
+	return b
+}
+
+func (b *ModuleBuilder) WithGenesis(ctrl controller.Genesis) *ModuleBuilder {
+	b.Descriptor.Genesis = genesisController{ctrl}
 	return b
 }
