@@ -17,7 +17,7 @@ type StateTransition interface {
 // StateObject defines an object which is saved in the state
 type StateObject interface {
 	Type
-	GetId() ID
+	GetID() ID
 }
 
 // ID defines the unique identification of an StateObject.
