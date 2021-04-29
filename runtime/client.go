@@ -1,6 +1,9 @@
 package runtime
 
-import "github.com/fdymylja/tmos/runtime/meta"
+import (
+	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/module"
+)
 
 // server defines runtime functionalities needed by clients
 type server interface {
@@ -10,10 +13,10 @@ type server interface {
 	Update(user string, object meta.StateObject) error
 	Delete(user string, id meta.ID, object meta.StateObject) error
 	// Deliver delivers a meta.StateTransition to the handling controller
-	Deliver(identities []string, transition meta.StateTransition, skipAdmissionControllers bool) error
+	Deliver(identities []string, transition meta.StateTransition) error
 }
 
-var _ ModuleClient = (*client)(nil)
+var _ module.Client = (*client)(nil)
 
 func newClient(runtime server) *client {
 	return &client{
@@ -43,7 +46,7 @@ func (c *client) Delete(id meta.ID, object meta.StateObject) error {
 }
 
 func (c client) Deliver(transition meta.StateTransition) error {
-	return c.runtime.Deliver([]string{c.user}, transition, false)
+	return c.runtime.Deliver([]string{c.user}, transition)
 }
 
 func (c client) List(obj meta.StateObject) error { panic("not impl") }

@@ -5,11 +5,11 @@ import (
 
 	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
 	"github.com/fdymylja/tmos/module/abci/v1alpha1"
-	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
+	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func checkTxHandler(client runtime.ModuleClient) controller.StateTransitionFn {
+func checkTxHandler(client module.Client) controller.StateTransitionFn {
 	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetCheckTxState)
 		switch msg.CheckTx.Type {
@@ -31,7 +31,7 @@ func checkTxHandler(client runtime.ModuleClient) controller.StateTransitionFn {
 	}
 }
 
-func beginBlockHandler(client runtime.ModuleClient) controller.StateTransitionFn {
+func beginBlockHandler(client module.Client) controller.StateTransitionFn {
 	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetBeginBlockState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_BeginBlock})
@@ -39,11 +39,15 @@ func beginBlockHandler(client runtime.ModuleClient) controller.StateTransitionFn
 			return
 		}
 		err = client.Update(&v1alpha1.BeginBlockState{BeginBlock: msg.BeginBlock})
+		if err != nil {
+			return
+		}
+		err = client.Update(&v1alpha1.CurrentBlock{BlockNumber: uint64(msg.BeginBlock.Header.Height)})
 		return
 	}
 }
 
-func deliverTxHandler(client runtime.ModuleClient) controller.StateTransitionFn {
+func deliverTxHandler(client module.Client) controller.StateTransitionFn {
 	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetDeliverTxState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_DeliverTx})

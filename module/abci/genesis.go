@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 
 	"github.com/fdymylja/tmos/module/abci/v1alpha1"
-	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
+	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func newGenesisHandler(client runtime.ModuleClient) controller.Genesis {
+func newGenesisHandler(client module.Client) controller.Genesis {
 	return genesis{client}
 }
 
 type genesis struct {
-	client runtime.ModuleClient
+	client module.Client
 }
 
 func (g genesis) SetDefault() error {
@@ -34,6 +34,10 @@ func (g genesis) SetDefault() error {
 	}
 	// set empty deliver tx state
 	err = g.client.Create(&v1alpha1.DeliverTxState{})
+	if err != nil {
+		return err
+	}
+	err = g.client.Create(&v1alpha1.CurrentBlock{})
 	if err != nil {
 		return err
 	}

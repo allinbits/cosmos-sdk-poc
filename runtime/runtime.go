@@ -9,18 +9,19 @@ import (
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/store/badger"
 	"k8s.io/klog/v2"
 )
 
 type Runtime struct {
-	modules     []*ModuleDescriptor
+	modules     []*module.ModuleDescriptor
 	initialized uint32
 
-	authenticator authentication.Authenticator
-	authorizer    authorization.Authorizer
-	router        *Router
-	store         *badger.Store
+	authn  authentication.Authenticator
+	authz  authorization.Authorizer
+	router *Router
+	store  *badger.Store
 }
 
 // Initialize initializes the runtime with default state from modules which have genesis
@@ -34,6 +35,9 @@ func (r *Runtime) Initialize() error {
 	// iterate through modules and call the genesis
 	for _, m := range r.modules {
 		klog.Infof("initializing genesis state for %s", m.Name)
+		if m.Genesis.Handler == nil {
+			continue
+		}
 		if err := m.Genesis.Handler.SetDefault(); err != nil {
 			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
 		}
@@ -62,18 +66,10 @@ func (r *Runtime) Delete(user string, id meta.ID, object meta.StateObject) error
 	return convertStoreError(r.store.Delete(object))
 }
 
-func (r *Runtime) Deliver(identities []string, transition meta.StateTransition, skipAdmissionControllers bool) (err error) {
+func (r *Runtime) Deliver(identities []string, transition meta.StateTransition) (err error) {
 	// identity here should be used for authorization checks
 	// ex: identity is module/user then can it call the state transition?
 	// TODO
-
-	// run the admission controllers
-	if !skipAdmissionControllers {
-		err = r.runAdmissionControllers(transition)
-		if err != nil {
-			return err
-		}
-	}
 
 	// get the handler
 	handler, err := r.router.GetStateTransitionController(transition)
@@ -90,7 +86,9 @@ func (r *Runtime) Deliver(identities []string, transition meta.StateTransition, 
 	return nil
 }
 
-func (r *Runtime) runAdmissionControllers(transition meta.StateTransition) error {
+// runAdmissionChain runs the controller.Admission handlers related to the
+// provided state transition.
+func (r *Runtime) runAdmissionChain(transition meta.StateTransition) error {
 	ctrls, err := r.router.GetAdmissionControllers(transition)
 	if err != nil {
 		return fmt.Errorf("unable to execute request: %s", meta.Name(transition))
@@ -98,7 +96,7 @@ func (r *Runtime) runAdmissionControllers(transition meta.StateTransition) error
 	for _, ctrl := range ctrls {
 		_, err = ctrl.Validate(controller.AdmissionRequest{Transition: transition})
 		if err != nil {
-			return fmt.Errorf("%w: %s", BadRequest, err.Error())
+			return fmt.Errorf("%w: %s", ErrBadRequest, err.Error())
 		}
 	}
 	return nil
@@ -111,7 +109,7 @@ func convertStoreError(err error) error {
 	}
 	switch {
 	case errors.Is(err, badger.ErrNotFound):
-		return fmt.Errorf("%w: %s", NotFound, err)
+		return fmt.Errorf("%w: %s", ErrNotFound, err)
 	default:
 		panic("unrecognized error type:" + err.Error())
 	}

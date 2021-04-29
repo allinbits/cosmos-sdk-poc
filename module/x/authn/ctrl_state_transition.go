@@ -1,17 +1,20 @@
 package authn
 
 import (
+	"errors"
+
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
+	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func NewCreateAccountController(c runtime.ModuleClient) *CreateAccountController {
+func NewCreateAccountController(c module.Client) *CreateAccountController {
 	return &CreateAccountController{c: c}
 }
 
 type CreateAccountController struct {
-	c runtime.ModuleClient
+	c module.Client
 }
 
 func (m *CreateAccountController) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
@@ -23,7 +26,7 @@ func (m *CreateAccountController) Deliver(req controller.StateTransitionRequest)
 	switch {
 	case err == nil:
 		break
-	case runtime.IsNotFound(err):
+	case errors.Is(err, runtime.ErrNotFound):
 		err = m.c.Create(&v1alpha1.CurrentAccountNumber{Number: 0})
 		if err != nil {
 			return resp, err

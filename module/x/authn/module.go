@@ -1,21 +1,22 @@
 package authn
 
 import (
-	"github.com/fdymylja/tmos/module/x/authn/tx"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
-	"github.com/fdymylja/tmos/runtime"
-	"k8s.io/klog/v2"
+	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/module"
 )
 
 // Module implements the authentication.Module
 type Module struct {
+	authenticator authentication.Authenticator
 }
 
-func NewModule() runtime.Module {
-	return Module{}
+func NewModule() *Module {
+	return &Module{}
 }
 
-func (m Module) Initialize(c runtime.ModuleClient, builder *runtime.ModuleBuilder) {
+func (m *Module) Initialize(c module.Client, builder *module.Builder) {
+	m.authenticator = newAuthenticator(c)
 	builder.
 		Named("authn").
 		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c)).
@@ -25,11 +26,6 @@ func (m Module) Initialize(c runtime.ModuleClient, builder *runtime.ModuleBuilde
 		OwnsStateObject(&v1alpha1.CurrentAccountNumber{})
 }
 
-func (m Module) DecodeTransaction(txBytes []byte) error {
-	t, err := tx.DecodeTx(txBytes)
-	if err != nil {
-		return err
-	}
-	klog.Infof("%s", t)
-	return nil
+func (m *Module) GetAuthenticator() authentication.Authenticator {
+	return m.authenticator
 }

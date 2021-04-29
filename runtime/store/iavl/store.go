@@ -1,11 +1,11 @@
 package iavl
 
 import (
-	runtime2 "github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/meta"
+	store2 "github.com/fdymylja/tmos/runtime/store"
 )
 
-func NewStore() runtime2.Store {
+func NewStore() store2.Store {
 	return store{}
 }
 

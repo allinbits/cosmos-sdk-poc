@@ -17,7 +17,7 @@ func TestCreateAccountController(t *testing.T) {
 		Address:       "test",
 		PubKey:        nil,
 		AccountNumber: 0,
-	}}, false)
+	}})
 
 	if err != nil {
 		t.Fatal(err)

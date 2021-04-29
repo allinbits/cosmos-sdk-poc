@@ -1,4 +1,4 @@
-package runtime
+package module
 
 import (
 	"github.com/fdymylja/tmos/runtime/controller"
@@ -41,36 +41,36 @@ type stateObject struct {
 	StateObject meta.StateObject
 }
 
-func NewModuleBuilder() *ModuleBuilder {
-	return &ModuleBuilder{Descriptor: new(ModuleDescriptor)}
+func NewModuleBuilder() *Builder {
+	return &Builder{Descriptor: new(ModuleDescriptor)}
 }
 
-// ModuleBuilder is used to build a module
-type ModuleBuilder struct {
+// Builder is used to build a module
+type Builder struct {
 	Descriptor *ModuleDescriptor
 }
 
-func (b *ModuleBuilder) Named(name string) *ModuleBuilder {
+func (b *Builder) Named(name string) *Builder {
 	b.Descriptor.Name = name
 	return b
 }
 
-func (b *ModuleBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition) *ModuleBuilder {
+func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition) *Builder {
 	b.Descriptor.StateTransitionControllers = append(b.Descriptor.StateTransitionControllers, stateTransitionController{transition, ctrl})
 	return b
 }
 
-func (b *ModuleBuilder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *ModuleBuilder {
+func (b *Builder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *Builder {
 	b.Descriptor.AdmissionControllers = append(b.Descriptor.AdmissionControllers, admissionController{transition, ctrl})
 	return b
 }
 
-func (b *ModuleBuilder) OwnsStateObject(object meta.StateObject) *ModuleBuilder {
+func (b *Builder) OwnsStateObject(object meta.StateObject) *Builder {
 	b.Descriptor.StateObjects = append(b.Descriptor.StateObjects, stateObject{object})
 	return b
 }
 
-func (b *ModuleBuilder) WithGenesis(ctrl controller.Genesis) *ModuleBuilder {
+func (b *Builder) WithGenesis(ctrl controller.Genesis) *Builder {
 	b.Descriptor.Genesis = genesisController{ctrl}
 	return b
 }

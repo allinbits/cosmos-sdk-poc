@@ -3,7 +3,10 @@ package runtime
 import (
 	"fmt"
 
+	"github.com/fdymylja/tmos/module/abci"
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/store/badger"
 	"k8s.io/klog/v2"
 )
@@ -19,23 +22,32 @@ func NewBuilder() *Builder {
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	modules []*ModuleDescriptor
+	modules []*module.ModuleDescriptor
+	authn   authentication.Authenticator
 	router  *Router
 	store   *badger.Store
 	rt      *Runtime
 }
 
 // AddModule adds a new module.Module to the list of modules to install
-func (b *Builder) AddModule(m Module) {
-	mb := NewModuleBuilder()
+func (b *Builder) AddModule(m module.Module) {
+	mb := module.NewModuleBuilder()
 	mc := newClient(b.rt)
 	m.Initialize(mc, mb)
 	mc.SetUser(mb.Descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
 	b.modules = append(b.modules, mb.Descriptor)
 }
 
+func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
+	b.authn = authn
+}
+
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() *Runtime {
+	// add core modules
+	abciModule := abci.NewModule()
+	b.AddModule(abciModule)
+	// install all modules
 	for _, m := range b.modules {
 		if err := b.install(m); err != nil {
 			panic(fmt.Errorf("error while installing module %s: %w", m.Name, err))
@@ -44,10 +56,16 @@ func (b *Builder) Build() *Runtime {
 	b.rt.store = b.store
 	b.rt.router = b.router
 	b.rt.modules = b.modules
+	switch b.authn {
+	case nil:
+		klog.Warningf("no authenticator was set up - resorting to a NO-OP authenticator")
+	default:
+		b.rt.authn = b.authn
+	}
 	return b.rt
 }
 
-func (b *Builder) install(m *ModuleDescriptor) error {
+func (b *Builder) install(m *module.ModuleDescriptor) error {
 	// check name
 	if !validModuleName(m.Name) {
 		return fmt.Errorf("invalid module name: %s", m.Name)

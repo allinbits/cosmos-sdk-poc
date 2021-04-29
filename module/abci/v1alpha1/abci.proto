@@ -17,6 +17,10 @@ enum ABCIStage {
   Commit = 7;
 }
 
+message CurrentBlock {
+  uint64 block_number = 1;
+}
+
 message Stage {
   ABCIStage stage = 1;
 }

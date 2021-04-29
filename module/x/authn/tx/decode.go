@@ -1,10 +1,10 @@
 package tx
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/meta"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 )
@@ -18,29 +18,33 @@ func (e errUnknownField) Error() string {
 	return fmt.Sprintf("tx: unkown field in provided protobuf message of type %s number %d", e.Type, e.Number)
 }
 
-var errUnknownFields = errors.New("tx: unknown fields")
-
-func DecodeTx(b []byte) (*v1alpha1.Tx, error) {
+// Decode decodes the transaction
+func Decode(b []byte) (*v1alpha1.Tx, []meta.StateTransition, error) {
 	rawTx := new(v1alpha1.TxRaw)
 	err := unmarshalAndRejectUnknowns(b, rawTx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	txBody := new(v1alpha1.TxBody)
 	err = unmarshalAndRejectUnknowns(rawTx.BodyBytes, txBody)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	authInfo := new(v1alpha1.AuthInfo)
 	err = unmarshalAndRejectUnknowns(rawTx.AuthInfoBytes, authInfo)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	// get transitions from body
+	transitions, err := getTransitions(txBody)
+	if err != nil {
+		return nil, nil, err
 	}
 	return &v1alpha1.Tx{
 		Body:       txBody,
 		AuthInfo:   authInfo,
 		Signatures: rawTx.Signatures,
-	}, nil
+	}, transitions, nil
 }
 
 func unmarshalAndRejectUnknowns(b []byte, pb proto.Message) error {
@@ -59,4 +63,21 @@ func unmarshalAndRejectUnknowns(b []byte, pb proto.Message) error {
 		}
 	}
 	return nil
+}
+
+func getTransitions(body *v1alpha1.TxBody) ([]meta.StateTransition, error) {
+	transitions := make([]meta.StateTransition, len(body.Messages))
+	for i, msg := range body.Messages {
+		// unmarshal from any
+		rawPb, err := msg.UnmarshalNew()
+		if err != nil {
+			return nil, fmt.Errorf("tx: unable to unmarshal message %s to known type", msg.TypeUrl)
+		}
+		transition, ok := rawPb.(meta.StateTransition)
+		if !ok {
+			return nil, fmt.Errorf("tx: %s is not a meta.StateTransition", msg.TypeUrl)
+		}
+		transitions[i] = transition
+	}
+	return transitions, nil
 }

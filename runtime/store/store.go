@@ -1,4 +1,4 @@
-package runtime
+package store
 
 import "github.com/fdymylja/tmos/runtime/meta"
 

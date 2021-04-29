@@ -4,6 +4,7 @@ import "github.com/fdymylja/tmos/runtime/meta"
 
 var (
 	StageID           = meta.NewStringID("stage")
+	CurrentBlockID    = meta.NewStringID("current_block")
 	BeginBlockStateID = meta.NewStringID("begin_block")
 	CheckTxStateID    = meta.NewStringID("check_tx")
 	DeliverTxStateID  = meta.NewStringID("deliver_tx")
@@ -23,6 +24,10 @@ func (x *DeliverTxState) GetID() meta.ID {
 
 func (x *CheckTxState) GetID() meta.ID {
 	return CheckTxStateID
+}
+
+func (x *CurrentBlock) GetID() meta.ID {
+	return CurrentBlockID
 }
 
 func (x *MsgSetCheckTxState) StateTransition()    {}

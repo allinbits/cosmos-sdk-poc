@@ -1,4 +1,4 @@
-package abci
+package abci_test
 
 import (
 	"testing"
@@ -7,8 +7,7 @@ import (
 )
 
 func TestModule(t *testing.T) {
-	b := runtime.NewBuilder()
-	b.AddModule(NewModule())
+	b := runtime.NewBuilder() // we're not adding because as of now its already installed
 	rt := b.Build()
 	err := rt.Initialize()
 	if err != nil {
