@@ -45,7 +45,8 @@ func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp c
 	switch {
 	// if no error simply update the balance
 	case err == nil:
-		newRecvBalance, err := coin.SafeAdd(recvBalance.Balance, msg.Amount)
+		var newRecvBalance []*coin.Coin
+		newRecvBalance, err = coin.SafeAdd(recvBalance.Balance, msg.Amount)
 		if err != nil {
 			return resp, err
 		}

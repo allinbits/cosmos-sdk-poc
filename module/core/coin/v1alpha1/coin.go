@@ -49,8 +49,8 @@ func SafeSub(initial []*Coin, toSub []*Coin) (result []*Coin, err error) {
 	if i.IsAnyNegative() || s.IsAnyNegative() {
 		return nil, fmt.Errorf("negative coins")
 	}
-	sdkRes, ok := i.SafeSub(s.Coins)
-	if !ok {
+	sdkRes, negative := i.SafeSub(s.Coins)
+	if negative {
 		return nil, fmt.Errorf("negative balance")
 	}
 	return (&Balance{Coins: sdkRes}).ToCoins(), nil
