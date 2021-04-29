@@ -1,6 +1,9 @@
 package v1alpha1
 
-import "github.com/fdymylja/tmos/runtime/module"
+import (
+	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/module"
+)
 
 func NewClient(c module.Client) *Client {
 	return &Client{c: c}
@@ -17,4 +20,10 @@ func (c *Client) GetParams() (*Params, error) {
 		return nil, err
 	}
 	return p, nil
+}
+
+func (c *Client) GetAccount(address string) (*Account, error) {
+	a := new(Account)
+	err := c.c.Get(meta.NewStringID(address), a)
+	return a, err
 }
