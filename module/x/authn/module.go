@@ -1,6 +1,7 @@
 package authn
 
 import (
+	"github.com/fdymylja/tmos/module/x/authn/extensions"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -24,7 +25,7 @@ func (m *Module) Initialize(c module.Client, builder *module.Builder) {
 		OwnsStateObject(&v1alpha1.Account{}).
 		OwnsStateObject(&v1alpha1.Params{}).
 		OwnsStateObject(&v1alpha1.CurrentAccountNumber{}).
-		ExtendsAuthentication(NewExtension(c))
+		ExtendsAuthentication(extensions.New(c))
 }
 
 func (m *Module) GetAuthenticator() authentication.Authenticator {

@@ -13,6 +13,11 @@ message MsgSendCoins {
   repeated core.coin.v1alpha1.Coin amount = 3;
 }
 
+message MsgSetBalance {
+  string address = 1;
+  repeated core.coin.v1alpha1.Coin amount = 2;
+}
+
 message Balance {
   // address identifies the user who owns balance TODO: i'd rename this user...
   string address = 1;

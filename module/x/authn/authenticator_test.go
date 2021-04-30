@@ -1,10 +1,15 @@
-package authn
+package authn_test
 
 import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	"github.com/fdymylja/tmos/module/x/authn"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
+	"github.com/fdymylja/tmos/module/x/bank"
+	bankv1aplha1 "github.com/fdymylja/tmos/module/x/bank/v1alpha1"
+	"github.com/fdymylja/tmos/module/x/distribution"
 	"github.com/fdymylja/tmos/runtime"
 	gogoproto "github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/abci/types"
@@ -15,11 +20,24 @@ import (
 
 func TestAuthenticator(t *testing.T) {
 	rtb := runtime.NewBuilder()
-	auth := NewModule()
+	auth := authn.NewModule()
+	rtb.AddModule(distribution.NewModule())
+	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(auth)
 	rtb.SetAuthenticator(auth.GetAuthenticator())
 	rt := rtb.Build()
 	err := rt.Initialize()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// initialize with money...
+	err = rt.Deliver(nil, &bankv1aplha1.MsgSetBalance{
+		Address: "frojdi",
+		Amount: []*coin.Coin{{
+			Denom:  "test",
+			Amount: "5000",
+		}},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +46,7 @@ func TestAuthenticator(t *testing.T) {
 	// run a begin block tx set forward
 	app.BeginBlock(types.RequestBeginBlock{
 		Header: tmproto.Header{
-			Height: 10000,
+			Height: 1,
 		},
 	})
 	// test timeout header
@@ -38,13 +56,19 @@ func TestAuthenticator(t *testing.T) {
 }
 
 func timedOutTx(t *testing.T) []byte {
-	body := &v1alpha1.TxBody{
-		Messages: []*anypb.Any{
-			{
-				TypeUrl: "/tmos.x.authn.v1alpha1.MsgCreateAccount",
-				Value:   nil,
-			},
+	msg := &v1alpha1.MsgCreateAccount{Account: &v1alpha1.Account{
+		Address: "cookies",
+		PubKey: &anypb.Any{
+			TypeUrl: "pk",
+			Value:   nil,
 		},
+	}}
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := &v1alpha1.TxBody{
+		Messages:      []*anypb.Any{anyMsg},
 		TimeoutHeight: 50,
 	}
 	b, err := proto.Marshal(body)
@@ -67,7 +91,17 @@ func timedOutTx(t *testing.T) []byte {
 				Sequence: 5,
 			},
 		},
-		Fee: nil,
+		Fee: &v1alpha1.Fee{
+			Amount: []*coin.Coin{
+				{
+					Denom:  "test",
+					Amount: "1000",
+				},
+			},
+			GasLimit: 0,
+			Payer:    "frojdi",
+			Granter:  "",
+		},
 	}
 
 	authB, err := proto.Marshal(auth)

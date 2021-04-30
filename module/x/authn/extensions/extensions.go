@@ -1,4 +1,4 @@
-package authn
+package extensions
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func NewExtension(c module.Client) module.AuthenticationExtension {
+func New(c module.Client) module.AuthenticationExtension {
 	return authExtension{c: c}
 }
 

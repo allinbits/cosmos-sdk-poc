@@ -95,3 +95,34 @@ func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
 	err = s.c.Create(&authv1alpha1.Account{Address: address})
 	return err
 }
+
+func NewSetCoinsHandler(c module.Client) SetCoinsHandler {
+	return SetCoinsHandler{c: c}
+}
+
+type SetCoinsHandler struct {
+	c module.Client
+}
+
+func (s SetCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+	msg := req.Transition.(*v1alpha1.MsgSetBalance)
+	// set balance i guess
+	balance := new(v1alpha1.Balance)
+	err = s.c.Get(meta.NewStringID(msg.Address), balance)
+	switch {
+	case err == nil:
+		err = s.c.Update(&v1alpha1.Balance{
+			Address: msg.Address,
+			Balance: msg.Amount,
+		})
+		return
+	case errors.Is(err, runtime.ErrNotFound):
+		err = s.c.Create(&v1alpha1.Balance{
+			Address: msg.Address,
+			Balance: msg.Amount,
+		})
+		return
+	default:
+		return
+	}
+}

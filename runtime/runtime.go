@@ -34,10 +34,10 @@ func (r *Runtime) Initialize() error {
 	klog.Infof("initializing default genesis state for modules")
 	// iterate through modules and call the genesis
 	for _, m := range r.modules {
-		klog.Infof("initializing genesis state for %s", m.Name)
 		if m.Genesis.Handler == nil {
 			continue
 		}
+		klog.Infof("initializing genesis state for %s", m.Name)
 		if err := m.Genesis.Handler.SetDefault(); err != nil {
 			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
 		}

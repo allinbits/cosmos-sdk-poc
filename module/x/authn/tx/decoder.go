@@ -50,6 +50,13 @@ func (d *Decoder) Decode(txBytes []byte) (authentication.Tx, error) {
 	if err != nil {
 		return nil, err
 	}
+	// check if fees are set
+	if authInfo.Fee == nil {
+		return nil, fmt.Errorf("tx: missing fees")
+	}
+	if authInfo.Fee.Amount == nil {
+		return nil, fmt.Errorf("tx: missing fee amount")
+	}
 	// get transitions from body
 	transitions, err := getTransitions(txBody)
 	if err != nil {
