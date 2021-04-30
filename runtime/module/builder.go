@@ -5,8 +5,8 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-// ModuleDescriptor describes the full functionality set of a Module
-type ModuleDescriptor struct {
+// Descriptor describes the full functionality set of a Module
+type Descriptor struct {
 	Name                           string
 	Genesis                        genesisController
 	AdmissionControllers           []admissionController
@@ -15,6 +15,7 @@ type ModuleDescriptor struct {
 	PostStateTransitionControllers []postStateTransitionController
 	StateObjects                   []stateObject
 	Needs                          []meta.StateTransition
+	AuthenticationExtension        *AuthenticationExtensionDescriptor
 }
 
 type genesisController struct {
@@ -42,12 +43,12 @@ type stateObject struct {
 }
 
 func NewModuleBuilder() *Builder {
-	return &Builder{Descriptor: new(ModuleDescriptor)}
+	return &Builder{Descriptor: new(Descriptor)}
 }
 
 // Builder is used to build a module
 type Builder struct {
-	Descriptor *ModuleDescriptor
+	Descriptor *Descriptor
 }
 
 func (b *Builder) Named(name string) *Builder {
@@ -72,5 +73,12 @@ func (b *Builder) OwnsStateObject(object meta.StateObject) *Builder {
 
 func (b *Builder) WithGenesis(ctrl controller.Genesis) *Builder {
 	b.Descriptor.Genesis = genesisController{ctrl}
+	return b
+}
+
+func (b *Builder) ExtendsAuthentication(xt AuthenticationExtension) *Builder {
+	authXtB := new(AuthenticationExtensionBuilder)
+	xt.Initialize(authXtB)
+	b.Descriptor.AuthenticationExtension = authXtB.descriptor
 	return b
 }

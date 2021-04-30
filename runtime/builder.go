@@ -22,7 +22,7 @@ func NewBuilder() *Builder {
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	modules []*module.ModuleDescriptor
+	modules []*module.Descriptor
 	authn   authentication.Authenticator
 	router  *Router
 	store   *badger.Store
@@ -65,7 +65,7 @@ func (b *Builder) Build() *Runtime {
 	return b.rt
 }
 
-func (b *Builder) install(m *module.ModuleDescriptor) error {
+func (b *Builder) install(m *module.Descriptor) error {
 	// check name
 	if !validModuleName(m.Name) {
 		return fmt.Errorf("invalid module name: %s", m.Name)
@@ -80,7 +80,7 @@ func (b *Builder) install(m *module.ModuleDescriptor) error {
 	}
 	// register admission controllers
 	for _, ctrl := range m.AdmissionControllers {
-		err := b.router.AddAdmissionController(ctrl.StateTransition, ctrl.Controller)
+		err := b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
 			return err
 		}

@@ -15,7 +15,7 @@ import (
 )
 
 type Runtime struct {
-	modules     []*module.ModuleDescriptor
+	modules     []*module.Descriptor
 	initialized uint32
 
 	authn  authentication.Authenticator
@@ -54,19 +54,19 @@ func (r *Runtime) List() {
 	panic("implement me")
 }
 
-func (r *Runtime) Create(user string, object meta.StateObject) error {
+func (r *Runtime) Create(subject string, object meta.StateObject) error {
 	return convertStoreError(r.store.Create(object))
 }
 
-func (r *Runtime) Update(user string, object meta.StateObject) error {
+func (r *Runtime) Update(subject string, object meta.StateObject) error {
 	return convertStoreError(r.store.Update(object))
 }
 
-func (r *Runtime) Delete(user string, id meta.ID, object meta.StateObject) error {
+func (r *Runtime) Delete(subject string, id meta.ID, object meta.StateObject) error {
 	return convertStoreError(r.store.Delete(object))
 }
 
-func (r *Runtime) Deliver(identities []string, transition meta.StateTransition) (err error) {
+func (r *Runtime) Deliver(subjects []string, transition meta.StateTransition) (err error) {
 	// identity here should be used for authorization checks
 	// ex: identity is module/user then can it call the state transition?
 	// TODO

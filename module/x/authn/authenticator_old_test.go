@@ -22,7 +22,7 @@ func TestAuthenticator(t *testing.T) {
 	}
 	// get abci app
 	app := runtime.NewABCIApplication(rt)
-	// run a begin block tx :)
+	// run a begin block tx set forward
 	app.BeginBlock(types.RequestBeginBlock{
 		Header: tmproto.Header{
 			Height: 10000,

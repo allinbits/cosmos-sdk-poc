@@ -23,7 +23,8 @@ func (m *Module) Initialize(c module.Client, builder *module.Builder) {
 		HandlesAdmission(&v1alpha1.MsgCreateAccount{}, NewCreateAccountAdmissionController()).
 		OwnsStateObject(&v1alpha1.Account{}).
 		OwnsStateObject(&v1alpha1.Params{}).
-		OwnsStateObject(&v1alpha1.CurrentAccountNumber{})
+		OwnsStateObject(&v1alpha1.CurrentAccountNumber{}).
+		ExtendsAuthentication(NewExtension(c))
 }
 
 func (m *Module) GetAuthenticator() authentication.Authenticator {

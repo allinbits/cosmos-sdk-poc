@@ -27,14 +27,14 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 	panic("implement me")
 }
 
-func (a ABCIApplication) CheckTx(tx types.RequestCheckTx) types.ResponseCheckTx {
+func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckTx {
 	// we decode the tx and run admission checks
-	transitions, err := a.rt.authn.DecodeTx(tx.Tx)
+	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
 	if err != nil {
 		return types.ResponseCheckTx{Code: 1}
 	}
 	// run admission checks on transitions
-	for _, transition := range transitions {
+	for _, transition := range tx.StateTransitions() {
 		err = a.rt.runAdmissionChain(transition)
 		if err != nil {
 			return types.ResponseCheckTx{Code: 1}
@@ -60,19 +60,19 @@ func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.Respo
 	}
 }
 
-func (a ABCIApplication) DeliverTx(tx types.RequestDeliverTx) types.ResponseDeliverTx {
-	// authenticate the transaction
-	subjects, transitions, err := a.rt.authn.Authenticate(tx.Tx)
+func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDeliverTx {
+	// decode tx
+	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}
-	// then for each transition we deliver it with the provided set of subjects
-	for _, transition := range transitions {
-		err = a.rt.Deliver(subjects, transition)
-		if err != nil {
-			return ToABCIResponse(0, 0, err)
-		}
+	// run admission checks on tx
+	err = a.rt.runTxAdmissionChain(tx)
+	if err != nil {
+		return ToABCIResponse(0, 0, err)
 	}
+	// start delivering txs
+
 	// success!
 	return types.ResponseDeliverTx{}
 }
