@@ -3,7 +3,7 @@ package tx
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcutil/bech32"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/fdymylja/tmos/module/x/authn/crypto"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -62,6 +62,9 @@ func (d *Decoder) Decode(txBytes []byte) (authentication.Tx, error) {
 	}
 	// get signers
 	payer, signers, pubKeys, err := d.authInfo(raw.AuthInfo)
+	if err != nil {
+		return nil, err
+	}
 	return &Tx{
 		raw:         raw,
 		bytes:       txBytes,
@@ -82,11 +85,14 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo) (string, *authentication.Sub
 	pubKeys := make([]crypto.PubKey, len(info.SignerInfos))
 	feePayer := ""
 	for i, sig := range info.SignerInfos {
+		if sig.PublicKey == nil {
+			return "", nil, nil, fmt.Errorf("tx: pubkey at index %d is nil", i)
+		}
 		pk, err := d.pubKeyResolver.New(sig.PublicKey)
 		if err != nil {
 			return "", nil, nil, fmt.Errorf("tx: unable to resolve public key at index %d: %w", i, err)
 		}
-		addr, err := bech32.Encode(d.bech32pfx, pk.Address())
+		addr, err := bech32.ConvertAndEncode(d.bech32pfx, pk.Address())
 		if err != nil {
 			return "", nil, nil, fmt.Errorf("tx: unable to bechify address of public key at index %d: %w", i, err)
 		}
@@ -98,6 +104,9 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo) (string, *authentication.Sub
 		}
 	}
 	// override fee payer if provided
+	if info.Fee == nil {
+		return feePayer, subjects, pubKeys, nil
+	}
 	if info.Fee.Payer != "" {
 		feePayer = info.Fee.Payer
 	}

@@ -77,7 +77,7 @@ func (b *Builder) WithGenesis(ctrl controller.Genesis) *Builder {
 }
 
 func (b *Builder) ExtendsAuthentication(xt AuthenticationExtension) *Builder {
-	authXtB := new(AuthenticationExtensionBuilder)
+	authXtB := NewAuthenticationExtensionBuilder()
 	xt.Initialize(authXtB)
 	b.Descriptor.AuthenticationExtension = authXtB.descriptor
 	return b

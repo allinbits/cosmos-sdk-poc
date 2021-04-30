@@ -71,8 +71,15 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}
+	// todo authenticate
+	// todo run authentication chain
 	// start delivering txs
-
+	for _, transition := range tx.StateTransitions() {
+		err = a.rt.Deliver(nil, transition)
+		if err != nil {
+			return ToABCIResponse(0, 0, err)
+		}
+	}
 	// success!
 	return types.ResponseDeliverTx{}
 }

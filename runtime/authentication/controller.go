@@ -16,6 +16,7 @@ type ValidateRequest struct {
 type ValidateResponse struct{}
 
 type DeliverRequest struct {
+	Tx Tx
 }
 
 type DeliverResponse struct {

@@ -58,3 +58,11 @@ func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]con
 	}
 	return ctrls, nil
 }
+
+func (r *Router) GetTransactionAdmissionControllers() []authentication.AdmissionController {
+	return r.transactionAdmissionControllers
+}
+
+func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionController) {
+	r.transactionAdmissionControllers = append(r.transactionAdmissionControllers, ctrl)
+}

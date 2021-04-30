@@ -102,6 +102,18 @@ func (r *Runtime) runAdmissionChain(transition meta.StateTransition) error {
 	return nil
 }
 
+// runTxAdmissionChain runs the authentication.AdmissionController handlers
+func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
+	ctrls := r.router.GetTransactionAdmissionControllers()
+	for _, ctrl := range ctrls {
+		_, err := ctrl.Validate(authentication.ValidateRequest{Tx: tx})
+		if err != nil {
+			return fmt.Errorf("%w: %s", ErrBadRequest, err)
+		}
+	}
+	return nil
+}
+
 // convertStoreError converts the store error to a runtime error
 func convertStoreError(err error) error {
 	if err == nil {

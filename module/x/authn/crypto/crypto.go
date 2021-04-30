@@ -3,9 +3,9 @@ package crypto
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcutil/bech32"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	gogoproto "github.com/gogo/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -44,7 +44,7 @@ type PubKeyResolver struct {
 }
 
 func (r *PubKeyResolver) New(any *anypb.Any) (PubKey, error) {
-	if _, exists := r.knownPubKeys["/"+any.TypeUrl]; !exists {
+	if _, exists := r.knownPubKeys[any.TypeUrl]; !exists {
 		return nil, fmt.Errorf("unknown pub key: %s", any.TypeUrl)
 	}
 	pk, err := r.newPubKey[any.TypeUrl](any.Value)
@@ -56,5 +56,5 @@ func (r *PubKeyResolver) Address(bech32Prefix string, any *anypb.Any) (string, e
 	if err != nil {
 		return "", err
 	}
-	return bech32.Encode(bech32Prefix, pk.Address())
+	return bech32.ConvertAndEncode(bech32Prefix, pk.Address())
 }

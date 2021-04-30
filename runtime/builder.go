@@ -96,6 +96,15 @@ func (b *Builder) install(m *module.Descriptor) error {
 	}
 	// TODO register admission + mutating admission + hooks
 	// TODO register roles and dependencies
+	// register authentication extensions
+	if m.AuthenticationExtension == nil {
+		return nil
+	}
+	// add authentication admission controllers
+	for _, xt := range m.AuthenticationExtension.AdmissionControllers {
+		b.router.AddTransactionAdmissionController(xt.Handler)
+		klog.Infof("registering authentication admission controller %T for module %s", xt.Handler, m.Name)
+	}
 	return nil
 }
 

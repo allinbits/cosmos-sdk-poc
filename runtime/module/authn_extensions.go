@@ -20,6 +20,10 @@ type AuthenticationExtensionDescriptor struct {
 	TransitionControllers []authenticationTransitionController
 }
 
+func NewAuthenticationExtensionBuilder() *AuthenticationExtensionBuilder {
+	return &AuthenticationExtensionBuilder{descriptor: new(AuthenticationExtensionDescriptor)}
+}
+
 // AuthenticationExtensionBuilder is a structure that can be used to extend authentication
 type AuthenticationExtensionBuilder struct {
 	descriptor *AuthenticationExtensionDescriptor

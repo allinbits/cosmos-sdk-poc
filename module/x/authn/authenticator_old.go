@@ -1,26 +1,19 @@
 package authn
 
 import (
-	"fmt"
-
-	"github.com/btcsuite/btcutil/bech32"
 	abciv1alpha1 "github.com/fdymylja/tmos/module/abci/v1alpha1"
-	"github.com/fdymylja/tmos/module/x/authn/crypto"
 	"github.com/fdymylja/tmos/module/x/authn/tx"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
-	bankv1alpha1 "github.com/fdymylja/tmos/module/x/bank/v1alpha1"
-	"github.com/fdymylja/tmos/runtime"
-	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
 func newAuthenticator(c module.Client) authenticator {
 	return authenticator{
-		abci:         abciv1alpha1.NewClient(c),
-		auth:         v1alpha1.NewClient(c),
-		pkRes:        crypto.NewDefaultPubKeyResolver(),
-		bech32Prefix: "test",
-		c:            c,
+		abci:    abciv1alpha1.NewClient(c),
+		auth:    v1alpha1.NewClient(c),
+		decoder: tx.NewDecoder("test"),
+		c:       c,
 	}
 }
 
@@ -31,6 +24,16 @@ type authenticator struct {
 	bech32Prefix string
 	c            module.Client
 }
+
+func (a authenticator) Authenticate(tx authentication.Tx) error {
+	panic("implement me")
+}
+
+func (a authenticator) DecodeTx(txBytes []byte) (tx authentication.Tx, err error) {
+	return a.decoder.Decode(txBytes)
+}
+
+/*
 
 // Authenticate authenticates a transaction.
 // TODO(fdymylja): this is done thinking how the sdk was originally designed
@@ -155,3 +158,4 @@ func (a authenticator) setPubKeys(tx *v1alpha1.Tx) error {
 
 	return nil
 }
+*/
