@@ -68,18 +68,22 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	}
 	// run admission checks on tx
 	err = a.rt.runTxAdmissionChain(tx)
+	// here we cache the store
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}
 	// todo authenticate
 	// todo run authentication chain
-	// start delivering txs
+	// write the cache
+	// cache again
+	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
 		err = a.rt.Deliver(nil, transition)
 		if err != nil {
 			return ToABCIResponse(0, 0, err)
 		}
 	}
+	// write cache
 	// success!
 	return types.ResponseDeliverTx{}
 }
