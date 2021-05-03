@@ -123,22 +123,29 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 }
 
 func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {
-	//
-	err := a.rt.Deliver(nil, &abcictrl.MsgSetEndBlockState{})
+	// we set the abci endblcok state given us by tendermint so other modules can access it
+	err := a.rt.Deliver(nil, &abcictrl.MsgSetEndBlockState{
+		EndBlock: &abci.RequestEndBlock{
+			Height: block.Height,
+		},
+	})
 	if err != nil {
 		panic(err)
 	}
 	// TODO real endblock for modules
-	// return val state changes
+
+	// we check if there was any val updates changes done by modules
 	valUpdates := new(abcictrl.ValidatorUpdates)
 	err = a.rt.Get(abcictrl.ValidatorUpdatesID, valUpdates)
 	if err != nil {
 		panic(err)
 	}
+	// convert from protov2 to legacy protov1
 	updates := make([]types.ValidatorUpdate, len(valUpdates.ValidatorUpdates))
 	for i, val := range valUpdates.ValidatorUpdates {
 		updates[i] = val.ToLegacy()
 	}
+	// updates..
 	return types.ResponseEndBlock{
 		ValidatorUpdates:      updates,
 		ConsensusParamUpdates: nil,
