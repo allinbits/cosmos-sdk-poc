@@ -17,6 +17,7 @@ var (
 	ErrNotFound        = errors.New("runtime: not found")
 	ErrAlreadyExists   = errors.New("runtime: already exists")
 	ErrConditionNotMet = errors.New("runtime: conditions were not met")
+	ErrEmptyModuleName = errors.New("runtime: empty module name")
 )
 
 var (
