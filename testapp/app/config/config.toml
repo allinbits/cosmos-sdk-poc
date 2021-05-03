@@ -61,7 +61,7 @@ genesis_file = "genesis.json"
 priv_validator_key_file = "priv_validator_key.json"
 
 # Path to the JSON file containing the last sign state of a validator
-priv_validator_state_file = "data\\priv_validator_state.json"
+priv_validator_state_file = "data/priv_validator_state.json"
 
 # TCP or UNIX socket address for Tendermint to listen on for
 # connections from an external PrivValidator process
@@ -190,7 +190,7 @@ persistent_peers = ""
 upnp = false
 
 # Path to address book
-addr_book_file = "addrbook.json"
+addr_book_file = "testapp/app/config/data/addrbook.json"
 
 # Set true for strict address routability rules
 # Set false for private or local networks
@@ -318,7 +318,7 @@ version = "v0"
 #######################################################
 [consensus]
 
-wal_file = "data\\cs.wal\\wal"
+wal_file = "testapp/app/config/data/cs.wal/wal"
 
 # How long we wait for a proposal block before prevoting nil
 timeout_propose = "3s"

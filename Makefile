@@ -8,10 +8,8 @@ test:
 	go test ./...
 
 testapp:
-	rm -rf testapp/app/config/data/blockstore.db
-	rm -rf testapp/app/config/data/evidence.db
-	rm -rf testapp/app/config/data/state.db
-	rm -rf testapp/app/config/data/tx_index.db
+	rm -rf testapp/app/config/data
+	mkdir testapp/app/config/data
 	echo '{}' > testapp/app/config/data/priv_validator_state.json
 	go build -o testapp/testapp.exe testapp/main.go
 	testapp/testapp.exe
