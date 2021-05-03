@@ -105,12 +105,15 @@ func (s *Store) keyFor(object meta.StateObject) []byte {
 
 func (s *Store) RegisterStateObject(object meta.StateObject) error {
 	name := meta.Name(object)
+
 	// check if registered
 	_, exists := s.objectPrefixes[name]
 	if exists {
 		return fmt.Errorf("%w: %s", ErrAlreadyExists, name)
 	}
+
 	// register object
 	s.objectPrefixes[name] = []byte(name + "/")
+
 	return nil
 }

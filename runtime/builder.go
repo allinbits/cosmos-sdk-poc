@@ -70,8 +70,8 @@ func (b *Builder) Build() (*Runtime, error) {
 
 func (b *Builder) install(m *module.Descriptor) error {
 	// check name
-	if !validModuleName(m.Name) {
-		return fmt.Errorf("invalid module name: %s", m.Name)
+	if isModuleNameEmpty(m.Name) {
+		return ErrEmptyModuleName
 	}
 
 	// install state transition controllers
@@ -117,6 +117,6 @@ func (b *Builder) install(m *module.Descriptor) error {
 	return nil
 }
 
-func validModuleName(name string) bool {
-	return name != ""
+func isModuleNameEmpty(name string) bool {
+	return name == ""
 }
