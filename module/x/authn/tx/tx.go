@@ -17,7 +17,7 @@ type Wrapper struct {
 	bytes       []byte
 	transitions []meta.StateTransition
 	signers     *authentication.Subjects
-	pubKeys     []crypto.PubKey
+	pubKeys     map[string]crypto.PubKey
 	payer       string
 }
 
@@ -45,6 +45,7 @@ func (t *Wrapper) RawBytes() []byte {
 	return t.bytes
 }
 
-func (t *Wrapper) PubKeys() []crypto.PubKey {
+// Signers returns a map containing the account identifier (address) and the public key the user used to sign.
+func (t *Wrapper) Signers() map[string]crypto.PubKey {
 	return t.pubKeys
 }

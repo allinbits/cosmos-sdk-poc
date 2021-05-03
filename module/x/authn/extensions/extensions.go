@@ -9,7 +9,6 @@ import (
 	"github.com/fdymylja/tmos/module/x/authn/tx"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
@@ -26,13 +25,37 @@ func (a authExtension) Initialize(builder *module.AuthenticationExtensionBuilder
 	// never modify it.
 	builder.
 		WithAdmissionController(mempoolFee{}).                  // verifies if fee matches the minimum
+		WithAdmissionController(newAccountExists(a.c)).         // verifies that all signer accounts exist
 		WithAdmissionController(newTimeoutBlockExtension(a.c)). // verifies if tx is not timed-out compared to block
 		WithAdmissionController(newValidateMemoExtension(a.c)). // validates memo length
 		WithAdmissionController(newValidateSigCount(a.c))       // validates number of signatures
-	// add transition controllers for tx
+	// add transition controllers for tx, they CAN modify state after
+	// a tx is authenticated
 	builder.
-		WithTransitionController(newConsumeGasForTxSize(a.c)) // consumes gas for tx size
+		WithTransitionController(newConsumeGasForTxSize(a.c)). // consumes gas for tx size
+		WithTransitionController(newSetPubKeys(a.c))
 
+}
+
+func newAccountExists(c module.Client) accountExists {
+	return accountExists{
+		c: v1alpha1.NewClient(c),
+	}
+}
+
+type accountExists struct {
+	c *v1alpha1.Client
+}
+
+func (a accountExists) Validate(req authentication.ValidateRequest) (authentication.ValidateResponse, error) {
+	// assert that all signer accounts exist
+	for _, sig := range req.Tx.Subjects().List() {
+		_, err := a.c.GetAccount(sig)
+		if err != nil {
+			return authentication.ValidateResponse{}, err
+		}
+	}
+	return authentication.ValidateResponse{}, nil
 }
 
 func newTimeoutBlockExtension(c module.Client) timeoutBlockExtension {
@@ -99,7 +122,7 @@ func (s sigCount) Validate(request authentication.ValidateRequest) (authenticati
 	if err != nil {
 		return authentication.ValidateResponse{}, err
 	}
-	pubKeys := wrapper.PubKeys()
+	pubKeys := wrapper.Signers()
 	sigs := 0
 	for _, pk := range pubKeys {
 		subKeys := s.countSubKeys(pk)
@@ -136,22 +159,31 @@ func (s consumeGasForTxSize) Deliver(req authentication.DeliverRequest) (authent
 	return authentication.DeliverResponse{}, nil
 }
 
+func newSetPubKeys(c module.Client) setPubKeys {
+	return setPubKeys{
+		c: v1alpha1.NewClient(c),
+	}
+}
+
 type setPubKeys struct {
-	c module.Client
+	c *v1alpha1.Client
 }
 
 func (s setPubKeys) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
-	for _, sig := range req.Tx.Subjects().List() {
-		acc := new(v1alpha1.Account)
-		err := s.c.Get(meta.NewStringID(sig), acc)
+	wrapper := req.Tx.(*tx.Wrapper)
+	for accIdentifier, pubKey := range wrapper.Signers() {
+		acc, err := s.c.GetAccount(accIdentifier)
 		if err != nil {
 			return authentication.DeliverResponse{}, err
 		}
-		// if pub key is set skip
+		// skip if its set
 		if acc.PubKey != nil {
 			continue
 		}
-		// otherwise set the pub key for the given subject
-
+		err = s.c.UpdatePublicKey(accIdentifier, pubKey)
+		if err != nil {
+			return authentication.DeliverResponse{}, err
+		}
 	}
+	return authentication.DeliverResponse{}, nil
 }
