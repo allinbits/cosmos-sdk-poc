@@ -8,7 +8,7 @@ import (
 // Descriptor describes the full functionality set of a Module
 type Descriptor struct {
 	Name                           string
-	Genesis                        genesisController
+	GenesisHandler                 controller.Genesis
 	AdmissionControllers           []admissionController
 	MutatingAdmissionControllers   []mutatingAdmissionController
 	StateTransitionControllers     []stateTransitionController
@@ -16,10 +16,6 @@ type Descriptor struct {
 	StateObjects                   []stateObject
 	Needs                          []meta.StateTransition
 	AuthenticationExtension        *AuthenticationExtensionDescriptor
-}
-
-type genesisController struct {
-	Handler controller.Genesis
 }
 
 type admissionController struct {
@@ -72,7 +68,8 @@ func (b *Builder) OwnsStateObject(object meta.StateObject) *Builder {
 }
 
 func (b *Builder) WithGenesis(ctrl controller.Genesis) *Builder {
-	b.Descriptor.Genesis = genesisController{ctrl}
+	b.Descriptor.GenesisHandler = ctrl
+
 	return b
 }
 

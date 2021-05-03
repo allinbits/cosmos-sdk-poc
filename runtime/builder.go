@@ -57,12 +57,14 @@ func (b *Builder) Build() (*Runtime, error) {
 	b.rt.store = b.store
 	b.rt.router = b.router
 	b.rt.modules = b.modules
+
 	switch b.authn {
 	case nil:
 		klog.Warningf("no authenticator was set up - resorting to a NO-OP authenticator")
 	default:
 		b.rt.authn = b.authn
 	}
+
 	return b.rt, nil
 }
 

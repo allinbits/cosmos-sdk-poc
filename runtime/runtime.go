@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"k8s.io/klog/v2"
+
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/store/badger"
-	"k8s.io/klog/v2"
 )
 
 type Runtime struct {
@@ -34,11 +35,11 @@ func (r *Runtime) Initialize() error {
 	klog.Infof("initializing default genesis state for modules")
 	// iterate through modules and call the genesis
 	for _, m := range r.modules {
-		if m.Genesis.Handler == nil {
+		if m.GenesisHandler == nil {
 			continue
 		}
 		klog.Infof("initializing genesis state for %s", m.Name)
-		if err := m.Genesis.Handler.SetDefault(); err != nil {
+		if err := m.GenesisHandler.SetDefault(); err != nil {
 			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
 		}
 	}
