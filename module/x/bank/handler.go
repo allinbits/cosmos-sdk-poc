@@ -22,6 +22,7 @@ type SendCoinsHandler struct {
 
 func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSendCoins)
+
 	// get the balance
 	senderBalance := new(v1alpha1.Balance)
 	err = s.c.Get(meta.NewStringID(msg.FromAddress), senderBalance)

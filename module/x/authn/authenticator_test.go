@@ -3,6 +3,8 @@ package authn_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn"
@@ -25,8 +27,10 @@ func TestAuthenticator(t *testing.T) {
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(auth)
 	rtb.SetAuthenticator(auth.GetAuthenticator())
-	rt := rtb.Build()
-	err := rt.Initialize()
+	rt, err := rtb.Build()
+	require.NoError(t, err)
+
+	err = rt.Initialize()
 	if err != nil {
 		t.Fatal(err)
 	}

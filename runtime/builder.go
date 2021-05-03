@@ -43,14 +43,15 @@ func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
 }
 
 // Build installs the module.Modules provided and returns a fully functional runtime
-func (b *Builder) Build() *Runtime {
+func (b *Builder) Build() (*Runtime, error) {
 	// add core modules
 	abciModule := abci.NewModule()
 	b.AddModule(abciModule)
+
 	// install all modules
 	for _, m := range b.modules {
 		if err := b.install(m); err != nil {
-			panic(fmt.Errorf("error while installing module %s: %w", m.Name, err))
+			return nil, fmt.Errorf("error while installing module %s: %w", m.Name, err)
 		}
 	}
 	b.rt.store = b.store
@@ -62,7 +63,7 @@ func (b *Builder) Build() *Runtime {
 	default:
 		b.rt.authn = b.authn
 	}
-	return b.rt
+	return b.rt, nil
 }
 
 func (b *Builder) install(m *module.Descriptor) error {
@@ -70,6 +71,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 	if !validModuleName(m.Name) {
 		return fmt.Errorf("invalid module name: %s", m.Name)
 	}
+
 	// install state transition controllers
 	for _, ctrl := range m.StateTransitionControllers {
 		err := b.router.AddStateTransitionHandler(ctrl.StateTransition, ctrl.Controller)
@@ -78,6 +80,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		}
 		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
+
 	// register admission controllers
 	for _, ctrl := range m.AdmissionControllers {
 		err := b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
@@ -86,6 +89,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 		}
 		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
+
 	// register state objects
 	for _, so := range m.StateObjects {
 		err := b.store.RegisterStateObject(so.StateObject)
@@ -94,17 +98,20 @@ func (b *Builder) install(m *module.Descriptor) error {
 		}
 		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
 	}
+
 	// TODO register admission + mutating admission + hooks
 	// TODO register roles and dependencies
 	// register authentication extensions
 	if m.AuthenticationExtension == nil {
 		return nil
 	}
+
 	// add authentication admission controllers
 	for _, xt := range m.AuthenticationExtension.AdmissionControllers {
 		b.router.AddTransactionAdmissionController(xt.Handler)
 		klog.Infof("registering authentication admission controller %T for module %s", xt.Handler, m.Name)
 	}
+
 	return nil
 }
 

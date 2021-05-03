@@ -3,6 +3,8 @@ package bank_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn"
 	"github.com/fdymylja/tmos/module/x/bank"
@@ -14,8 +16,10 @@ func TestSendCoins(t *testing.T) {
 	rtb := runtime.NewBuilder()
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(authn.NewModule())
-	rt := rtb.Build()
-	err := rt.Create("dio", &v1alpha1.Balance{
+	rt, err := rtb.Build()
+	require.NoError(t, err)
+
+	err = rt.Create("dio", &v1alpha1.Balance{
 		Address: "frojdi",
 		Balance: []*coin.Coin{
 			{

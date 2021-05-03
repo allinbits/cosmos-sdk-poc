@@ -3,6 +3,7 @@ package authn
 import (
 	runtime2 "github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/stretchr/testify/require"
 
 	"testing"
 
@@ -12,8 +13,10 @@ import (
 func TestCreateAccountController(t *testing.T) {
 	rtb := runtime2.NewBuilder()
 	rtb.AddModule(NewModule())
-	rt := rtb.Build()
-	err := rt.Deliver([]string{"authn"}, &v1alpha1.MsgCreateAccount{Account: &v1alpha1.Account{
+	rt, err := rtb.Build()
+	require.NoError(t, err)
+
+	err = rt.Deliver([]string{"authn"}, &v1alpha1.MsgCreateAccount{Account: &v1alpha1.Account{
 		Address:       "test",
 		PubKey:        nil,
 		AccountNumber: 0,
