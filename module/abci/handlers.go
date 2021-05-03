@@ -9,6 +9,17 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
+func setInitChainInfo(client module.Client) controller.StateTransitionFn {
+	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+		msg := req.Transition.(*v1alpha1.MsgSetInitChain)
+		err = client.Update(&v1alpha1.InitChainInfo{ChainId: msg.InitChainInfo.ChainId})
+		if err != nil {
+			return controller.StateTransitionResponse{}, err
+		}
+		return controller.StateTransitionResponse{}, nil
+	}
+}
+
 func checkTxHandler(client module.Client) controller.StateTransitionFn {
 	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetCheckTxState)

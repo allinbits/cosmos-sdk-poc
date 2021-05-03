@@ -44,7 +44,17 @@ func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckT
 }
 
 func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseInitChain {
-	panic("implement me")
+	// set init chain info
+	err := a.rt.Deliver(nil, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
+	if err != nil {
+		panic(err)
+	}
+	//
+	return types.ResponseInitChain{
+		ConsensusParams: nil,
+		Validators:      chain.Validators,
+		AppHash:         nil,
+	}
 }
 
 func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.ResponseBeginBlock {
@@ -73,6 +83,10 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	}
 	// here we cache the store
 	// todo authenticate
+	err = a.rt.authn.Authenticate(tx)
+	if err != nil {
+		return ToABCIResponse(0, 0, err)
+	}
 	// todo run authentication chain
 	// write the cache
 	// cache again

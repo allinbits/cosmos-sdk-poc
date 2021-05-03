@@ -20,6 +20,8 @@ func (m Module) Initialize(client module.Client, builder *module.Builder) {
 		OwnsStateObject(&v1alpha1.DeliverTxState{}).
 		OwnsStateObject(&v1alpha1.CheckTxState{}).
 		OwnsStateObject(&v1alpha1.CurrentBlock{}).
+		OwnsStateObject(&v1alpha1.InitChainInfo{}).
+		HandlesStateTransition(&v1alpha1.MsgSetInitChain{}, setInitChainInfo(client)).
 		HandlesStateTransition(&v1alpha1.MsgSetCheckTxState{}, checkTxHandler(client)).
 		HandlesStateTransition(&v1alpha1.MsgSetBeginBlockState{}, beginBlockHandler(client)).
 		HandlesStateTransition(&v1alpha1.MsgSetDeliverTxState{}, deliverTxHandler(client)).

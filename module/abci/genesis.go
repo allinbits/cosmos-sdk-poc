@@ -41,6 +41,7 @@ func (g genesis) SetDefault() error {
 	if err != nil {
 		return err
 	}
+	err = g.client.Create(&v1alpha1.InitChainInfo{})
 	return nil
 }
 

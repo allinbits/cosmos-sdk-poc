@@ -25,6 +25,10 @@ message Stage {
   ABCIStage stage = 1;
 }
 
+message InitChainInfo {
+  string chain_id = 1;
+}
+
 message BeginBlockState {
   tendermint.abci.RequestBeginBlock begin_block = 1;
 }
@@ -47,4 +51,8 @@ message MsgSetCheckTxState {
 
 message MsgSetDeliverTxState {
   tendermint.abci.RequestDeliverTx deliver_tx = 1;
+}
+
+message MsgSetInitChain {
+  InitChainInfo init_chain_info = 1;
 }

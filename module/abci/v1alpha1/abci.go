@@ -4,11 +4,16 @@ import "github.com/fdymylja/tmos/runtime/meta"
 
 var (
 	StageID           = meta.NewStringID("stage")
+	InitChainInfoID   = meta.NewStringID("chain_id")
 	CurrentBlockID    = meta.NewStringID("current_block")
 	BeginBlockStateID = meta.NewStringID("begin_block")
 	CheckTxStateID    = meta.NewStringID("check_tx")
 	DeliverTxStateID  = meta.NewStringID("deliver_tx")
 )
+
+func (x *InitChainInfo) GetID() meta.ID {
+	return InitChainInfoID
+}
 
 func (x *Stage) GetID() meta.ID {
 	return StageID
@@ -33,3 +38,4 @@ func (x *CurrentBlock) GetID() meta.ID {
 func (x *MsgSetCheckTxState) StateTransition()    {}
 func (x *MsgSetBeginBlockState) StateTransition() {}
 func (x *MsgSetDeliverTxState) StateTransition()  {}
+func (x *MsgSetInitChain) StateTransition()       {}

@@ -125,7 +125,7 @@ func (s sigCount) Validate(request authentication.ValidateRequest) (authenticati
 	pubKeys := wrapper.Signers()
 	sigs := 0
 	for _, pk := range pubKeys {
-		subKeys := s.countSubKeys(pk)
+		subKeys := s.countSubKeys(pk.PubKey)
 		sigs += subKeys
 		if uint64(sigs) > params.TxSigLimit {
 			return authentication.ValidateResponse{}, fmt.Errorf("number of maximum signatures is %d got %d", params.TxSigLimit, sigs)
@@ -171,8 +171,8 @@ type setPubKeys struct {
 
 func (s setPubKeys) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
 	wrapper := req.Tx.(*tx.Wrapper)
-	for accIdentifier, pubKey := range wrapper.Signers() {
-		acc, err := s.c.GetAccount(accIdentifier)
+	for _, sig := range wrapper.Signers() {
+		acc, err := s.c.GetAccount(sig.Address)
 		if err != nil {
 			return authentication.DeliverResponse{}, err
 		}
@@ -180,7 +180,7 @@ func (s setPubKeys) Deliver(req authentication.DeliverRequest) (authentication.D
 		if acc.PubKey != nil {
 			continue
 		}
-		err = s.c.UpdatePublicKey(accIdentifier, pubKey)
+		err = s.c.UpdatePublicKey(sig.Address, sig.PubKey)
 		if err != nil {
 			return authentication.DeliverResponse{}, err
 		}

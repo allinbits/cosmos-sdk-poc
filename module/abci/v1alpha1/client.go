@@ -28,3 +28,12 @@ func (c *Client) GetCurrentBlock() (*CurrentBlock, error) {
 	err := c.c.Get(CurrentBlockID, currentBlock)
 	return currentBlock, err
 }
+
+func (c *Client) GetChainID() (string, error) {
+	chainInfo := new(InitChainInfo)
+	err := c.c.Get(InitChainInfoID, chainInfo)
+	if err != nil {
+		return "", err
+	}
+	return chainInfo.ChainId, nil
+}

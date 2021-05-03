@@ -82,14 +82,14 @@ func (d *Decoder) Decode(txBytes []byte) (authentication.Tx, error) {
 	}, nil
 }
 
-func (d *Decoder) authInfo(info *v1alpha1.AuthInfo) (string, *authentication.Subjects, map[string]crypto.PubKey, error) {
+func (d *Decoder) authInfo(info *v1alpha1.AuthInfo) (string, *authentication.Subjects, []Signer, error) {
 	if len(info.SignerInfos) == 0 {
 		return "", nil, nil, fmt.Errorf("tx: no signer provided")
 	}
 
 	subjects := authentication.NewSubjects()
 
-	addrToPubKey := make(map[string]crypto.PubKey)
+	var signers []Signer
 	feePayer := ""
 	for i, sig := range info.SignerInfos {
 		if sig.PublicKey == nil {
@@ -104,7 +104,10 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo) (string, *authentication.Sub
 			return "", nil, nil, fmt.Errorf("tx: unable to bechify address of public key at index %d: %w", i, err)
 		}
 		subjects.Add(addr)
-		addrToPubKey[addr] = pk // TODO should we check if a pub key was already specified?
+		signers = append(signers, Signer{
+			Address: addr,
+			PubKey:  pk,
+		})
 		// set fee payer as first signer
 		if i == 0 {
 			feePayer = addr
@@ -112,10 +115,10 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo) (string, *authentication.Sub
 	}
 	// override fee payer if provided
 	if info.Fee == nil {
-		return feePayer, subjects, addrToPubKey, nil
+		return feePayer, subjects, signers, nil
 	}
 	if info.Fee.Payer != "" {
 		feePayer = info.Fee.Payer
 	}
-	return feePayer, subjects, addrToPubKey, nil
+	return feePayer, subjects, signers, nil
 }
