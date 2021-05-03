@@ -114,7 +114,7 @@ func (a authenticator) DecodeTx(txBytes []byte) (transitions []meta.StateTransit
 }
 
 // getFeePayer returns the fee payer given a transaction
-func (a authenticator) getFeePayer(tx *v1alpha1.Tx) (string, error) {
+func (a authenticator) getFeePayer(tx *v1alpha1.Wrapper) (string, error) {
 	feePayer := tx.AuthInfo.Fee.Payer
 	if feePayer != "" {
 		return feePayer, nil
@@ -134,7 +134,7 @@ func (a authenticator) getFeePayer(tx *v1alpha1.Tx) (string, error) {
 	return bech32Addr, nil
 }
 
-func (a authenticator) setPubKeys(tx *v1alpha1.Tx) error {
+func (a authenticator) setPubKeys(tx *v1alpha1.Wrapper) error {
 	// we check if every signing account exists
 	for _, sigInfo := range tx.AuthInfo.SignerInfos {
 		addr, err := a.pkRes.Address(a.bech32Prefix, sigInfo.PublicKey)

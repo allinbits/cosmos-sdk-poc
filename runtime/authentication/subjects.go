@@ -21,3 +21,11 @@ func (s *Subjects) HasAuthenticated(subject string) bool {
 func (s *Subjects) Add(subject string) {
 	s.authenticatedSubjects[subject] = struct{}{}
 }
+
+func (s *Subjects) List() []string {
+	l := make([]string, 0, len(s.authenticatedSubjects))
+	for k := range s.authenticatedSubjects {
+		l = append(l, k)
+	}
+	return l
+}

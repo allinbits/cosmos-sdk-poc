@@ -8,9 +8,11 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-var _ authentication.Tx = (*Tx)(nil)
+var _ authentication.Tx = (*Wrapper)(nil)
 
-type Tx struct {
+// Wrapper wraps the raw *v1alpha1.Tx but contains parsed information
+// regarding pub keys and such.
+type Wrapper struct {
 	raw         *v1alpha1.Tx
 	bytes       []byte
 	transitions []meta.StateTransition
@@ -19,26 +21,30 @@ type Tx struct {
 	payer       string
 }
 
-func (t *Tx) StateTransitions() []meta.StateTransition {
+func (t *Wrapper) StateTransitions() []meta.StateTransition {
 	return t.transitions
 }
 
-func (t *Tx) Subjects() *authentication.Subjects {
+func (t *Wrapper) Subjects() *authentication.Subjects {
 	return t.signers
 }
 
-func (t *Tx) Fee() []*coin.Coin {
+func (t *Wrapper) Fee() []*coin.Coin {
 	return t.raw.AuthInfo.Fee.Amount
 }
 
-func (t *Tx) Payer() string {
+func (t *Wrapper) Payer() string {
 	return t.payer
 }
 
-func (t *Tx) Raw() interface{} {
+func (t *Wrapper) Raw() interface{} {
 	return t.raw
 }
 
-func (t *Tx) RawBytes() []byte {
+func (t *Wrapper) RawBytes() []byte {
 	return t.bytes
+}
+
+func (t *Wrapper) PubKeys() []crypto.PubKey {
+	return t.pubKeys
 }

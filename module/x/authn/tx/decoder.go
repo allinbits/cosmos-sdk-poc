@@ -72,7 +72,7 @@ func (d *Decoder) Decode(txBytes []byte) (authentication.Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Tx{
+	return &Wrapper{
 		raw:         raw,
 		bytes:       txBytes,
 		transitions: transitions,
