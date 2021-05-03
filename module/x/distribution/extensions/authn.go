@@ -33,11 +33,13 @@ type FeeChecker struct {
 func (x FeeChecker) Validate(req authentication.Tx) (err error) {
 	payer := req.Payer()
 	fee := req.Fee()
+
 	// get balance of fee payer
 	balance, err := x.bank.GetBalance(payer)
 	if err != nil {
 		return err
 	}
+
 	// check if it has enough coins
 	_, err = coin.SafeSub(balance.Balance, fee)
 	if err != nil {

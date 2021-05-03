@@ -9,8 +9,6 @@ type AdmissionController interface {
 	Validate(tx Tx) error
 }
 
-type ValidateResponse struct{}
-
 type DeliverRequest struct {
 	Tx Tx
 }
