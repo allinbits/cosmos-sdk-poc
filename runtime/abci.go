@@ -16,7 +16,13 @@ type ABCIApplication struct {
 }
 
 func (a ABCIApplication) Info(info types.RequestInfo) types.ResponseInfo {
-	panic("implement me")
+	return types.ResponseInfo{
+		Data:             "runtime",
+		Version:          "0.0.0",
+		AppVersion:       0,
+		LastBlockHeight:  0,
+		LastBlockAppHash: []byte("unknown"),
+	}
 }
 
 func (a ABCIApplication) SetOption(option types.RequestSetOption) types.ResponseSetOption {
@@ -44,6 +50,20 @@ func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckT
 }
 
 func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseInitChain {
+	// if app state bytes is nil we initialize with default genesis states
+	switch len(chain.AppStateBytes) {
+	case 0:
+		err := a.rt.Initialize()
+		if err != nil {
+			panic(err)
+		}
+	// otherwise we import the chain from the state bytes
+	default:
+		err := a.rt.Import(chain.AppStateBytes)
+		if err != nil {
+			panic(err)
+		}
+	}
 	// set init chain info
 	err := a.rt.Deliver(nil, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
 	if err != nil {

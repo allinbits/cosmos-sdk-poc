@@ -91,7 +91,9 @@ func timedOutTx(t *testing.T) []byte {
 					TypeUrl: "/" + gogoproto.MessageName(pk),
 					Value:   pkB,
 				},
-				ModeInfo: nil,
+				ModeInfo: &v1alpha1.ModeInfo{Sum: &v1alpha1.ModeInfo_Single_{Single: &v1alpha1.ModeInfo_Single{
+					Mode: v1alpha1.SignMode_SIGN_MODE_DIRECT,
+				}}},
 				Sequence: 5,
 			},
 		},

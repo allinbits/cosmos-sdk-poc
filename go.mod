@@ -7,6 +7,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.42.4
 	github.com/dgraph-io/badger/v3 v3.2011.1
 	github.com/gogo/protobuf v1.3.3
+	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tendermint v0.34.9
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect

@@ -47,6 +47,10 @@ func (r *Runtime) Initialize() error {
 	return nil
 }
 
+func (r *Runtime) Import(stateBytes []byte) error {
+	return fmt.Errorf("not implemented")
+}
+
 func (r *Runtime) Get(id meta.ID, object meta.StateObject) error {
 	return convertStoreError(r.store.Get(id, object))
 }

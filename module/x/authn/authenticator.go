@@ -3,12 +3,12 @@ package authn
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	abciv1alpha1 "github.com/fdymylja/tmos/module/abci/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn/tx"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
+	"google.golang.org/protobuf/proto"
 )
 
 func newAuthenticator(c module.Client) authenticator {
@@ -30,8 +30,14 @@ type authenticator struct {
 
 // Authenticate takes care of authenticating an authentication.Tx
 func (a authenticator) Authenticate(aTx authentication.Tx) error {
-	w := aTx.(*tx.Wrapper)
-	sigs := w.Signers()
+	wrapper := aTx.(*tx.Wrapper)
+	raw := wrapper.Raw().(*v1alpha1.TxRaw)
+	sigs := wrapper.Signers()
+	// get chainID
+	chainID, err := a.abci.GetChainID()
+	if err != nil {
+		return err
+	}
 	for _, signer := range sigs {
 		// get account
 		acc, err := a.auth.GetAccount(signer.Address)
@@ -42,12 +48,27 @@ func (a authenticator) Authenticate(aTx authentication.Tx) error {
 			return fmt.Errorf("pub key not set on account %s", signer.Address)
 		}
 
-		signerData := signing.SignerData{
-			ChainID:       "",
-			AccountNumber: 0,
-			Sequence:      0,
+		expectedBytes, err := DirectSignBytes(raw.BodyBytes, raw.AuthInfoBytes, chainID, acc.AccountNumber)
+		if err != nil {
+			return err
+		}
+		if !signer.PubKey.VerifySignature(expectedBytes, signer.Signature) {
+			return fmt.Errorf("bad sig")
 		}
 	}
+	return nil
+}
+
+// DirectSignBytes returns the SIGN_MODE_DIRECT sign bytes for the provided TxBody bytes, AuthInfo bytes, chain ID,
+// account number and sequence.
+func DirectSignBytes(bodyBytes, authInfoBytes []byte, chainID string, accnum uint64) ([]byte, error) {
+	signDoc := &v1alpha1.SignDoc{
+		BodyBytes:     bodyBytes,
+		AuthInfoBytes: authInfoBytes,
+		ChainId:       chainID,
+		AccountNumber: accnum,
+	}
+	return proto.Marshal(signDoc)
 }
 
 func (a authenticator) DecodeTx(txBytes []byte) (tx authentication.Tx, err error) {
