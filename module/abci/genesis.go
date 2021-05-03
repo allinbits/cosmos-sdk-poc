@@ -42,6 +42,17 @@ func (g genesis) SetDefault() error {
 		return err
 	}
 	err = g.client.Create(&v1alpha1.InitChainInfo{})
+	if err != nil {
+		return err
+	}
+	err = g.client.Create(&v1alpha1.ValidatorUpdates{})
+	if err != nil {
+		return err
+	}
+	err = g.client.Create(&v1alpha1.EndBlockState{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

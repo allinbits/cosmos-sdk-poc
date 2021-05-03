@@ -123,11 +123,34 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 }
 
 func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {
-	panic("implement me")
+	//
+	err := a.rt.Deliver(nil, &abcictrl.MsgSetEndBlockState{})
+	if err != nil {
+		panic(err)
+	}
+	// TODO real endblock for modules
+	// return val state changes
+	valUpdates := new(abcictrl.ValidatorUpdates)
+	err = a.rt.Get(abcictrl.ValidatorUpdatesID, valUpdates)
+	if err != nil {
+		panic(err)
+	}
+	updates := make([]types.ValidatorUpdate, len(valUpdates.ValidatorUpdates))
+	for i, val := range valUpdates.ValidatorUpdates {
+		updates[i] = val.ToLegacy()
+	}
+	return types.ResponseEndBlock{
+		ValidatorUpdates:      updates,
+		ConsensusParamUpdates: nil,
+		Events:                nil,
+	}
 }
 
 func (a ABCIApplication) Commit() types.ResponseCommit {
-	panic("implement me")
+	return types.ResponseCommit{
+		Data:         []byte("constant"),
+		RetainHeight: 0,
+	}
 }
 
 func (a ABCIApplication) ListSnapshots(snapshots types.RequestListSnapshots) types.ResponseListSnapshots {

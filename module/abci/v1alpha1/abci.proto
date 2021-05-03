@@ -53,6 +53,22 @@ message MsgSetDeliverTxState {
   tendermint.abci.RequestDeliverTx deliver_tx = 1;
 }
 
+message MsgSetEndBlockState {
+  tendermint.abci.RequestEndBlock end_block = 1;
+}
+
 message MsgSetInitChain {
   InitChainInfo init_chain_info = 1;
+}
+
+message ValidatorUpdates {
+  repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
+}
+
+message MsgSetValidatorUpdates {
+  repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
+}
+
+message EndBlockState {
+  tendermint.abci.RequestEndBlock end_block = 1;
 }

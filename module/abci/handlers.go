@@ -12,7 +12,13 @@ import (
 func setInitChainInfo(client module.Client) controller.StateTransitionFn {
 	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetInitChain)
+		// set init chain info
 		err = client.Update(&v1alpha1.InitChainInfo{ChainId: msg.InitChainInfo.ChainId})
+		if err != nil {
+			return controller.StateTransitionResponse{}, err
+		}
+		// set stage init chain
+		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_InitChain})
 		if err != nil {
 			return controller.StateTransitionResponse{}, err
 		}
@@ -58,6 +64,23 @@ func beginBlockHandler(client module.Client) controller.StateTransitionFn {
 	}
 }
 
+func endBlockHandler(client module.Client) controller.StateTransitionFn {
+	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+		msg := req.Transition.(*v1alpha1.MsgSetEndBlockState)
+		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_EndBlock})
+		if err != nil {
+			return controller.StateTransitionResponse{}, err
+		}
+		err = client.Update(&v1alpha1.EndBlockState{
+			EndBlock: msg.EndBlock,
+		})
+		if err != nil {
+			return controller.StateTransitionResponse{}, err
+		}
+		return
+	}
+}
+
 func deliverTxHandler(client module.Client) controller.StateTransitionFn {
 	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetDeliverTxState)
@@ -66,6 +89,27 @@ func deliverTxHandler(client module.Client) controller.StateTransitionFn {
 			return
 		}
 		err = client.Update(&v1alpha1.DeliverTxState{DeliverTx: msg.DeliverTx})
+		return
+	}
+}
+
+func validatorUpdatesHandler(client module.Client) controller.StateTransitionFn {
+	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+		msg := req.Transition.(*v1alpha1.MsgSetValidatorUpdates)
+		stage := new(v1alpha1.Stage)
+		err = client.Get(v1alpha1.StageID, stage)
+		if err != nil {
+			return controller.StateTransitionResponse{}, err
+		}
+		// this handler can only be executed during begin and endblock stages
+		if stage.Stage != v1alpha1.ABCIStage_InitChain && stage.Stage != v1alpha1.ABCIStage_EndBlock {
+			return controller.StateTransitionResponse{}, fmt.Errorf("validator updates can be done only during EndBlock and InitChain, stage is %s", stage.Stage)
+		}
+		// update validator set
+		err = client.Update(&v1alpha1.ValidatorUpdates{ValidatorUpdates: msg.ValidatorUpdates})
+		if err != nil {
+			return controller.StateTransitionResponse{}, err
+		}
 		return
 	}
 }
