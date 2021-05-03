@@ -147,6 +147,7 @@ func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEnd
 }
 
 func (a ABCIApplication) Commit() types.ResponseCommit {
+	// TODO in commit we should do clearing of old ABCI controller state :)
 	return types.ResponseCommit{
 		Data:         []byte("constant"),
 		RetainHeight: 0,
