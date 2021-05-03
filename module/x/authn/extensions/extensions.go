@@ -47,15 +47,15 @@ type accountExists struct {
 	c *v1alpha1.Client
 }
 
-func (a accountExists) Validate(req authentication.ValidateRequest) (authentication.ValidateResponse, error) {
+func (a accountExists) Validate(tx authentication.Tx) error {
 	// assert that all signer accounts exist
-	for _, sig := range req.Tx.Subjects().List() {
+	for _, sig := range tx.Subjects().List() {
 		_, err := a.c.GetAccount(sig)
 		if err != nil {
-			return authentication.ValidateResponse{}, err
+			return err
 		}
 	}
-	return authentication.ValidateResponse{}, nil
+	return nil
 }
 
 func newTimeoutBlockExtension(c module.Client) timeoutBlockExtension {
@@ -66,16 +66,17 @@ type timeoutBlockExtension struct {
 	abci *abciv1alpha1.Client
 }
 
-func (t timeoutBlockExtension) Validate(request authentication.ValidateRequest) (authentication.ValidateResponse, error) {
-	tx := request.Tx.Raw().(*v1alpha1.Tx)
+func (t timeoutBlockExtension) Validate(reqTx authentication.Tx) error {
+	tx := reqTx.Raw().(*v1alpha1.Tx)
 	currentBlock, err := t.abci.GetCurrentBlock()
 	if err != nil {
-		return authentication.ValidateResponse{}, err
+		return err
 	}
 	if currentBlock.BlockNumber > tx.Body.TimeoutHeight {
-		return authentication.ValidateResponse{}, fmt.Errorf("invalid block height")
+		return fmt.Errorf("invalid block height")
 	}
-	return authentication.ValidateResponse{}, nil
+
+	return nil
 }
 
 func newValidateMemoExtension(c module.Client) validateMemoExtension {
@@ -86,26 +87,26 @@ type validateMemoExtension struct {
 	c *v1alpha1.Client
 }
 
-func (e validateMemoExtension) Validate(request authentication.ValidateRequest) (authentication.ValidateResponse, error) {
-	tx := request.Tx.Raw().(*v1alpha1.Tx)
+func (e validateMemoExtension) Validate(reqTx authentication.Tx) error {
+	tx := reqTx.Raw().(*v1alpha1.Tx)
 	memo := tx.Body.Memo
 	memoLength := len(memo)
 	params, err := e.c.GetParams()
 	if err != nil {
-		return authentication.ValidateResponse{}, nil
+		return err
 	}
 	if uint64(memoLength) > params.MaxMemoCharacters {
-		return authentication.ValidateResponse{}, fmt.Errorf("invalid memo length")
+		return fmt.Errorf("invalid memo length")
 	}
-	return authentication.ValidateResponse{}, nil
+	return nil
 }
 
 // mempoolFee is used to check if the transaction meets the minimum mempool requirements
 type mempoolFee struct {
 }
 
-func (e mempoolFee) Validate(request authentication.ValidateRequest) (authentication.ValidateResponse, error) {
-	return authentication.ValidateResponse{}, nil
+func (e mempoolFee) Validate(tx authentication.Tx) error {
+	return nil
 }
 
 func newValidateSigCount(c module.Client) sigCount {
@@ -116,11 +117,11 @@ type sigCount struct {
 	c *v1alpha1.Client
 }
 
-func (s sigCount) Validate(request authentication.ValidateRequest) (authentication.ValidateResponse, error) {
-	wrapper := request.Tx.(*tx.Wrapper) // TODO: should we return an error? or simply skip validation?
+func (s sigCount) Validate(reqTx authentication.Tx) error {
+	wrapper := reqTx.(*tx.Wrapper) // TODO: should we return an error? or simply skip validation?
 	params, err := s.c.GetParams()
 	if err != nil {
-		return authentication.ValidateResponse{}, err
+		return err
 	}
 	pubKeys := wrapper.Signers()
 	sigs := 0
@@ -128,10 +129,11 @@ func (s sigCount) Validate(request authentication.ValidateRequest) (authenticati
 		subKeys := s.countSubKeys(pk.PubKey)
 		sigs += subKeys
 		if uint64(sigs) > params.TxSigLimit {
-			return authentication.ValidateResponse{}, fmt.Errorf("number of maximum signatures is %d got %d", params.TxSigLimit, sigs)
+			return fmt.Errorf("number of maximum signatures is %d got %d", params.TxSigLimit, sigs)
 		}
 	}
-	return authentication.ValidateResponse{}, nil
+
+	return nil
 }
 
 func (s sigCount) countSubKeys(pk crypto.PubKey) int {

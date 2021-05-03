@@ -30,21 +30,22 @@ type FeeChecker struct {
 	bank *bankv1aplha1.Client
 }
 
-func (x FeeChecker) Validate(req authentication.ValidateRequest) (resp authentication.ValidateResponse, err error) {
-	payer := req.Tx.Payer()
-	fee := req.Tx.Fee()
+func (x FeeChecker) Validate(req authentication.Tx) (err error) {
+	payer := req.Payer()
+	fee := req.Fee()
 	// get balance of fee payer
 	balance, err := x.bank.GetBalance(payer)
 	if err != nil {
-		return
+		return err
 	}
 	// check if it has enough coins
 	_, err = coin.SafeSub(balance.Balance, fee)
 	if err != nil {
-		return
+		return err
 	}
+
 	// balance is enough
-	return
+	return nil
 }
 
 func NewFeeDeduction(c module.Client) authentication.TransitionController {

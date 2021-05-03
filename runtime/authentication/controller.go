@@ -6,11 +6,7 @@ package authentication
 //         was the minimum fee reached?
 //         do the accounts exist?
 type AdmissionController interface {
-	Validate(ValidateRequest) (ValidateResponse, error)
-}
-
-type ValidateRequest struct {
-	Tx Tx
+	Validate(tx Tx) error
 }
 
 type ValidateResponse struct{}

@@ -111,7 +111,7 @@ func (r *Runtime) runAdmissionChain(transition meta.StateTransition) error {
 func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 	ctrls := r.router.GetTransactionAdmissionControllers()
 	for _, ctrl := range ctrls {
-		_, err := ctrl.Validate(authentication.ValidateRequest{Tx: tx})
+		err := ctrl.Validate(tx)
 		if err != nil {
 			return fmt.Errorf("%w: %s", ErrBadRequest, err)
 		}
