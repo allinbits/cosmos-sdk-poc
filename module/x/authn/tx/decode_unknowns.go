@@ -7,6 +7,9 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type errUnknownField struct {
@@ -43,7 +46,9 @@ func getTransitions(body *v1alpha1.TxBody) ([]meta.StateTransition, error) {
 	transitions := make([]meta.StateTransition, len(body.Messages))
 	for i, msg := range body.Messages {
 		// unmarshal from any
-		rawPb, err := msg.UnmarshalNew()
+		rawPb, err := anypb.UnmarshalNew(msg, proto.UnmarshalOptions{
+			Resolver: sdkTypeURLMatcher{},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("Tx: unable to unmarshal message %s to known type", msg.TypeUrl)
 		}
@@ -54,4 +59,27 @@ func getTransitions(body *v1alpha1.TxBody) ([]meta.StateTransition, error) {
 		transitions[i] = transition
 	}
 	return transitions, nil
+}
+
+type sdkTypeURLMatcher struct {
+}
+
+func (s sdkTypeURLMatcher) FindMessageByName(message protoreflect.FullName) (protoreflect.MessageType, error) {
+	return nil, fmt.Errorf("tx: unsupported")
+}
+
+func (s sdkTypeURLMatcher) FindMessageByURL(url string) (protoreflect.MessageType, error) {
+	switch url {
+	case "/cosmos.bank.v1beta1.MsgSend":
+		return protoregistry.GlobalTypes.FindMessageByURL("/tmos.x.bank.v1alpha1.MsgSendCoins")
+	default:
+		return protoregistry.GlobalTypes.FindMessageByURL(url)
+	}
+}
+
+func (s sdkTypeURLMatcher) FindExtensionByName(field protoreflect.FullName) (protoreflect.ExtensionType, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+func (s sdkTypeURLMatcher) FindExtensionByNumber(message protoreflect.FullName, field protoreflect.FieldNumber) (protoreflect.ExtensionType, error) {
+	return nil, fmt.Errorf("not implemented")
 }

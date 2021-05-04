@@ -79,7 +79,9 @@ func timedOutTx(t *testing.T) []byte {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pk := secp256k1.GenPrivKey().PubKey()
+	privKey := secp256k1.GenPrivKey()
+	t.Logf("%x", privKey.Key)
+	pk := privKey.PubKey()
 	pkB, err := gogoproto.Marshal(pk)
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +111,7 @@ func timedOutTx(t *testing.T) []byte {
 			Granter:  "",
 		},
 	}
-
+	t.Logf("%s %x", auth.SignerInfos[0].PublicKey.TypeUrl, auth.SignerInfos[0].PublicKey.Value)
 	authB, err := proto.Marshal(auth)
 	if err != nil {
 		t.Fatal(err)

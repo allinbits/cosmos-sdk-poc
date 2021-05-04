@@ -33,7 +33,8 @@ func (a authExtension) Initialize(builder *module.AuthenticationExtensionBuilder
 	// a tx is authenticated
 	builder.
 		WithTransitionController(newConsumeGasForTxSize(a.c)). // consumes gas for tx size
-		WithTransitionController(newSetPubKeys(a.c))
+		WithTransitionController(newSetPubKeys(a.c)).          // sets pub keys
+		WithTransitionController(newIncreaseSequence(a.c))     // increases sequence
 
 }
 
@@ -72,7 +73,7 @@ func (t timeoutBlockExtension) Validate(reqTx authentication.Tx) error {
 	if err != nil {
 		return err
 	}
-	if currentBlock.BlockNumber > tx.Body.TimeoutHeight {
+	if tx.Body.TimeoutHeight != 0 && currentBlock.BlockNumber > tx.Body.TimeoutHeight {
 		return fmt.Errorf("invalid block height")
 	}
 
@@ -183,6 +184,25 @@ func (s setPubKeys) Deliver(req authentication.DeliverRequest) (authentication.D
 			continue
 		}
 		err = s.c.UpdatePublicKey(sig.Address, sig.PubKey)
+		if err != nil {
+			return authentication.DeliverResponse{}, err
+		}
+	}
+	return authentication.DeliverResponse{}, nil
+}
+
+func newIncreaseSequence(c module.Client) increaseSequence {
+	return increaseSequence{c: v1alpha1.NewClient(c)}
+}
+
+type increaseSequence struct {
+	c *v1alpha1.Client
+}
+
+func (i increaseSequence) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
+	signers := req.Tx.Subjects()
+	for _, signer := range signers.List() {
+		err := i.c.IncreaseSequence(signer)
 		if err != nil {
 			return authentication.DeliverResponse{}, err
 		}

@@ -31,7 +31,7 @@ type authenticator struct {
 // Authenticate takes care of authenticating an authentication.Tx
 func (a authenticator) Authenticate(aTx authentication.Tx) error {
 	wrapper := aTx.(*tx.Wrapper)
-	raw := wrapper.Raw().(*v1alpha1.TxRaw)
+	raw := wrapper.TxRaw()
 	sigs := wrapper.Signers()
 	// get chainID
 	chainID, err := a.abci.GetChainID()

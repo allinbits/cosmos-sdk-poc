@@ -19,6 +19,7 @@ type Signer struct {
 // Wrapper wraps the raw *v1alpha1.Tx but contains parsed information
 // regarding pub keys and such.
 type Wrapper struct {
+	txRaw       *v1alpha1.TxRaw
 	raw         *v1alpha1.Tx
 	bytes       []byte
 	transitions []meta.StateTransition
@@ -49,6 +50,10 @@ func (t *Wrapper) Raw() interface{} {
 
 func (t *Wrapper) RawBytes() []byte {
 	return t.bytes
+}
+
+func (t *Wrapper) TxRaw() *v1alpha1.TxRaw {
+	return t.txRaw
 }
 
 // Signers returns a map containing the account identifier (address) and the public key the user used to sign.

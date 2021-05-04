@@ -27,3 +27,10 @@ func (c *Client) Send(sender, recipient string, amount []*coin.Coin) error {
 		Amount:      amount,
 	})
 }
+
+func (c *Client) SetBalance(target string, amount []*coin.Coin) error {
+	return c.c.Deliver(&MsgSetBalance{
+		Address: target,
+		Amount:  amount,
+	})
+}

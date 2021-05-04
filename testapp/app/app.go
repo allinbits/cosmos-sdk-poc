@@ -11,6 +11,7 @@ import (
 	"github.com/fdymylja/tmos/module/x/bank"
 	"github.com/fdymylja/tmos/module/x/distribution"
 	"github.com/fdymylja/tmos/runtime"
+	testmodule "github.com/fdymylja/tmos/testapp/module"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/config"
@@ -28,13 +29,14 @@ func init() {
 	flag.StringVar(&configFile, "config", "testapp/app/config/config.toml", "Path to config.toml")
 }
 
-func Sheesh() {
+func New() {
 	rtb := runtime.NewBuilder()
 	authentication := authn.NewModule()
 	rtb.AddModule(authentication)
 	rtb.SetAuthenticator(authentication.GetAuthenticator())
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(distribution.NewModule())
+	rtb.AddModule(testmodule.NewModule())
 	rt, err := rtb.Build()
 	if err != nil {
 		panic(err)

@@ -15,6 +15,15 @@ import (
 	"github.com/fdymylja/tmos/runtime/store/badger"
 )
 
+const (
+	VerbGet     = "get"
+	VerbList    = "list"
+	VerbDeliver = "deliver"
+	VerbCreate  = "create"
+	VerbUpdate  = "update"
+	VerbDelete  = "delete"
+)
+
 type Runtime struct {
 	modules     []*module.Descriptor
 	initialized uint32

@@ -1,9 +1,15 @@
 package runtime
 
 import (
+	"strings"
+
 	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
 	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 func NewABCIApplication(rt *Runtime) ABCIApplication {
@@ -18,7 +24,7 @@ type ABCIApplication struct {
 func (a ABCIApplication) Info(info types.RequestInfo) types.ResponseInfo {
 	return types.ResponseInfo{
 		Data:             "runtime",
-		Version:          "0.0.0",
+		Version:          "v0.0.0",
 		AppVersion:       0,
 		LastBlockHeight:  0,
 		LastBlockAppHash: []byte("unknown"),
@@ -30,20 +36,57 @@ func (a ABCIApplication) SetOption(option types.RequestSetOption) types.Response
 }
 
 func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
-	panic("implement me")
+	// TODO get store based on height
+	splitted := strings.Split(query.Path, "/")
+	switch len(splitted) {
+	case 3:
+	case 4:
+		splitted = splitted[1:]
+	default:
+		return types.ResponseQuery{Code: CodeBadRequest, Log: "invalid path"}
+	}
+	verb := splitted[0]
+	stateObjectName := splitted[1] // TODO check if store knows of the existence of this stateObjectName
+	key := splitted[2]
+	switch verb {
+	case VerbGet:
+		objType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(stateObjectName))
+		if err != nil {
+			return types.ResponseQuery{Code: CodeNotFound}
+		}
+		object := objType.New().Interface().(meta.StateObject)
+		err = a.rt.Get(meta.NewStringID(key), object)
+		if err != nil {
+			return types.ResponseQuery{Code: CodeUnknown, Log: err.Error()}
+		}
+		jsonObject, err := protojson.Marshal(object)
+		if err != nil {
+			return types.ResponseQuery{Code: CodeUnknown, Log: err.Error()}
+		}
+		return types.ResponseQuery{
+			Value: jsonObject,
+		}
+	default:
+		return types.ResponseQuery{Code: CodeBadRequest, Log: "unsupported verb" + verb}
+	}
 }
 
 func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckTx {
-	// we decode the tx and run admission checks
+	// decode tx
 	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
 	if err != nil {
-		return types.ResponseCheckTx{Code: 1}
+		return types.ResponseCheckTx(ToABCIResponse(0, 0, err))
 	}
-	// run admission checks on transitions
+	// run admission checks on the transaction
+	err = a.rt.runTxAdmissionChain(tx)
+	if err != nil {
+		return types.ResponseCheckTx(ToABCIResponse(0, 0, err))
+	}
+	// run admission checks on single state transitions
 	for _, transition := range tx.StateTransitions() {
 		err = a.rt.runAdmissionChain(transition)
 		if err != nil {
-			return types.ResponseCheckTx{Code: 1}
+			return types.ResponseCheckTx(ToABCIResponse(0, 0, err))
 		}
 	}
 	return types.ResponseCheckTx{}
@@ -69,7 +112,6 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 	if err != nil {
 		panic(err)
 	}
-	//
 	return types.ResponseInitChain{
 		ConsensusParams: nil,
 		Validators:      chain.Validators,
@@ -101,13 +143,17 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}
-	// here we cache the store
-	// todo authenticate
+	// do authentication
 	err = a.rt.authn.Authenticate(tx)
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}
+	// TODO cache the store
 	// todo run authentication chain
+	err = a.rt.runTxAdmissionChain(tx)
+	if err != nil {
+		return ToABCIResponse(0, 0, err)
+	}
 	// write the cache
 	// cache again
 	// start delivering transitions
@@ -119,7 +165,16 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	}
 	// write cache
 	// success!
-	return types.ResponseDeliverTx{}
+	return types.ResponseDeliverTx{
+		Code:      0,
+		Data:      nil,
+		Log:       "",
+		Info:      "",
+		GasWanted: 0,
+		GasUsed:   0,
+		Events:    nil,
+		Codespace: "",
+	}
 }
 
 func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {

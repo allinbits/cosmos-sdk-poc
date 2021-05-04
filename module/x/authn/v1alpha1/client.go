@@ -18,6 +18,16 @@ type Client struct {
 	c module.Client
 }
 
+func (c *Client) IncreaseSequence(address string) error {
+	acc := new(Account)
+	err := c.c.Get(meta.NewStringID(address), acc)
+	if err != nil {
+		return err
+	}
+	acc.Sequence = acc.Sequence + 1
+	return c.c.Update(acc)
+}
+
 func (c *Client) GetParams() (*Params, error) {
 	p := new(Params)
 	err := c.c.Get(ParamsID, p)
@@ -31,6 +41,12 @@ func (c *Client) GetAccount(address string) (*Account, error) {
 	a := new(Account)
 	err := c.c.Get(meta.NewStringID(address), a)
 	return a, err
+}
+
+func (c *Client) CreateAccount(acc *Account) error {
+	return c.c.Deliver(&MsgCreateAccount{
+		Account: acc,
+	})
 }
 
 func (c *Client) UpdatePublicKey(address string, newPubKey crypto.PubKey) error {
