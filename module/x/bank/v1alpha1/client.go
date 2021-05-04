@@ -7,21 +7,21 @@ import (
 )
 
 func NewClient(c module.Client) *Client {
-	return &Client{c: c}
+	return &Client{Client: c}
 }
 
 type Client struct {
-	c module.Client
+	module.Client
 }
 
 func (c *Client) GetBalance(address string) (*Balance, error) {
 	balance := new(Balance)
-	err := c.c.Get(meta.NewStringID(address), balance)
+	err := c.Client.Get(meta.NewStringID(address), balance)
 	return balance, err
 }
 
 func (c *Client) Send(sender, recipient string, amount []*coin.Coin) error {
-	return c.c.Deliver(&MsgSendCoins{
+	return c.Client.Deliver(&MsgSendCoins{
 		FromAddress: sender,
 		ToAddress:   recipient,
 		Amount:      amount,
@@ -29,7 +29,7 @@ func (c *Client) Send(sender, recipient string, amount []*coin.Coin) error {
 }
 
 func (c *Client) SetBalance(target string, amount []*coin.Coin) error {
-	return c.c.Deliver(&MsgSetBalance{
+	return c.Client.Deliver(&MsgSetBalance{
 		Address: target,
 		Amount:  amount,
 	})

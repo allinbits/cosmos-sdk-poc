@@ -12,18 +12,18 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func NewSendCoinsHandler(client module.Client) SendCoinsHandler {
+func NewSendCoinsHandler(client *v1alpha1.Client) SendCoinsHandler {
 	return SendCoinsHandler{c: client}
 }
 
 type SendCoinsHandler struct {
-	c module.Client
+	c *v1alpha1.Client
 }
 
 func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSendCoins)
 
-	senderBalance, err := s.getBalanceFrom(msg.FromAddress)
+	senderBalance, err := s.c.GetBalance(msg.FromAddress)
 	if err != nil {
 		return resp, err
 	}
@@ -35,13 +35,13 @@ func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp c
 	}
 
 	// update balance of sender
-	err = s.c.Update(&v1alpha1.Balance{Address: msg.FromAddress, Balance: newSenderBalance})
+	err = s.c.SetBalance(msg.FromAddress, newSenderBalance)
 	if err != nil {
 		return resp, err
 	}
 
 	// get balance of receiver
-	recvBalance, err := s.getBalanceFrom(msg.ToAddress)
+	recvBalance, err := s.c.GetBalance(msg.ToAddress)
 
 	// we do a switch check to assert if the balance exists or not
 	switch {
@@ -52,24 +52,23 @@ func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp c
 		if err != nil {
 			return resp, err
 		}
-		err = s.c.Update(&v1alpha1.Balance{
-			Address: msg.ToAddress,
-			Balance: newRecvBalance,
-		})
+		err = s.c.SetBalance(msg.ToAddress, newRecvBalance)
 		if err != nil {
 			return
 		}
+
 		return resp, nil
 	// if not found create the balance for the account
 	// then attempt to create the account itself if it does not exist
 	case errors.Is(err, runtime.ErrNotFound):
-		err = s.c.Create(&v1alpha1.Balance{
-			Address: msg.ToAddress,
-			Balance: msg.Amount,
-		})
+		err = s.c.SetBalance(
+			msg.ToAddress,
+			msg.Amount,
+		)
 		if err != nil {
 			return
 		}
+
 		return resp, s.createAccountIfNotExist(msg.ToAddress)
 	// another error exit...
 	default:
@@ -78,17 +77,18 @@ func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp c
 }
 
 func (s SendCoinsHandler) getBalanceFrom(address string) (*v1alpha1.Balance, error) {
-	senderBalance := new(v1alpha1.Balance)
-	err := s.c.Get(meta.NewStringID(address), senderBalance)
+	senderBalance, err := s.c.GetBalance(address)
 	if err != nil {
 		return nil, err
 	}
+
 	return senderBalance, nil
 }
 
 // createAccountIfNotExist creates a new account since it has received balance
 // so its public key can be sent
 // TODO: is this really required?
+// TODO: This should be done via Deliver to AUTH.
 func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
 	acc := new(authv1alpha1.Account)
 	err := s.c.Get(meta.NewStringID(address), acc)
@@ -103,6 +103,7 @@ func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
 	case errors.Is(err, runtime.ErrNotFound):
 		break
 	}
+
 	err = s.c.Create(&authv1alpha1.Account{Address: address})
 	return err
 }
