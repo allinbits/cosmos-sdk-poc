@@ -3,6 +3,8 @@ package bank_test
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/runtime/meta"
+
 	"github.com/stretchr/testify/require"
 
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
@@ -19,7 +21,7 @@ func TestSendCoins(t *testing.T) {
 	rt, err := rtb.Build()
 	require.NoError(t, err)
 
-	err = rt.Create("dio", &v1alpha1.Balance{
+	err = rt.Create("TODO", &v1alpha1.Balance{
 		Address: "frojdi",
 		Balance: []*coin.Coin{
 			{
@@ -31,6 +33,7 @@ func TestSendCoins(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	err = rt.Deliver([]string{"dio"}, &v1alpha1.MsgSendCoins{
 		FromAddress: "frojdi",
 		ToAddress:   "jonathan",
@@ -44,4 +47,16 @@ func TestSendCoins(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// Frojdi's balance == 1
+	fBalance := &v1alpha1.Balance{}
+	err = rt.Get(meta.NewStringID("frojdi"), fBalance)
+	require.NoError(t, err)
+	require.Equal(t, "1", fBalance.Balance[0].Amount)
+
+	// Jonathans's balance == 999
+	jBalance := &v1alpha1.Balance{}
+	err = rt.Get(meta.NewStringID("jonathan"), jBalance)
+	require.NoError(t, err)
+	require.Equal(t, "999", jBalance.Balance[0].Amount)
 }
