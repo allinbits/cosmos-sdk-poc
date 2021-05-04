@@ -128,6 +128,17 @@ func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 	return nil
 }
 
+func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
+	ctrls := r.router.GetTransactionPostAuthenticationControllers()
+	for _, ctrl := range ctrls {
+		_, err := ctrl.Deliver(authentication.DeliverRequest{Tx: tx})
+		if err != nil {
+			return fmt.Errorf("%w: %s", ErrBadRequest, err)
+		}
+	}
+	return nil
+}
+
 // convertStoreError converts the store error to a runtime error
 func convertStoreError(err error) error {
 	if err == nil {

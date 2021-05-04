@@ -36,7 +36,7 @@ func Sign(pkHex string, chainID, send, recv string, coins types.Coins) (signedTx
 
 	signerData := signing.SignerData{
 		ChainID:       chainID,
-		AccountNumber: 0,
+		AccountNumber: 1,
 		Sequence:      0,
 	}
 

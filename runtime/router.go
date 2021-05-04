@@ -19,12 +19,13 @@ func NewRouter() *Router {
 }
 
 type Router struct {
-	transactionAdmissionControllers     []authentication.AdmissionController
-	stateTransitionControllers          map[string]controller.StateTransition
-	stateTransitionAdmissionControllers map[string][]controller.Admission
+	transactionAdmissionControllers          []authentication.AdmissionController
+	transactionPostAuthenticationControllers []authentication.TransitionController
+	stateTransitionControllers               map[string]controller.StateTransition
+	stateTransitionAdmissionControllers      map[string][]controller.Admission
 }
 
-func (r *Router) AddStateTransitionHandler(transition meta.StateTransition, handler controller.StateTransition) error {
+func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler controller.StateTransition) error {
 	name := meta.Name(transition)
 	if _, exists := r.stateTransitionControllers[name]; exists {
 		return fmt.Errorf("%w: %s", ErrTransitionAlreadyRegistered, name)
@@ -65,4 +66,12 @@ func (r *Router) GetTransactionAdmissionControllers() []authentication.Admission
 
 func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionController) {
 	r.transactionAdmissionControllers = append(r.transactionAdmissionControllers, ctrl)
+}
+
+func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.TransitionController {
+	return r.transactionPostAuthenticationControllers
+}
+
+func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.TransitionController) {
+	r.transactionPostAuthenticationControllers = append(r.transactionPostAuthenticationControllers, ctrl)
 }

@@ -19,7 +19,7 @@ func TestBroadcastTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%#v", status)
-	xd, err := Sign(privKey, status.NodeInfo.Network, accountAddress, "some_random_account", types.NewCoins(types.NewCoin("test", types.NewInt(500))))
+	xd, err := Sign(privKey, status.NodeInfo.Network, accountAddress, "some_random_a'ccount", types.NewCoins(types.NewCoin("test", types.NewInt(500))))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -150,7 +150,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	}
 	// TODO cache the store
 	// todo run authentication chain
-	err = a.rt.runTxAdmissionChain(tx)
+	err = a.rt.runTxPostAuthenticationChain(tx)
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}

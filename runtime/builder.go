@@ -76,7 +76,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 
 	// install state transition controllers
 	for _, ctrl := range m.StateTransitionControllers {
-		err := b.router.AddStateTransitionHandler(ctrl.StateTransition, ctrl.Controller)
+		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,10 @@ func (b *Builder) install(m *module.Descriptor) error {
 		b.router.AddTransactionAdmissionController(xt.Handler)
 		klog.Infof("registering authentication admission controller %T for module %s", xt.Handler, m.Name)
 	}
-
+	for _, xt := range m.AuthenticationExtension.TransitionControllers {
+		b.router.AddTransactionPostAuthenticationController(xt.Handler)
+		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
+	}
 	return nil
 }
 
