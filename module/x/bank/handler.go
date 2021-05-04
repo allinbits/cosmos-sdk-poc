@@ -23,25 +23,26 @@ type SendCoinsHandler struct {
 func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSendCoins)
 
-	// get the balance
-	senderBalance := new(v1alpha1.Balance)
-	err = s.c.Get(meta.NewStringID(msg.FromAddress), senderBalance)
+	senderBalance, err := s.getBalanceFrom(msg.FromAddress)
 	if err != nil {
 		return resp, err
 	}
+
 	// subtract the coins
 	newSenderBalance, err := coin.SafeSub(senderBalance.Balance, msg.Amount)
 	if err != nil {
 		return resp, err
 	}
+
 	// update balance of sender
 	err = s.c.Update(&v1alpha1.Balance{Address: msg.FromAddress, Balance: newSenderBalance})
 	if err != nil {
 		return resp, err
 	}
+
 	// get balance of receiver
-	recvBalance := new(v1alpha1.Balance)
-	err = s.c.Get(meta.NewStringID(msg.ToAddress), recvBalance)
+	recvBalance, err := s.getBalanceFrom(msg.ToAddress)
+
 	// we do a switch check to assert if the balance exists or not
 	switch {
 	// if no error simply update the balance
@@ -74,6 +75,15 @@ func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp c
 	default:
 		return resp, err
 	}
+}
+
+func (s SendCoinsHandler) getBalanceFrom(address string) (*v1alpha1.Balance, error) {
+	senderBalance := new(v1alpha1.Balance)
+	err := s.c.Get(meta.NewStringID(address), senderBalance)
+	if err != nil {
+		return nil, err
+	}
+	return senderBalance, nil
 }
 
 // createAccountIfNotExist creates a new account since it has received balance
