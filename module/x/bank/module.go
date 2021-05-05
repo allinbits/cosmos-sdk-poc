@@ -16,6 +16,7 @@ func (m Module) Initialize(client module.Client, builder *module.Builder) {
 	builder.
 		Named("bank").
 		OwnsStateObject(&v1alpha1.Balance{}).
-		HandlesStateTransition(&v1alpha1.MsgSendCoins{}, NewSendCoinsHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgSetBalance{}, NewSetCoinsHandler(client))
+		HandlesStateTransition(&v1alpha1.MsgSendCoins{}, NewSendCoinsHandler(v1alpha1.NewClient(client))).
+		HandlesStateTransition(&v1alpha1.MsgSetBalance{}, NewSetCoinsHandler(client)).
+		WithGenesis(newGenesisHandler())
 }
