@@ -57,7 +57,7 @@ func (g genesis) SetDefault() error {
 }
 
 func (g genesis) Import(state json.RawMessage) error {
-	panic("implement me")
+	return nil
 }
 
 func (g genesis) Export(state json.RawMessage) error {

@@ -31,5 +31,8 @@
       "name": ""
     }
   ],
-  "app_hash": ""
+  "app_hash": "",
+  "app_state": {
+    "test": {}
+  }
 }

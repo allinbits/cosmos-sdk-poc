@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -42,6 +43,7 @@ func (r *Runtime) Initialize() error {
 		return fmt.Errorf("already initialized")
 	}
 	klog.Infof("initializing default genesis state for modules")
+
 	// iterate through modules and call the genesis
 	for _, m := range r.modules {
 		if m.GenesisHandler == nil {
@@ -53,11 +55,31 @@ func (r *Runtime) Initialize() error {
 		}
 	}
 	klog.Infof("default genesis initialization completed")
+
 	return nil
 }
 
 func (r *Runtime) Import(stateBytes []byte) error {
-	return fmt.Errorf("not implemented")
+	genesisData := make(map[string]json.RawMessage)
+	err := json.Unmarshal(stateBytes, &genesisData)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range r.modules {
+		if m.GenesisHandler == nil {
+			continue
+		}
+
+		err := m.GenesisHandler.Import(genesisData[m.Name])
+		if err != nil {
+			return err
+		}
+	}
+
+	klog.Infof("%v", genesisData)
+
+	return nil
 }
 
 func (r *Runtime) Get(id meta.ID, object meta.StateObject) error {

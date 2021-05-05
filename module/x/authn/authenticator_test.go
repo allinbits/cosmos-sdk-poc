@@ -3,27 +3,25 @@ package authn_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	gogoproto "github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
+
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/bank"
 	bankv1aplha1 "github.com/fdymylja/tmos/module/x/bank/v1alpha1"
-	"github.com/fdymylja/tmos/module/x/distribution"
 	"github.com/fdymylja/tmos/runtime"
-	gogoproto "github.com/gogo/protobuf/proto"
-	"github.com/tendermint/tendermint/abci/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func TestAuthenticator(t *testing.T) {
 	rtb := runtime.NewBuilder()
 	auth := authn.NewModule()
-	rtb.AddModule(distribution.NewModule())
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(auth)
 	rtb.SetAuthenticator(auth.GetAuthenticator())
@@ -34,6 +32,7 @@ func TestAuthenticator(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// initialize with money...
 	err = rt.Deliver(nil, &bankv1aplha1.MsgSetBalance{
 		Address: "frojdi",
@@ -45,8 +44,10 @@ func TestAuthenticator(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// get abci app
 	app := runtime.NewABCIApplication(rt)
+
 	// run a begin block tx set forward
 	app.BeginBlock(types.RequestBeginBlock{
 		Header: tmproto.Header{
