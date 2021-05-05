@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/module/abci"
+	"github.com/fdymylja/tmos/module/runtime"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -14,19 +15,23 @@ import (
 // NewBuilder creates a new Builder for the Runtime
 func NewBuilder() *Builder {
 	return &Builder{
-		router: NewRouter(),
-		store:  badger.NewStore(),
-		rt:     &Runtime{},
+		installedModules: map[string]struct{}{},
+		modules:          nil,
+		authn:            nil,
+		router:           NewRouter(),
+		store:            badger.NewStore(),
+		rt:               &Runtime{},
 	}
 }
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	modules []*module.Descriptor
-	authn   authentication.Authenticator
-	router  *Router
-	store   *badger.Store
-	rt      *Runtime
+	installedModules map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
+	modules          []*module.Descriptor
+	authn            authentication.Authenticator
+	router           *Router
+	store            *badger.Store
+	rt               *Runtime
 }
 
 // AddModule adds a new module.Module to the list of modules to install
@@ -45,14 +50,19 @@ func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
 	// add core modules
-	abciModule := abci.NewModule()
-	b.AddModule(abciModule)
-
+	b.AddModule(abci.NewModule())
+	b.AddModule(runtime.NewModule())
 	// install all modules
 	for _, m := range b.modules {
+		// check if already installed
+		if _, exists := b.installedModules[m.Name]; exists {
+			return nil, fmt.Errorf("double registration of module named %s", m.Name)
+		}
 		if err := b.install(m); err != nil {
 			return nil, fmt.Errorf("error while installing module %s: %w", m.Name, err)
 		}
+		// mark as installed module
+		b.installedModules[m.Name] = struct{}{}
 	}
 	b.rt.store = b.store
 	b.rt.router = b.router
@@ -60,7 +70,7 @@ func (b *Builder) Build() (*Runtime, error) {
 
 	switch b.authn {
 	case nil:
-		klog.Warningf("no authenticator was set up - resorting to a NO-OP authenticator")
+		klog.Warningf("no authenticator was set up - transactions sent to the ABCI application will be rejected")
 	default:
 		b.rt.authn = b.authn
 	}

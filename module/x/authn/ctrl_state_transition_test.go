@@ -20,9 +20,8 @@ func TestCreateAccountController(t *testing.T) {
 		[]string{"authn"},
 		&v1alpha1.MsgCreateAccount{
 			Account: &v1alpha1.Account{
-				Address:       "test",
-				PubKey:        nil,
-				AccountNumber: 0,
+				Address: "test",
+				PubKey:  nil,
 			},
 		},
 	)

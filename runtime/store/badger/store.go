@@ -117,3 +117,11 @@ func (s *Store) RegisterStateObject(object meta.StateObject) error {
 
 	return nil
 }
+
+func (s *Store) ListRegisteredStateObjects() []string {
+	sos := make([]string, 0, len(s.objectPrefixes))
+	for stateObject := range s.objectPrefixes {
+		sos = append(sos, stateObject)
+	}
+	return sos
+}

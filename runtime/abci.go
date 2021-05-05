@@ -5,6 +5,7 @@ import (
 
 	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
 	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
+	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -49,7 +50,7 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 	stateObjectName := splitted[1] // TODO check if store knows of the existence of this stateObjectName
 	key := splitted[2]
 	switch verb {
-	case VerbGet:
+	case runtimev1alpha1.Verb_Get.String():
 		objType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(stateObjectName))
 		if err != nil {
 			return types.ResponseQuery{Code: CodeNotFound}

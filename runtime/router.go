@@ -75,3 +75,11 @@ func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.
 func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.TransitionController) {
 	r.transactionPostAuthenticationControllers = append(r.transactionPostAuthenticationControllers, ctrl)
 }
+
+func (r *Router) ListStateTransitions() []string {
+	sts := make([]string, len(r.stateTransitionControllers))
+	for st := range r.stateTransitionControllers {
+		sts = append(sts, st)
+	}
+	return sts
+}

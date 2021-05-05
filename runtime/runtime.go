@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"k8s.io/klog/v2"
 
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -14,15 +15,6 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/store/badger"
-)
-
-const (
-	VerbGet     = "get"
-	VerbList    = "list"
-	VerbDeliver = "deliver"
-	VerbCreate  = "create"
-	VerbUpdate  = "update"
-	VerbDelete  = "delete"
 )
 
 type Runtime struct {
@@ -37,10 +29,22 @@ type Runtime struct {
 
 // Initialize initializes the runtime with default state from modules which have genesis
 func (r *Runtime) Initialize() error {
+	// check if runtime is initialized
 	const notInitialized uint32 = 0
 	const initialized uint32 = 1
 	if !atomic.CompareAndSwapUint32(&r.initialized, notInitialized, initialized) {
 		return fmt.Errorf("already initialized")
+	}
+	// initialize the initial runtime components information
+	// so that modules such as RBAC can have access to it.
+	klog.Infof("initializing runtime controller default state")
+	err := r.deliver(&runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
+	if err != nil {
+		return err
+	}
+	err = r.deliver(&runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
+	if err != nil {
+		return err
 	}
 	klog.Infof("initializing default genesis state for modules")
 
@@ -106,15 +110,20 @@ func (r *Runtime) Deliver(subjects []string, transition meta.StateTransition) (e
 	// identity here should be used for authorization checks
 	// ex: identity is module/user then can it call the state transition?
 	// TODO
+	return r.deliver(transition)
+}
 
+// deliver delivers a meta.StateTransition to the handling controller
+// returns error in case of routing errors or execution errors.
+func (r *Runtime) deliver(stateTransition meta.StateTransition) error {
 	// get the handler
-	handler, err := r.router.GetStateTransitionController(transition)
+	handler, err := r.router.GetStateTransitionController(stateTransition)
 	if err != nil {
 		return err
 	}
 
 	// deliver the request
-	_, err = handler.Deliver(controller.StateTransitionRequest{Transition: transition})
+	_, err = handler.Deliver(controller.StateTransitionRequest{Transition: stateTransition})
 	if err != nil {
 		return err
 	}

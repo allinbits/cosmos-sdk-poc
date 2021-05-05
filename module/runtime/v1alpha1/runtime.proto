@@ -20,3 +20,23 @@ enum Verb {
   // Deliver identifies the DELIVER operation
   Deliver = 6;
 }
+
+// StateObjectsList provides the list of state objects
+// represented as protobuf.Fullname(meta.StateObject)
+message StateObjectsList {
+  repeated string state_objects = 1;
+}
+
+// StateTransitionsList provides the list of state transitions
+// that can be delivered to the runtime represented as protobuf.Fullname(meta.StateTransition)
+message StateTransitionsList {
+  repeated string state_transitions = 1;
+}
+
+message CreateStateObjectsList {
+  repeated string state_objects = 1;
+}
+
+message CreateStateTransitionsList {
+  repeated string state_transitions = 1;
+}
