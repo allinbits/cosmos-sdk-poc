@@ -4,13 +4,15 @@ package tmos.rbac.v1alpha1;
 
 option go_package = "github.com/fdymylja/tmos/module/rbac/v1alpha1";
 
+import "module/runtime/v1alpha1/runtime.proto";
+
 // Role defines a role, which defines what resources
 // can be accessed and which operations can be performed
 // on those resources
 message Role {
   string id = 1; // external_account
   repeated string resources = 2;
-  repeated string verbs = 3;
+  repeated tmos.runtime.v1alpha1.Verb verbs = 3;
 }
 
 // RoleBinding binds a subject to a role
@@ -24,3 +26,14 @@ message RoleBinding {
 
 // bank.Balance, bank.MsgSend
 // verbs -> GET/CREATE/UPDATE/DELIVER
+
+// MsgCreateRole creates a new role
+message MsgCreateRole {
+  Role new_role = 1;
+}
+
+// MsgBindRole binds subject to role_id
+message MsgBindRole {
+  string role_id = 1;
+  string subject = 2;
+}

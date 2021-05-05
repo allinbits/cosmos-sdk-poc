@@ -1,0 +1,22 @@
+syntax="proto3";
+package tmos.runtime.v1alpha1;
+
+option go_package = "github.com/fdymylja/tmos/module/runtime/v1alpha1";
+
+// Verb defines an action that can be performed on the runtime by external entities
+enum Verb {
+  // Unknown defines an unknown verb
+  Unknown = 0;
+  // Get identifies the GET operation
+  Get = 1;
+  // List identifies the LIST operation
+  List = 2;
+  // Create identifies the CREATE operation
+  Create = 3;
+  // Update identifies the UPDATE operation
+  Update = 4;
+  // Delete identifies the DELETE operation
+  Delete = 5;
+  // Deliver identifies the DELIVER operation
+  Deliver = 6;
+}

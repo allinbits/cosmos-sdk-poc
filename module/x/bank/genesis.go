@@ -2,7 +2,6 @@ package bank
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/fdymylja/tmos/runtime/controller"
 )
@@ -15,11 +14,11 @@ func newGenesisHandler() controller.Genesis {
 }
 
 func (g genesisHandler) SetDefault() error {
-	GenesisSta
+	return nil
 }
 
 func (g genesisHandler) Import(state json.RawMessage) error {
-	fmt.Println("%v", state)
+	// fmt.Println("%v", state)
 	return nil
 }
 
