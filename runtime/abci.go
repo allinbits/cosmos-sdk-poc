@@ -6,6 +6,7 @@ import (
 	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
 	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -44,7 +45,7 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 	case 4:
 		splitted = splitted[1:]
 	default:
-		return types.ResponseQuery{Code: CodeBadRequest, Log: "invalid path"}
+		return types.ResponseQuery{Code: errors.CodeBadRequest, Log: "invalid path"}
 	}
 	verb := splitted[0]
 	stateObjectName := splitted[1] // TODO check if store knows of the existence of this stateObjectName
@@ -53,22 +54,22 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 	case runtimev1alpha1.Verb_Get.String():
 		objType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(stateObjectName))
 		if err != nil {
-			return types.ResponseQuery{Code: CodeNotFound}
+			return types.ResponseQuery{Code: errors.CodeNotFound}
 		}
 		object := objType.New().Interface().(meta.StateObject)
 		err = a.rt.Get(meta.NewStringID(key), object)
 		if err != nil {
-			return types.ResponseQuery{Code: CodeUnknown, Log: err.Error()}
+			return types.ResponseQuery{Code: errors.CodeUnknown, Log: err.Error()}
 		}
 		jsonObject, err := protojson.Marshal(object)
 		if err != nil {
-			return types.ResponseQuery{Code: CodeUnknown, Log: err.Error()}
+			return types.ResponseQuery{Code: errors.CodeUnknown, Log: err.Error()}
 		}
 		return types.ResponseQuery{
 			Value: jsonObject,
 		}
 	default:
-		return types.ResponseQuery{Code: CodeBadRequest, Log: "unsupported verb" + verb}
+		return types.ResponseQuery{Code: errors.CodeBadRequest, Log: "unsupported verb" + verb}
 	}
 }
 
@@ -76,18 +77,18 @@ func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckT
 	// decode tx
 	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
 	if err != nil {
-		return types.ResponseCheckTx(ToABCIResponse(0, 0, err))
+		return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 	}
 	// run admission checks on the transaction
 	err = a.rt.runTxAdmissionChain(tx)
 	if err != nil {
-		return types.ResponseCheckTx(ToABCIResponse(0, 0, err))
+		return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 	}
 	// run admission checks on single state transitions
 	for _, transition := range tx.StateTransitions() {
 		err = a.rt.runAdmissionChain(transition)
 		if err != nil {
-			return types.ResponseCheckTx(ToABCIResponse(0, 0, err))
+			return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 		}
 	}
 	return types.ResponseCheckTx{}
@@ -137,23 +138,23 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	// decode tx
 	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
 	if err != nil {
-		return ToABCIResponse(0, 0, err)
+		return errors.ToABCIResponse(0, 0, err)
 	}
 	// run admission checks on tx
 	err = a.rt.runTxAdmissionChain(tx)
 	if err != nil {
-		return ToABCIResponse(0, 0, err)
+		return errors.ToABCIResponse(0, 0, err)
 	}
 	// do authentication
 	err = a.rt.authn.Authenticate(tx) // sig verification - weight 10
 	if err != nil {
-		return ToABCIResponse(0, 0, err)
+		return errors.ToABCIResponse(0, 0, err)
 	}
 	// TODO cache the store
 	// todo run authentication chain
 	err = a.rt.runTxPostAuthenticationChain(tx)
 	if err != nil {
-		return ToABCIResponse(0, 0, err)
+		return errors.ToABCIResponse(0, 0, err)
 	}
 	// write the cache
 	// cache again
@@ -161,7 +162,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	for _, transition := range tx.StateTransitions() {
 		err = a.rt.Deliver(nil, transition)
 		if err != nil {
-			return ToABCIResponse(0, 0, err)
+			return errors.ToABCIResponse(0, 0, err)
 		}
 	}
 	// write cache

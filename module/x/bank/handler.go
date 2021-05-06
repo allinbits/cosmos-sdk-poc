@@ -6,8 +6,8 @@ import (
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	authv1alpha1 "github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/bank/v1alpha1"
-	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/controller"
+	errors2 "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 )
@@ -60,7 +60,7 @@ func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp c
 		return resp, nil
 	// if not found create the balance for the account
 	// then attempt to create the account itself if it does not exist
-	case errors.Is(err, runtime.ErrNotFound):
+	case errors.Is(err, errors2.ErrNotFound):
 		err = s.c.SetBalance(
 			msg.ToAddress,
 			msg.Amount,
@@ -100,7 +100,7 @@ func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
 	case err == nil:
 		return nil
 	// break so we create it
-	case errors.Is(err, runtime.ErrNotFound):
+	case errors.Is(err, errors2.ErrNotFound):
 		break
 	}
 
@@ -128,7 +128,7 @@ func (s SetCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp co
 			Balance: msg.Amount,
 		})
 		return
-	case errors.Is(err, runtime.ErrNotFound):
+	case errors.Is(err, errors2.ErrNotFound):
 		err = s.c.Create(&v1alpha1.Balance{
 			Address: msg.Address,
 			Balance: msg.Amount,

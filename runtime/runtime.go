@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	errors2 "github.com/fdymylja/tmos/runtime/errors"
 	"k8s.io/klog/v2"
 
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -141,7 +142,7 @@ func (r *Runtime) runAdmissionChain(transition meta.StateTransition) error {
 	for _, ctrl := range ctrls {
 		_, err = ctrl.Validate(controller.AdmissionRequest{Transition: transition})
 		if err != nil {
-			return fmt.Errorf("%w: %s", ErrBadRequest, err.Error())
+			return fmt.Errorf("%w: %s", errors2.ErrBadRequest, err.Error())
 		}
 	}
 	return nil
@@ -153,7 +154,7 @@ func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 	for _, ctrl := range ctrls {
 		err := ctrl.Validate(tx)
 		if err != nil {
-			return fmt.Errorf("%w: %s", ErrBadRequest, err)
+			return fmt.Errorf("%w: %s", errors2.ErrBadRequest, err)
 		}
 	}
 	return nil
@@ -164,7 +165,7 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 	for _, ctrl := range ctrls {
 		_, err := ctrl.Deliver(authentication.DeliverRequest{Tx: tx})
 		if err != nil {
-			return fmt.Errorf("%w: %s", ErrBadRequest, err)
+			return fmt.Errorf("%w: %s", errors2.ErrBadRequest, err)
 		}
 	}
 	return nil
@@ -177,7 +178,7 @@ func convertStoreError(err error) error {
 	}
 	switch {
 	case errors.Is(err, badger.ErrNotFound):
-		return fmt.Errorf("%w: %s", ErrNotFound, err)
+		return fmt.Errorf("%w: %s", errors2.ErrNotFound, err)
 	default:
 		panic("unrecognized error type:" + err.Error())
 	}

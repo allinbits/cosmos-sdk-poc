@@ -6,6 +6,7 @@ import (
 	"github.com/fdymylja/tmos/module/abci"
 	"github.com/fdymylja/tmos/module/runtime"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/store/badger"
@@ -81,7 +82,7 @@ func (b *Builder) Build() (*Runtime, error) {
 func (b *Builder) install(m *module.Descriptor) error {
 	// check name
 	if isModuleNameEmpty(m.Name) {
-		return ErrEmptyModuleName
+		return errors.ErrEmptyModuleName
 	}
 
 	// install state transition controllers
