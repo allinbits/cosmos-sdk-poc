@@ -13,18 +13,6 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-func NewBindRoleController(client module.Client) controller.StateTransition {
-	return BindRoleController{client: client}
-}
-
-type BindRoleController struct {
-	client module.Client
-}
-
-func (b BindRoleController) Deliver(req controller.StateTransitionRequest) (controller.StateTransitionResponse, error) {
-	panic("implement me")
-}
-
 func NewCreateRoleController(client module.Client) controller.StateTransition {
 	return CreateRoleController{
 		client: client,

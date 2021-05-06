@@ -15,5 +15,6 @@ func (m Module) Initialize(client module.Client, builder *module.Builder) {
 		OwnsStateObject(&v1alpha1.RoleBinding{}).
 		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleController(client)).
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionController(client)).
-		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleController(client))
+		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleController(client)).
+		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client))
 }
