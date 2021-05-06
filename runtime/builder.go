@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/module/abci"
+	"github.com/fdymylja/tmos/module/rbac"
 	"github.com/fdymylja/tmos/module/runtime"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/errors"
@@ -53,6 +54,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	// add core modules
 	b.AddModule(abci.NewModule())
 	b.AddModule(runtime.NewModule())
+	b.AddModule(rbac.NewModule())
 	// install all modules
 	for _, m := range b.modules {
 		// check if already installed

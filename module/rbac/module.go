@@ -5,6 +5,8 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
+func NewModule() Module { return Module{} }
+
 type Module struct {
 }
 
