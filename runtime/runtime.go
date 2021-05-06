@@ -27,8 +27,8 @@ type Runtime struct {
 	store  *badger.Store
 }
 
-// Initialize initializes the runtime with default state from modules which have genesis
-func (r *Runtime) Initialize() error {
+// InitGenesis initializes the runtime with default state from modules which have genesis
+func (r *Runtime) InitGenesis() error {
 	// check if runtime is initialized
 	const notInitialized uint32 = 0
 	const initialized uint32 = 1

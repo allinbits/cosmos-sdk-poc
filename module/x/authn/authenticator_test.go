@@ -28,7 +28,7 @@ func TestAuthenticator(t *testing.T) {
 	rt, err := rtb.Build()
 	require.NoError(t, err)
 
-	err = rt.Initialize()
+	err = rt.InitGenesis()
 	if err != nil {
 		t.Fatal(err)
 	}

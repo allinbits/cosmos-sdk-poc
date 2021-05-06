@@ -97,7 +97,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 	// if app state bytes is nil we initialize with default genesis states
 	switch len(chain.AppStateBytes) {
 	case 0:
-		err := a.rt.Initialize()
+		err := a.rt.InitGenesis()
 		if err != nil {
 			panic(err)
 		}
@@ -145,7 +145,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 		return ToABCIResponse(0, 0, err)
 	}
 	// do authentication
-	err = a.rt.authn.Authenticate(tx)
+	err = a.rt.authn.Authenticate(tx) // sig verification - weight 10
 	if err != nil {
 		return ToABCIResponse(0, 0, err)
 	}

@@ -12,10 +12,10 @@ func TestModule(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = rt.Initialize()
+	err = rt.InitGenesis()
 	if err != nil {
 		t.Fatal(err)
 	}
 	// we should have in store the registered state objects and state transitions
-
+	// TODO test :)
 }

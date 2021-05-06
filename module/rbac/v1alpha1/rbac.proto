@@ -4,15 +4,17 @@ package tmos.rbac.v1alpha1;
 
 option go_package = "github.com/fdymylja/tmos/module/rbac/v1alpha1";
 
-import "module/runtime/v1alpha1/runtime.proto";
-
 // Role defines a role, which defines what resources
 // can be accessed and which operations can be performed
 // on those resources
 message Role {
   string id = 1; // external_account
-  repeated string resources = 2;
-  repeated tmos.runtime.v1alpha1.Verb verbs = 3;
+  repeated string gets = 2;
+  repeated string lists = 3;
+  repeated string creates = 4;
+  repeated string updates = 5;
+  repeated string deletes = 6;
+  repeated string delivers = 7;
 }
 
 // RoleBinding binds a subject to a role
