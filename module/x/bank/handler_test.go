@@ -3,6 +3,7 @@ package bank_test
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,7 @@ func TestSendCoins(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = rt.Deliver([]string{"dio"}, &v1alpha1.MsgSendCoins{
+	err = rt.Deliver(authentication.NewSubjects("dio"), &v1alpha1.MsgSendCoins{
 		FromAddress: "frojdi",
 		ToAddress:   "jonathan",
 		Amount: []*coin.Coin{

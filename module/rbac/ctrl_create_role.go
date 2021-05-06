@@ -7,7 +7,7 @@ import (
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/controller"
-	errors2 "github.com/fdymylja/tmos/runtime/errors"
+	rterr "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/scylladb/go-set/strset"
@@ -69,7 +69,7 @@ func (c CreateRoleAdmissionController) roleNotExist(id string) error {
 	switch {
 	case err == nil:
 		return fmt.Errorf("role %s already exists", id)
-	case errors.Is(err, errors2.ErrNotFound):
+	case errors.Is(err, rterr.ErrNotFound):
 		return nil
 	default:
 		return err

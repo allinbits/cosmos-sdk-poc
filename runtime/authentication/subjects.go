@@ -1,9 +1,17 @@
 package authentication
 
-func NewSubjects() *Subjects {
+func NewEmptySubjects() *Subjects {
 	return &Subjects{
 		authenticatedSubjects: map[string]struct{}{},
 	}
+}
+
+func NewSubjects(subjects ...string) *Subjects {
+	s := &Subjects{authenticatedSubjects: make(map[string]struct{}, len(subjects))}
+	for _, sub := range subjects {
+		s.authenticatedSubjects[sub] = struct{}{}
+	}
+	return s
 }
 
 // Subjects is a convenience struct for checking

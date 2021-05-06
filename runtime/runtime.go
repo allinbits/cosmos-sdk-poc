@@ -18,6 +18,16 @@ import (
 	"github.com/fdymylja/tmos/runtime/store/badger"
 )
 
+type deliverOptions struct {
+	skipAdmissionController bool
+}
+
+type DeliverOption func(opt *deliverOptions)
+
+func DeliverSkipAdmissionControllers(opt *deliverOptions) {
+	opt.skipAdmissionController = true
+}
+
 type Runtime struct {
 	modules     []*module.Descriptor
 	initialized uint32
@@ -39,11 +49,11 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as RBAC can have access to it.
 	klog.Infof("initializing runtime controller default state")
-	err := r.deliver(&runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
+	err := r.deliver(nil, &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
 	if err != nil {
 		return err
 	}
-	err = r.deliver(&runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
+	err = r.deliver(nil, &runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
 	if err != nil {
 		return err
 	}
@@ -107,16 +117,26 @@ func (r *Runtime) Delete(subject string, id meta.ID, object meta.StateObject) er
 	return convertStoreError(r.store.Delete(object))
 }
 
-func (r *Runtime) Deliver(subjects []string, transition meta.StateTransition) (err error) {
+func (r *Runtime) Deliver(subjects *authentication.Subjects, transition meta.StateTransition, opts ...DeliverOption) (err error) {
 	// identity here should be used for authorization checks
 	// ex: identity is module/user then can it call the state transition?
 	// TODO
-	return r.deliver(transition)
+	return r.deliver(subjects, transition, opts...)
 }
 
 // deliver delivers a meta.StateTransition to the handling controller
 // returns error in case of routing errors or execution errors.
-func (r *Runtime) deliver(stateTransition meta.StateTransition) error {
+func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition meta.StateTransition, opts ...DeliverOption) error {
+	deliverOpt := new(deliverOptions)
+	for _, opt := range opts {
+		opt(deliverOpt)
+	}
+	if !deliverOpt.skipAdmissionController {
+		err := r.runAdmissionChain(stateTransition)
+		if err != nil {
+			return err
+		}
+	}
 	// get the handler
 	handler, err := r.router.GetStateTransitionController(stateTransition)
 	if err != nil {
@@ -124,7 +144,10 @@ func (r *Runtime) deliver(stateTransition meta.StateTransition) error {
 	}
 
 	// deliver the request
-	_, err = handler.Deliver(controller.StateTransitionRequest{Transition: stateTransition})
+	_, err = handler.Deliver(controller.StateTransitionRequest{
+		Subjects:   subjects,
+		Transition: stateTransition,
+	})
 	if err != nil {
 		return err
 	}

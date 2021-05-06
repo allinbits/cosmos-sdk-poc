@@ -91,7 +91,7 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo, signatures [][]byte) (string
 	if len(signatures) != len(info.SignerInfos) {
 		return "", nil, nil, fmt.Errorf("tx: signers and signatures number mimsatch")
 	}
-	subjects := authentication.NewSubjects()
+	subjects := authentication.NewEmptySubjects()
 
 	var signers []Signer
 	feePayer := ""

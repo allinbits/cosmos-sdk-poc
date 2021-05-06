@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 )
@@ -13,7 +14,7 @@ type server interface {
 	Update(user string, object meta.StateObject) error
 	Delete(user string, id meta.ID, object meta.StateObject) error
 	// Deliver delivers a meta.StateTransition to the handling controller
-	Deliver(identities []string, transition meta.StateTransition) error
+	Deliver(subjects *authentication.Subjects, transition meta.StateTransition, opts ...DeliverOption) error
 }
 
 var _ module.Client = (*client)(nil)
@@ -46,7 +47,9 @@ func (c *client) Delete(id meta.ID, object meta.StateObject) error {
 }
 
 func (c client) Deliver(transition meta.StateTransition) error {
-	return c.runtime.Deliver([]string{c.user}, transition)
+	subjects := authentication.NewEmptySubjects()
+	subjects.Add(c.user)
+	return c.runtime.Deliver(subjects, transition)
 }
 
 func (c client) List(obj meta.StateObject) error { panic("not impl") }

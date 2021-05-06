@@ -6,6 +6,7 @@ import (
 	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
 	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
@@ -124,7 +125,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.ResponseBeginBlock {
 	block := new(abci.RequestBeginBlock)
 	block.FromLegacyProto(&tmBlock)
-	err := a.rt.Deliver([]string{"abci"}, &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
+	err := a.rt.Deliver(authentication.NewSubjects(), &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
 	if err != nil {
 		panic(err)
 	}
@@ -160,7 +161,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	// cache again
 	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.Deliver(nil, transition)
+		err = a.rt.Deliver(tx.Subjects(), transition)
 		if err != nil {
 			return errors.ToABCIResponse(0, 0, err)
 		}

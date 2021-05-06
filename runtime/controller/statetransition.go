@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // StateTransitionRequest is the request forwarded to the StateTransition controller
 type StateTransitionRequest struct {
+	Subjects   *authentication.Subjects
 	Transition meta.StateTransition
 }
 
