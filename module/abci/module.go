@@ -5,6 +5,8 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
+const Subject = "abci"
+
 func NewModule() module.Module {
 	return Module{}
 }
@@ -14,7 +16,7 @@ type Module struct {
 
 func (m Module) Initialize(client module.Client, builder *module.Builder) {
 	builder.
-		Named("abci").
+		Named(Subject).
 		OwnsStateObject(&v1alpha1.Stage{}).
 		OwnsStateObject(&v1alpha1.BeginBlockState{}).
 		OwnsStateObject(&v1alpha1.DeliverTxState{}).

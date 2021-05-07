@@ -72,6 +72,13 @@ func (g *genesis) SetDefault() error {
 			return err
 		}
 	}
+	// create external_account role
+	err := g.c.Deliver(&v1alpha1.MsgCreateRole{NewRole: &v1alpha1.Role{
+		Id: v1alpha1.ExternalAccountRoleID,
+	}})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

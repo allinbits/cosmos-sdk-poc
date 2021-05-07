@@ -2,6 +2,7 @@ package authn
 
 import (
 	"encoding/json"
+
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/module"
 )

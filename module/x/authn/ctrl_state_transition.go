@@ -1,6 +1,7 @@
 package authn
 
 import (
+	rbacv1alpha1 "github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -36,5 +37,16 @@ func (m *CreateAccountController) Deliver(req controller.StateTransitionRequest)
 	// update last account number
 	lastAccNum.Number = lastAccNum.Number + 1
 	err = m.c.Update(lastAccNum)
+	if err != nil {
+		return
+	}
+	// bind account to external_account role
+	err = m.c.Deliver(&rbacv1alpha1.MsgBindRole{
+		RoleId:  rbacv1alpha1.ExternalAccountRoleID,
+		Subject: account.Address,
+	})
+	if err != nil {
+		return
+	}
 	return resp, err
 }

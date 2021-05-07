@@ -1,6 +1,7 @@
 package authn
 
 import (
+	rbacv1alpha1 "github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/authn/extensions"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -26,10 +27,10 @@ func (m *Module) Initialize(c module.Client, builder *module.Builder) {
 		OwnsStateObject(&v1alpha1.Params{}).
 		OwnsStateObject(&v1alpha1.CurrentAccountNumber{}).
 		ExtendsAuthentication(extensions.New(c)).
-		WithGenesis(genesis{c: c})
+		WithGenesis(genesis{c: c}).
+		NeedsStateTransition(&rbacv1alpha1.MsgBindRole{})
 }
 
 func (m *Module) GetAuthenticator() authentication.Authenticator {
 	return m.authenticator
 }
-

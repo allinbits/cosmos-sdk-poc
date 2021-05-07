@@ -8,6 +8,11 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+// ExternalAccountRoleID defines the external account role
+// which every newly created account has, it gives them
+// access to Deliver on external handlers.
+const ExternalAccountRoleID = "external_account"
+
 func (x *Role) GetID() meta.ID { return meta.NewStringID(x.Id) }
 
 func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {

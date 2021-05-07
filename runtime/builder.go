@@ -9,6 +9,7 @@ import (
 	"github.com/fdymylja/tmos/module/runtime"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -22,7 +23,7 @@ var (
 
 // NewBuilder creates a new Builder for the Runtime
 func NewBuilder() *Builder {
-	return &Builder{
+	b := &Builder{
 		installedModules: map[string]struct{}{},
 		modules:          nil,
 		authn:            nil,
@@ -30,6 +31,17 @@ func NewBuilder() *Builder {
 		store:            badger.NewStore(),
 		rt:               &Runtime{},
 	}
+	// we already add the core modules in order
+	// in theory we could add a dependency system
+	// for genesis initialization, but for now lets keep it simple.
+	runtimeModule := runtime.NewModule() // needs to be first as it has state transitions/state object info
+	rbacModule := rbac.NewModule()       // needs to be second as it provides the authorization layer
+	b.rbac = rbacModule                  // we set the rbac module inside so that we can prepare initial genesis with rbac
+	abciModule := abci.NewModule()       // abci third so other modules can have access to this information
+	b.AddModule(runtimeModule)
+	b.AddModule(rbacModule)
+	b.AddModule(abciModule)
+	return b
 }
 
 // Builder is used to create a new runtime from scratch
@@ -37,6 +49,7 @@ type Builder struct {
 	installedModules map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
 	modules          []*module.Descriptor
 	authn            authentication.Authenticator
+	rbac             *rbac.Module
 	router           *Router
 	store            *badger.Store
 	rt               *Runtime
@@ -44,10 +57,13 @@ type Builder struct {
 
 // AddModule adds a new module.Module to the list of modules to install
 func (b *Builder) AddModule(m module.Module) {
+	type subjectSetter interface {
+		SetSubject(subject string)
+	}
 	mb := module.NewModuleBuilder()
-	mc := newClient(b.rt)
+	mc := client.New(newRuntimeAsServer(b.rt))
 	m.Initialize(mc, mb)
-	mc.SetUser(mb.Descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
+	mc.(subjectSetter).SetSubject(mb.Descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
 	b.modules = append(b.modules, mb.Descriptor)
 }
 
@@ -57,12 +73,6 @@ func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
 
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
-	// instantiate rbac
-	rbacM := rbac.NewModule()
-	// add core modules
-	b.AddModule(abci.NewModule())
-	b.AddModule(runtime.NewModule())
-	b.AddModule(rbacM)
 	// install all modules
 	for _, m := range b.modules {
 		// check if already installed
@@ -74,14 +84,14 @@ func (b *Builder) Build() (*Runtime, error) {
 			return nil, fmt.Errorf("error while installing module %s: %w", m.Name, err)
 		}
 		// add initial role to rbac
-		rbacM.AddInitialRole(role, binding)
+		b.rbac.AddInitialRole(role, binding)
 		// mark as installed module
 		b.installedModules[m.Name] = struct{}{}
 	}
 	b.rt.store = b.store
 	b.rt.router = b.router
 	b.rt.modules = b.modules
-	b.rt.rbac = rbacM.AsAuthorizer()
+	b.rt.rbac = b.rbac.AsAuthorizer()
 	switch b.authn {
 	case nil:
 		klog.Warningf("no authenticator was set up - transactions sent to the ABCI application will be rejected")

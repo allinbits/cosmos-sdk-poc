@@ -1,13 +1,9 @@
 package module
 
-import (
-	"github.com/fdymylja/tmos/runtime/meta"
-	"github.com/fdymylja/tmos/runtime/store"
-)
+import "github.com/fdymylja/tmos/runtime/client"
 
 type Client interface {
-	store.Store
-	Deliver(transition meta.StateTransition) error
+	client.RuntimeClient
 }
 
 // Module defines a basic module which handles changes

@@ -16,12 +16,16 @@ import (
 )
 
 func NewABCIApplication(rt *Runtime) ABCIApplication {
-	return ABCIApplication{rt: rt}
+	return ABCIApplication{
+		rt:          rt,
+		abciSubject: authentication.NewSubjects("abci"),
+	}
 }
 
 // ABCIApplication is a Runtime orchestrated by Tendermint
 type ABCIApplication struct {
-	rt *Runtime
+	rt          *Runtime
+	abciSubject *authentication.Subjects
 }
 
 func (a ABCIApplication) Info(info types.RequestInfo) types.ResponseInfo {
@@ -111,10 +115,12 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 		}
 	}
 	// set init chain info
-	err := a.rt.Deliver(nil, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
+	err := a.rt.Deliver(a.abciSubject, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
 	if err != nil {
 		panic(err)
 	}
+	// enable role based access control
+	a.rt.EnableRBAC()
 	return types.ResponseInitChain{
 		ConsensusParams: nil,
 		Validators:      chain.Validators,
@@ -125,7 +131,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.ResponseBeginBlock {
 	block := new(abci.RequestBeginBlock)
 	block.FromLegacyProto(&tmBlock)
-	err := a.rt.Deliver(authentication.NewSubjects(), &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
+	err := a.rt.Deliver(a.abciSubject, &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
 	if err != nil {
 		panic(err)
 	}
@@ -168,21 +174,12 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	}
 	// write cache
 	// success!
-	return types.ResponseDeliverTx{
-		Code:      0,
-		Data:      nil,
-		Log:       "",
-		Info:      "",
-		GasWanted: 0,
-		GasUsed:   0,
-		Events:    nil,
-		Codespace: "",
-	}
+	return types.ResponseDeliverTx{}
 }
 
 func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {
 	// we set the abci endblcok state given us by tendermint so other modules can access it
-	err := a.rt.Deliver(nil, &abcictrl.MsgSetEndBlockState{
+	err := a.rt.Deliver(a.abciSubject, &abcictrl.MsgSetEndBlockState{
 		EndBlock: &abci.RequestEndBlock{
 			Height: block.Height,
 		},
