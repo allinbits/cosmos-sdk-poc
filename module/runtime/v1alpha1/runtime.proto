@@ -1,0 +1,42 @@
+syntax="proto3";
+package tmos.runtime.v1alpha1;
+
+option go_package = "github.com/fdymylja/tmos/module/runtime/v1alpha1";
+
+// Verb defines an action that can be performed on the runtime by external entities
+enum Verb {
+  // Unknown defines an unknown verb
+  Unknown = 0;
+  // Get identifies the GET operation
+  Get = 1;
+  // List identifies the LIST operation
+  List = 2;
+  // Create identifies the CREATE operation
+  Create = 3;
+  // Update identifies the UPDATE operation
+  Update = 4;
+  // Delete identifies the DELETE operation
+  Delete = 5;
+  // Deliver identifies the DELIVER operation
+  Deliver = 6;
+}
+
+// StateObjectsList provides the list of state objects
+// represented as protobuf.Fullname(meta.StateObject)
+message StateObjectsList {
+  repeated string state_objects = 1;
+}
+
+// StateTransitionsList provides the list of state transitions
+// that can be delivered to the runtime represented as protobuf.Fullname(meta.StateTransition)
+message StateTransitionsList {
+  repeated string state_transitions = 1;
+}
+
+message CreateStateObjectsList {
+  repeated string state_objects = 1;
+}
+
+message CreateStateTransitionsList {
+  repeated string state_transitions = 1;
+}
