@@ -5,8 +5,8 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-// Authorizer defines an authorizer module in the runtime.Runtime
-type Authorizer interface {
+// RBAC defines an authorizer module in the runtime.Runtime based on Role Based Access Control
+type RBAC interface {
 	// Allowed checks if the provided subject is allowed to do the Verb action on the defined resource
 	Allowed(verb runtimev1alpha1.Verb, resource meta.Type, subjects ...string) error
 }

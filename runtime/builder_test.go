@@ -3,7 +3,6 @@ package runtime_test
 import (
 	"testing"
 
-	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/fdymylja/tmos/runtime"
@@ -21,5 +20,6 @@ func TestNewBuilder_ModuleWithoutName(t *testing.T) {
 	builder.AddModule(&TestModule{})
 
 	_, err := builder.Build()
-	require.Contains(t, err.Error(), errors.ErrEmptyModuleName.Error())
+	require.NotNil(t, err)
+	require.Contains(t, err.Error(), "empty module name")
 }

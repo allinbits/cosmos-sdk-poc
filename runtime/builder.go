@@ -14,6 +14,10 @@ import (
 	"k8s.io/klog/v2"
 )
 
+var (
+	errEmptyModuleName = errors.New("runtime: empty module name")
+)
+
 // NewBuilder creates a new Builder for the Runtime
 func NewBuilder() *Builder {
 	return &Builder{
@@ -51,10 +55,12 @@ func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
 
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
+	// instantiate rbac
+	rbacM := rbac.NewModule()
 	// add core modules
 	b.AddModule(abci.NewModule())
 	b.AddModule(runtime.NewModule())
-	b.AddModule(rbac.NewModule())
+	b.AddModule(rbacM)
 	// install all modules
 	for _, m := range b.modules {
 		// check if already installed
@@ -70,7 +76,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	b.rt.store = b.store
 	b.rt.router = b.router
 	b.rt.modules = b.modules
-
+	b.rt.rbac = rbacM.AsAuthorizer()
 	switch b.authn {
 	case nil:
 		klog.Warningf("no authenticator was set up - transactions sent to the ABCI application will be rejected")
@@ -84,7 +90,7 @@ func (b *Builder) Build() (*Runtime, error) {
 func (b *Builder) install(m *module.Descriptor) error {
 	// check name
 	if isModuleNameEmpty(m.Name) {
-		return errors.ErrEmptyModuleName
+		return errEmptyModuleName
 	}
 
 	// install state transition controllers

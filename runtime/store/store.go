@@ -7,5 +7,5 @@ type Store interface {
 	List(object meta.StateObject) error
 	Create(meta.StateObject) error
 	Update(meta.StateObject) error
-	Delete(meta.ID, meta.StateObject) error
+	Delete(meta.StateObject) error
 }

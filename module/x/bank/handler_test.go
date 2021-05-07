@@ -21,6 +21,7 @@ func TestSendCoins(t *testing.T) {
 	rtb.AddModule(authn.NewModule())
 	rt, err := rtb.Build()
 	require.NoError(t, err)
+	rt.EnableRBAC()
 
 	err = rt.Create("TODO", &v1alpha1.Balance{
 		Address: "frojdi",

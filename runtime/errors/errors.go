@@ -17,7 +17,7 @@ var (
 	ErrNotFound        = errors.New("runtime: not found")
 	ErrAlreadyExists   = errors.New("runtime: already exists")
 	ErrConditionNotMet = errors.New("runtime: conditions were not met")
-	ErrEmptyModuleName = errors.New("runtime: empty module name")
+	ErrUnauthorized    = errors.New("runtime: unauthorized")
 )
 
 var (
@@ -27,6 +27,14 @@ var (
 	CodeAlreadyExists    uint32 = http.StatusConflict
 	CodeConditionsNotMet uint32 = http.StatusPreconditionFailed
 )
+
+func New(s string) error {
+	return errors.New(s)
+}
+
+func Is(err, target error) bool {
+	return errors.Is(err, target)
+}
 
 func ToABCIResponse(gasWanted, gasUsed uint64, err error) abci.ResponseDeliverTx {
 	var code uint32

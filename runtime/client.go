@@ -12,7 +12,7 @@ type server interface {
 	List() // TBD
 	Create(user string, object meta.StateObject) error
 	Update(user string, object meta.StateObject) error
-	Delete(user string, id meta.ID, object meta.StateObject) error
+	Delete(user string, object meta.StateObject) error
 	// Deliver delivers a meta.StateTransition to the handling controller
 	Deliver(subjects *authentication.Subjects, transition meta.StateTransition, opts ...DeliverOption) error
 }
@@ -42,8 +42,8 @@ func (c *client) Update(object meta.StateObject) error {
 	return c.runtime.Update(c.user, object)
 }
 
-func (c *client) Delete(id meta.ID, object meta.StateObject) error {
-	return c.runtime.Delete(c.user, id, object)
+func (c *client) Delete(object meta.StateObject) error {
+	return c.runtime.Delete(c.user, object)
 }
 
 func (c client) Deliver(transition meta.StateTransition) error {

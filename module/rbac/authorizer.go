@@ -5,10 +5,17 @@ import (
 
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/scylladb/go-set/strset"
 )
+
+var _ authorization.RBAC = Authorizer{}
+
+func NewAuthorizer(c module.Client) authorization.RBAC {
+	return Authorizer{c: c}
+}
 
 type Authorizer struct {
 	c module.Client

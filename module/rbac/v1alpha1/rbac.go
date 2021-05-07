@@ -6,6 +6,7 @@ import (
 )
 
 func (x *Role) GetID() meta.ID { return meta.NewStringID(x.Id) }
+
 func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	switch verb {
 	case runtimev1alpha1.Verb_Get:
@@ -24,6 +25,7 @@ func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 		return nil
 	}
 }
+
 func (x *RoleBinding) GetID() meta.ID { return meta.NewStringID(x.Subject) }
 
 func (x *MsgBindRole) StateTransition()   {}
