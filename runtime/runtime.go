@@ -33,19 +33,19 @@ type Runtime struct {
 
 	authn authentication.Authenticator
 
-	rbac         authorization.RBAC
-	authzEnabled bool
+	rbac        authorization.RBAC
+	rbacEnabled bool
 
 	router *Router
 	store  *badger.Store
 }
 
 func (r *Runtime) EnableRBAC() {
-	r.authzEnabled = true
+	r.rbacEnabled = true
 }
 
 func (r *Runtime) DisableRBAC() {
-	r.authzEnabled = false
+	r.rbacEnabled = false
 }
 
 // InitGenesis initializes the runtime with default state from modules which have genesis
@@ -221,7 +221,7 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 }
 
 func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, subjects ...string) error {
-	if !r.authzEnabled {
+	if !r.rbacEnabled {
 		return nil
 	}
 	err := r.rbac.Allowed(verb, resource, subjects...)
