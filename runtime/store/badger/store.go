@@ -53,7 +53,7 @@ func (s *Store) Get(id meta.ID, object meta.StateObject) error {
 func (s *Store) Create(object meta.StateObject) error {
 	key := s.keyFor(object)
 	if s.kv.has(key) {
-		return ErrAlreadyExists
+		return fmt.Errorf("%w: %s", ErrAlreadyExists, key)
 	}
 	klog.Infof("creating: %s %s", key, object)
 	b, err := proto.Marshal(object)

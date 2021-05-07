@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/scylladb/go-set/strset"
@@ -27,20 +29,43 @@ func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	}
 }
 
-func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resources ...meta.Type) {
-
+func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resource meta.Type) error {
+	name := meta.Name(resource)
+	switch verb {
+	case runtimev1alpha1.Verb_Get:
+		x.Gets = append(x.Gets, name)
+		return nil
+	case runtimev1alpha1.Verb_List:
+		x.Lists = append(x.Lists, name)
+		return nil
+	case runtimev1alpha1.Verb_Create:
+		x.Creates = append(x.Creates, name)
+		return nil
+	case runtimev1alpha1.Verb_Delete:
+		x.Deletes = append(x.Deletes, name)
+		return nil
+	case runtimev1alpha1.Verb_Update:
+		x.Updates = append(x.Updates, name)
+		return nil
+	case runtimev1alpha1.Verb_Deliver:
+		x.Delivers = append(x.Delivers, name)
+		return nil
+	default:
+		return fmt.Errorf("unknown verb %s", verb)
+	}
 }
 
-func (x *Role) Extend(verb runtimev1alpha1.Verb, resources ...meta.Type) error {
+func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.Type) error {
 	res := x.GetResourcesForVerb(verb)
-	// in case its empty simply append
-	if len(res) == 0 {
-		x.appendToVerb(verb, resources...)
-	}
 	set := strset.New(res...)
-	for _, r := range resources {
-		if !set.Has(meta.)
+	if len(res) != 0 && set.Has(meta.Name(resource)) {
+		return fmt.Errorf("role %s has already resource %s", x, meta.Name(resource))
 	}
+	err := x.appendToVerb(verb, resource)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (x *RoleBinding) GetID() meta.ID { return meta.NewStringID(x.Subject) }

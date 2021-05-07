@@ -5,7 +5,9 @@ import (
 
 	"github.com/fdymylja/tmos/module/abci"
 	"github.com/fdymylja/tmos/module/rbac"
+	rbacv1alpha1 "github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/module/runtime"
+	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -67,9 +69,12 @@ func (b *Builder) Build() (*Runtime, error) {
 		if _, exists := b.installedModules[m.Name]; exists {
 			return nil, fmt.Errorf("double registration of module named %s", m.Name)
 		}
-		if err := b.install(m); err != nil {
+		role, binding, err := b.install(m)
+		if err != nil {
 			return nil, fmt.Errorf("error while installing module %s: %w", m.Name, err)
 		}
+		// add initial role to rbac
+		rbacM.AddInitialRole(role, binding)
 		// mark as installed module
 		b.installedModules[m.Name] = struct{}{}
 	}
@@ -87,35 +92,51 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) install(m *module.Descriptor) error {
+func (b *Builder) install(m *module.Descriptor) (role *rbacv1alpha1.Role, binding *rbacv1alpha1.RoleBinding, err error) {
 	// check name
 	if isModuleNameEmpty(m.Name) {
-		return errEmptyModuleName
+		return nil, nil, errEmptyModuleName
 	}
-
+	role = &rbacv1alpha1.Role{
+		Id: roleNameForModule(m.Name),
+	}
+	binding = &rbacv1alpha1.RoleBinding{
+		Subject: m.Name,
+		RoleRef: roleNameForModule(m.Name),
+	}
 	// install state transition controllers
 	for _, ctrl := range m.StateTransitionControllers {
-		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
+		// add state transition controller to the router
+		err = b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
-			return err
+			return
+		}
+		// add deliver rights for the state transition
+		err = role.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
+		if err != nil {
+			return
 		}
 		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
 
 	// register admission controllers
 	for _, ctrl := range m.AdmissionControllers {
-		err := b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
+		err = b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
-			return err
+			return
 		}
 		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
 
 	// register state objects
 	for _, so := range m.StateObjects {
-		err := b.store.RegisterStateObject(so.StateObject)
+		err = b.store.RegisterStateObject(so.StateObject)
 		if err != nil {
-			return err
+			return
+		}
+		err = extendRoleForStateObject(role, so.StateObject)
+		if err != nil {
+			return
 		}
 		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
 	}
@@ -124,7 +145,7 @@ func (b *Builder) install(m *module.Descriptor) error {
 	// TODO register roles and dependencies
 	// register authentication extensions
 	if m.AuthenticationExtension == nil {
-		return nil
+		return
 	}
 
 	// add authentication admission controllers
@@ -136,9 +157,38 @@ func (b *Builder) install(m *module.Descriptor) error {
 		b.router.AddTransactionPostAuthenticationController(xt.Handler)
 		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
 	}
-	return nil
+	return
 }
 
 func isModuleNameEmpty(name string) bool {
 	return name == ""
+}
+
+func roleNameForModule(name string) string {
+	const moduleRoleSuffix = "role"
+	return fmt.Sprintf("%s-%s", name, moduleRoleSuffix)
+}
+
+func extendRoleForStateObject(role *rbacv1alpha1.Role, so meta.StateObject) (err error) {
+	err = role.Extend(runtimev1alpha1.Verb_Create, so)
+	if err != nil {
+		return err
+	}
+	err = role.Extend(runtimev1alpha1.Verb_Delete, so)
+	if err != nil {
+		return err
+	}
+	err = role.Extend(runtimev1alpha1.Verb_Update, so)
+	if err != nil {
+		return err
+	}
+	err = role.Extend(runtimev1alpha1.Verb_Get, so)
+	if err != nil {
+		return err
+	}
+	err = role.Extend(runtimev1alpha1.Verb_List, so)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -248,6 +248,6 @@ func convertStoreError(err error) error {
 	case errors.Is(err, badger.ErrNotFound):
 		return fmt.Errorf("%w: %s", errors.ErrNotFound, err)
 	default:
-		panic("unrecognized error type:" + err.Error())
+		panic("unrecognized error type: " + err.Error())
 	}
 }
