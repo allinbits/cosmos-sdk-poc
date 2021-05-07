@@ -140,9 +140,15 @@ func (b *Builder) install(m *module.Descriptor) (role *rbacv1alpha1.Role, bindin
 		}
 		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
 	}
+	// register dependencies onto other modules
+	for _, st := range m.Needs {
+		err = role.Extend(runtimev1alpha1.Verb_Deliver, st)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
+		}
+	}
 
 	// TODO register admission + mutating admission + hooks
-	// TODO register roles and dependencies
 	// register authentication extensions
 	if m.AuthenticationExtension == nil {
 		return

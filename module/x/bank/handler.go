@@ -104,7 +104,9 @@ func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
 		break
 	}
 
-	err = s.c.Create(&authv1alpha1.Account{Address: address})
+	err = s.c.Deliver(&authv1alpha1.MsgCreateAccount{Account: &authv1alpha1.Account{
+		Address: address,
+	}})
 	return err
 }
 

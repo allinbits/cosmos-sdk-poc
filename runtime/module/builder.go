@@ -79,3 +79,8 @@ func (b *Builder) ExtendsAuthentication(xt AuthenticationExtension) *Builder {
 	b.Descriptor.AuthenticationExtension = authXtB.descriptor
 	return b
 }
+
+func (b *Builder) NeedsStateTransition(transition meta.StateTransition) *Builder {
+	b.Descriptor.Needs = append(b.Descriptor.Needs, transition)
+	return b
+}
