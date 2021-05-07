@@ -57,11 +57,11 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as RBAC can have access to it.
 	klog.Infof("initializing runtime controller default state")
-	err := r.deliver(nil, &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
+	err := r.deliver(authentication.NewEmptySubjects(), &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
 	if err != nil {
 		return err
 	}
-	err = r.deliver(nil, &runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
+	err = r.deliver(authentication.NewEmptySubjects(), &runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
 	if err != nil {
 		return err
 	}

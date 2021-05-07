@@ -29,7 +29,7 @@ func (a Authorizer) Allowed(verb runtimev1alpha1.Verb, resource meta.Type, subje
 	// check if role is allowed to access the resource
 	set := a.getResourcesSet(verb, roles)
 	if !set.Has(meta.Name(resource)) {
-		return fmt.Errorf("no subject in %#v has role %s towards resource %s", subjects, verb, meta.Name(resource))
+		return fmt.Errorf("no subject in %s has role %s towards resource %s", subjects, verb, meta.Name(resource))
 	}
 	return nil
 }

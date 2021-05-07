@@ -3,6 +3,7 @@ package bank_test
 import (
 	"testing"
 
+	rbac "github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 
@@ -21,9 +22,25 @@ func TestSendCoins(t *testing.T) {
 	rtb.AddModule(authn.NewModule())
 	rt, err := rtb.Build()
 	require.NoError(t, err)
+	err = rt.InitGenesis()
+	require.NoError(t, err)
+	// create role
+	err = rt.Deliver(authentication.NewEmptySubjects(), &rbac.MsgCreateRole{
+		NewRole: &rbac.Role{
+			Id:      "bank",
+			Creates: []string{meta.Name(&v1alpha1.Balance{})},
+		},
+	})
+	require.NoError(t, err)
+	// bind role
+	err = rt.Deliver(authentication.NewEmptySubjects(), &rbac.MsgBindRole{
+		RoleId:  "bank",
+		Subject: "bank",
+	})
+	require.NoError(t, err)
 	rt.EnableRBAC()
 
-	err = rt.Create("TODO", &v1alpha1.Balance{
+	err = rt.Create("bank", &v1alpha1.Balance{
 		Address: "frojdi",
 		Balance: []*coin.Coin{
 			{
@@ -36,7 +53,7 @@ func TestSendCoins(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = rt.Deliver(authentication.NewSubjects("dio"), &v1alpha1.MsgSendCoins{
+	err = rt.Deliver(authentication.NewSubjects("bank"), &v1alpha1.MsgSendCoins{
 		FromAddress: "frojdi",
 		ToAddress:   "jonathan",
 		Amount: []*coin.Coin{

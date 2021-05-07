@@ -40,7 +40,7 @@ func (b BindRoleAdmission) Validate(request controller.AdmissionRequest) (contro
 }
 
 func (b BindRoleAdmission) roleExists(id string) error {
-	err := b.client.Get(meta.NewStringID(id), new(v1alpha1.RoleBinding))
+	err := b.client.Get(meta.NewStringID(id), new(v1alpha1.Role))
 	if err != nil {
 		return err
 	}

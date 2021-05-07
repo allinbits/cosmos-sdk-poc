@@ -1,5 +1,7 @@
 package authentication
 
+import "strings"
+
 func NewEmptySubjects() *Subjects {
 	return &Subjects{
 		authenticatedSubjects: map[string]struct{}{},
@@ -36,4 +38,8 @@ func (s *Subjects) List() []string {
 		l = append(l, k)
 	}
 	return l
+}
+
+func (s *Subjects) String() string {
+	return strings.Join(s.List(), ",")
 }

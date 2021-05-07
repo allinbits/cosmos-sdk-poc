@@ -82,19 +82,19 @@ func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) e
 		return err
 	}
 	set := strset.New(stateObjects.StateObjects...)
-	if !set.Has(role.Gets...) {
+	if len(role.Gets) != 0 && !set.Has(role.Gets...) {
 		return fmt.Errorf("unknown state object in get types %#v", role.Gets)
 	}
-	if !set.Has(role.Lists...) {
+	if len(role.Lists) != 0 && !set.Has(role.Lists...) {
 		return fmt.Errorf("unknown state object in list types %#v", role.Lists)
 	}
-	if !set.Has(role.Creates...) {
+	if len(role.Creates) != 0 && !set.Has(role.Creates...) {
 		return fmt.Errorf("unknown state object in create types %#v", role.Creates)
 	}
-	if !set.Has(role.Updates...) {
+	if len(role.Updates) != 0 && !set.Has(role.Updates...) {
 		return fmt.Errorf("unkown state object in update types %#v", role.Updates)
 	}
-	if !set.Has(role.Deletes...) {
+	if len(role.Deletes) != 0 && !set.Has(role.Deletes...) {
 		return fmt.Errorf("unknown state object in delete types %#v", role.Deletes)
 	}
 	return nil
@@ -106,7 +106,7 @@ func (c CreateRoleAdmissionController) verifyStateTransitions(role *v1alpha1.Rol
 		return err
 	}
 	set := strset.New(stateTransitions.StateTransitions...)
-	if !set.Has(role.Delivers...) {
+	if len(role.Delivers) != 0 && !set.Has(role.Delivers...) {
 		return fmt.Errorf("unknown state transition types %#v", role.Delivers)
 	}
 	return nil
