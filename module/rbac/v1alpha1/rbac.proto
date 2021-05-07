@@ -8,26 +8,31 @@ option go_package = "github.com/fdymylja/tmos/module/rbac/v1alpha1";
 // can be accessed and which operations can be performed
 // on those resources
 message Role {
-  string id = 1; // external_account
+  // id is the unique of the role, it does not identify the subject
+  // it just identifies the role as multiple subjects can be bound
+  // to the same role via RoleBinding
+  string id = 1;
+  // gets represents the resources (state objects) which the role can runtime.Get
   repeated string gets = 2;
+  // lists represents the resources (state objects) which the role can runtime.List
   repeated string lists = 3;
+  // creates represents the resources (state objects) which the role can runtime.Create
   repeated string creates = 4;
+  // updates represents the resources (state objects) which the role can runtime.Update
   repeated string updates = 5;
+  // deletes represents the resources(state objects)  which the role can runtime.Delete
   repeated string deletes = 6;
+  // delivers represents the resources (state transitions) which tre role can runtime.Deliver
   repeated string delivers = 7;
 }
 
-// RoleBinding binds a subject to a role
+// RoleBinding defines the role for a given subject
 message RoleBinding {
-  string subject = 1; // uniquely identifies the account
-  string role_ref = 2; // points to Role
+  // subject defines which account the binding refers to
+  string subject = 1;
+  // role_ref points to the Role associated with subject
+  string role_ref = 2;
 }
-
-// get role binding for jonathan -> external_account
-// get role external_account
-
-// bank.Balance, bank.MsgSend
-// verbs -> GET/CREATE/UPDATE/DELIVER
 
 // MsgCreateRole creates a new role
 message MsgCreateRole {
