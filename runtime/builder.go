@@ -110,7 +110,6 @@ func (b *Builder) Build() (*Runtime, error) {
 }
 
 func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding *rbacv1alpha1.RoleBinding, err error) {
-	// check name
 	if isModuleNameEmpty(m.Name) {
 		return nil, nil, errEmptyModuleName
 	}
@@ -130,27 +129,16 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 		return
 	}
 
-	// register admission controllers
-	for _, ctrl := range m.AdmissionControllers {
-		err = b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
-		if err != nil {
-			return
-		}
-		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+	err = b.registerAdmissionControllers(m)
+	if err != nil {
+		return
 	}
 
-	// register state objects
-	for _, so := range m.StateObjects {
-		err = b.store.RegisterStateObject(so.StateObject)
-		if err != nil {
-			return
-		}
-		err = extendRoleForStateObject(role, so.StateObject)
-		if err != nil {
-			return
-		}
-		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
+	err = b.registerStateObjects(m, role)
+	if err != nil {
+		return
 	}
+
 	// register dependencies onto other modules
 	for _, st := range m.Needs {
 		err = role.Extend(runtimev1alpha1.Verb_Deliver, st)
@@ -178,7 +166,6 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 }
 
 func (b *Builder) registerStateTranstionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
-
 	for _, ctrl := range m.StateTransitionControllers {
 		// add state transition controller to the router
 		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
@@ -201,6 +188,34 @@ func (b *Builder) registerStateTranstionControllers(m module.Descriptor, role *r
 		}
 
 		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+	}
+
+	return nil
+}
+
+func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
+	for _, ctrl := range m.AdmissionControllers {
+		err := b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
+		if err != nil {
+			return err
+		}
+		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+	}
+
+	return nil
+}
+
+func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.Role) error {
+	for _, so := range m.StateObjects {
+		err := b.store.RegisterStateObject(so.StateObject)
+		if err != nil {
+			return err
+		}
+		err = extendRoleForStateObject(role, so.StateObject)
+		if err != nil {
+			return err
+		}
+		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
 	}
 
 	return nil
