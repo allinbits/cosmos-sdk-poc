@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/fdymylja/tmos/runtime/authentication"
 	gogoproto "github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/abci/types"
@@ -34,7 +35,7 @@ func TestAuthenticator(t *testing.T) {
 	}
 
 	// initialize with money...
-	err = rt.Deliver(nil, &bankv1aplha1.MsgSetBalance{
+	err = rt.Deliver(authentication.NewEmptySubjects(), &bankv1aplha1.MsgSetBalance{
 		Address: "frojdi",
 		Amount: []*coin.Coin{{
 			Denom:  "test",

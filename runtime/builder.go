@@ -25,8 +25,6 @@ var (
 func NewBuilder() *Builder {
 	b := &Builder{
 		installedModules: map[string]struct{}{},
-		modules:          nil,
-		authn:            nil,
 		router:           NewRouter(),
 		store:            badger.NewStore(),
 		rt:               &Runtime{},
@@ -41,6 +39,10 @@ func NewBuilder() *Builder {
 	b.AddModule(runtimeModule)
 	b.AddModule(rbacModule)
 	b.AddModule(abciModule)
+	// we add the initial external role, with basically no authorization towards no resource.
+	b.externalRole = &rbacv1alpha1.Role{
+		Id: rbacv1alpha1.ExternalAccountRoleID,
+	}
 	return b
 }
 
@@ -48,11 +50,14 @@ func NewBuilder() *Builder {
 type Builder struct {
 	installedModules map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
 	modules          []*module.Descriptor
-	authn            authentication.Authenticator
-	rbac             *rbac.Module
-	router           *Router
-	store            *badger.Store
-	rt               *Runtime
+
+	externalRole *rbacv1alpha1.Role
+	rbac         *rbac.Module
+	authn        authentication.Authenticator
+
+	router *Router
+	store  *badger.Store
+	rt     *Runtime
 }
 
 // AddModule adds a new module.Module to the list of modules to install
@@ -88,6 +93,8 @@ func (b *Builder) Build() (*Runtime, error) {
 		// mark as installed module
 		b.installedModules[m.Name] = struct{}{}
 	}
+	// add external role to rbac with no binding
+	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
 	b.rt.router = b.router
 	b.rt.modules = b.modules
@@ -125,6 +132,13 @@ func (b *Builder) install(m *module.Descriptor) (role *rbacv1alpha1.Role, bindin
 		err = role.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
 		if err != nil {
 			return
+		}
+		// if the state transition is marked as external we extend the external_account role
+		if ctrl.External {
+			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}

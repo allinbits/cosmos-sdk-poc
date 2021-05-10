@@ -30,9 +30,9 @@ func (m *Module) Initialize(client module.Client, builder *module.Builder) {
 		Named("rbac").
 		OwnsStateObject(&v1alpha1.Role{}).
 		OwnsStateObject(&v1alpha1.RoleBinding{}).
-		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleController(client)).
+		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleController(client), false).
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionController(client)).
-		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleController(client)).
+		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleController(client), false).
 		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client)).
 		WithGenesis(m.genesis)
 }
@@ -64,6 +64,9 @@ func (g *genesis) SetDefault() error {
 			return err
 		}
 		binding := g.bindings[i]
+		if binding == nil {
+			continue
+		}
 		err = g.c.Deliver(&v1alpha1.MsgBindRole{
 			RoleId:  binding.RoleRef,
 			Subject: binding.Subject,
@@ -71,13 +74,6 @@ func (g *genesis) SetDefault() error {
 		if err != nil {
 			return err
 		}
-	}
-	// create external_account role
-	err := g.c.Deliver(&v1alpha1.MsgCreateRole{NewRole: &v1alpha1.Role{
-		Id: v1alpha1.ExternalAccountRoleID,
-	}})
-	if err != nil {
-		return err
 	}
 	return nil
 }

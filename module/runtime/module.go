@@ -16,8 +16,8 @@ func (m Module) Initialize(client module.Client, builder *module.Builder) {
 		Named("runtime").
 		OwnsStateObject(&v1alpha1.StateObjectsList{}).
 		OwnsStateObject(&v1alpha1.StateTransitionsList{}).
-		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsController(client)).
-		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client))
+		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsController(client), false).
+		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false)
 }
 
 func newCreateStateObjectsController(client module.Client) controller.StateTransitionFn {

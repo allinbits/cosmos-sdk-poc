@@ -48,5 +48,5 @@ func (m *CreateAccountController) Deliver(req controller.StateTransitionRequest)
 	if err != nil {
 		return
 	}
-	return resp, err
+	return resp, nil
 }

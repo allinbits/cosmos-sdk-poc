@@ -25,11 +25,11 @@ func (m Module) Initialize(client module.Client, builder *module.Builder) {
 		OwnsStateObject(&v1alpha1.EndBlockState{}).
 		OwnsStateObject(&v1alpha1.CurrentBlock{}).
 		OwnsStateObject(&v1alpha1.ValidatorUpdates{}).
-		HandlesStateTransition(&v1alpha1.MsgSetInitChain{}, setInitChainInfo(client)).
-		HandlesStateTransition(&v1alpha1.MsgSetCheckTxState{}, checkTxHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgSetBeginBlockState{}, beginBlockHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgSetDeliverTxState{}, deliverTxHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgSetEndBlockState{}, endBlockHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgSetValidatorUpdates{}, validatorUpdatesHandler(client)).
+		HandlesStateTransition(&v1alpha1.MsgSetInitChain{}, setInitChainInfo(client), false).
+		HandlesStateTransition(&v1alpha1.MsgSetCheckTxState{}, checkTxHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgSetBeginBlockState{}, beginBlockHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgSetDeliverTxState{}, deliverTxHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgSetEndBlockState{}, endBlockHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgSetValidatorUpdates{}, validatorUpdatesHandler(client), false).
 		WithGenesis(newGenesisHandler(client))
 }

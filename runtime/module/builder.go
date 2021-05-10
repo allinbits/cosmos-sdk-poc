@@ -29,7 +29,7 @@ type mutatingAdmissionController struct {
 type stateTransitionController struct {
 	StateTransition meta.StateTransition
 	Controller      controller.StateTransition
-	Internal        bool
+	External        bool
 }
 
 type postStateTransitionController struct {
@@ -53,11 +53,11 @@ func (b *Builder) Named(name string) *Builder {
 	return b
 }
 
-func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition) *Builder {
+func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition, external bool) *Builder {
 	b.Descriptor.StateTransitionControllers = append(b.Descriptor.StateTransitionControllers, stateTransitionController{
 		StateTransition: transition,
 		Controller:      ctrl,
-		Internal:        false,
+		External:        external,
 	})
 	return b
 }

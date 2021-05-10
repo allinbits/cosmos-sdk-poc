@@ -21,7 +21,7 @@ func (m *Module) Initialize(c module.Client, builder *module.Builder) {
 	m.authenticator = newAuthenticator(c)
 	builder.
 		Named("authn").
-		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c)).
+		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c), true).
 		HandlesAdmission(&v1alpha1.MsgCreateAccount{}, NewCreateAccountAdmissionController()).
 		OwnsStateObject(&v1alpha1.Account{}).
 		OwnsStateObject(&v1alpha1.Params{}).
