@@ -33,7 +33,7 @@ func New() {
 	rtb := runtime.NewBuilder()
 	authentication := authn.NewModule()
 	rtb.AddModule(authentication)
-	rtb.SetAuthenticator(authentication.GetAuthenticator())
+	rtb.SetDecoder(authentication.GetAuthenticator())
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(distribution.NewModule())
 	rtb.AddModule(testmodule.NewModule())

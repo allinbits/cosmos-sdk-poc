@@ -21,7 +21,7 @@ type Descriptor struct {
 
 type admissionController struct {
 	StateTransition meta.StateTransition
-	Controller      admission.Controller
+	Controller      admission.Handler
 }
 
 type mutatingAdmissionController struct {
@@ -63,7 +63,7 @@ func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransiti
 	return b
 }
 
-func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl admission.Controller) *DescriptorBuilder {
+func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl admission.Handler) *DescriptorBuilder {
 	b.descriptor.AdmissionControllers = append(b.descriptor.AdmissionControllers, admissionController{transition, ctrl})
 	return b
 }

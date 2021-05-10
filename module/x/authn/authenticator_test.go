@@ -25,7 +25,7 @@ func TestAuthenticator(t *testing.T) {
 	auth := authn.NewModule()
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(auth)
-	rtb.SetAuthenticator(auth.GetAuthenticator())
+	rtb.SetDecoder(auth.GetAuthenticator())
 	rt, err := rtb.Build()
 	require.NoError(t, err)
 

@@ -23,8 +23,10 @@ type deliverOptions struct {
 
 type DeliverOption func(opt *deliverOptions)
 
-func DeliverSkipAdmissionControllers(opt *deliverOptions) {
-	opt.skipAdmissionController = true
+func DeliverSkipAdmissionControllers() DeliverOption {
+	return func(opt *deliverOptions) {
+		opt.skipAdmissionController = true
+	}
 }
 
 type Runtime struct {
@@ -32,7 +34,7 @@ type Runtime struct {
 
 	modules []module.Descriptor
 
-	authn authentication.Authenticator
+	authn authentication.TxDecoder
 
 	rbac        authorization.RBAC
 	rbacEnabled bool
@@ -182,7 +184,7 @@ func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition met
 	return nil
 }
 
-// runAdmissionChain runs the controller.Controller handlers related to the
+// runAdmissionChain runs the controller.Handler handlers related to the
 // provided state transition.
 func (r *Runtime) runAdmissionChain(subjects *authentication.Subjects, transition meta.StateTransition) error {
 	ctrls, err := r.router.GetAdmissionControllers(transition)

@@ -152,11 +152,6 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	if err != nil {
 		return errors.ToABCIResponse(0, 0, err)
 	}
-	// do authentication
-	err = a.rt.authn.Authenticate(tx) // sig verification - weight 10
-	if err != nil {
-		return errors.ToABCIResponse(0, 0, err)
-	}
 	// TODO cache the store
 	// todo run authentication chain
 	err = a.rt.runTxPostAuthenticationChain(tx)
@@ -167,7 +162,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	// cache again
 	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.Deliver(tx.Subjects(), transition)
+		err = a.rt.Deliver(tx.Subjects(), transition, DeliverSkipAdmissionControllers())
 		if err != nil {
 			return errors.ToABCIResponse(0, 0, err)
 		}

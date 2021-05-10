@@ -24,7 +24,7 @@ func (b BindRoleController) Deliver(req controller.StateTransitionRequest) (cont
 	})
 }
 
-func NewBindRoleAdmission(client module.Client) admission.Controller {
+func NewBindRoleAdmission(client module.Client) admission.Handler {
 	return BindRoleAdmission{client: client}
 }
 

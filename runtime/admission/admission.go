@@ -14,14 +14,24 @@ type StateTransitionRequest struct {
 	Subjects *authentication.Subjects
 }
 
-// Controller defines the admission controller
-// its duty is to verify without accessing state
-// that the provided state transition is valid
-type Controller interface {
+// Handler defines the admission controller
+// its duty is to verify that the state transition
+// can be executed.
+// It can read state but it cannot modify it.
+type Handler interface {
 	// Validate validates the StateTransitionRequest and returns
 	// an error if the request is invalid.
-	// If one Controller in the meta.StateTransition admission chain
+	// If one Handler in the meta.StateTransition admission chain
 	// fails then the execution is fully stopped.
 	// And state rolled back accordingly to the current execution phase.
 	Validate(StateTransitionRequest) error
+}
+
+// HandlerFunc implements Handler and allows to create a Handler
+// using a function.
+type HandlerFunc func(req StateTransitionRequest) error
+
+// Validate implements Handler
+func (h HandlerFunc) Validate(req StateTransitionRequest) error {
+	return h(req)
 }

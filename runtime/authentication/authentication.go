@@ -5,12 +5,8 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-// Authenticator represents the module that takes care of authenticating transactions
-// and returning the state transitions.
-type Authenticator interface {
-	// Authenticate authenticates the provided Tx (signature verification)
-	// if it fails - a runtime.ErrUnauthorized will be returned to the caller
-	Authenticate(tx Tx) error
+// TxDecoder represents the component which decodes transactions given raw bytes
+type TxDecoder interface {
 	// DecodeTx simply decodes a transaction and returns a Tx.
 	DecodeTx(txBytes []byte) (tx Tx, err error)
 }

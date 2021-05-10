@@ -53,7 +53,7 @@ type Builder struct {
 
 	externalRole *rbacv1alpha1.Role
 	rbac         *rbac.Module
-	authn        authentication.Authenticator
+	decoder      authentication.TxDecoder
 
 	router *Router
 	store  *badger.Store
@@ -72,8 +72,8 @@ func (b *Builder) AddModule(m module.Module) {
 	b.modules = append(b.modules, descriptor)
 }
 
-func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
-	b.authn = authn
+func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
+	b.decoder = txDecoder
 }
 
 // Build installs the module.Modules provided and returns a fully functional runtime
@@ -99,11 +99,11 @@ func (b *Builder) Build() (*Runtime, error) {
 	b.rt.router = b.router
 	b.rt.modules = b.modules
 	b.rt.rbac = b.rbac.AsAuthorizer()
-	switch b.authn {
+	switch b.decoder {
 	case nil:
-		klog.Warningf("no authenticator was set up - transactions sent to the ABCI application will be rejected")
+		klog.Warningf("no decoder - transactions sent to the ABCI application will be rejected")
 	default:
-		b.rt.authn = b.authn
+		b.rt.authn = b.decoder
 	}
 
 	return b.rt, nil

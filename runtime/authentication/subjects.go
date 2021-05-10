@@ -2,6 +2,16 @@ package authentication
 
 import "strings"
 
+type ImmutableSubjects interface {
+	List() []string
+	AuthorizedBy(subject ...string) bool
+}
+
+type MutableSubjects interface {
+	Add(subject string)
+	Remove(subject string) bool
+}
+
 func NewEmptySubjects() *Subjects {
 	return &Subjects{
 		authenticatedSubjects: map[string]struct{}{},
