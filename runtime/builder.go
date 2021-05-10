@@ -139,29 +139,14 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 		return
 	}
 
-	// register dependencies onto other modules
-	for _, st := range m.Needs {
-		err = role.Extend(runtimev1alpha1.Verb_Deliver, st)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
-		}
-	}
-
-	// TODO register admission + mutating admission + hooks
-	// register authentication extensions
-	if m.AuthenticationExtension == nil {
+	err = b.registerModuleDependencies(m, role)
+	if err != nil {
 		return
 	}
 
-	// add authentication admission controllers
-	for _, xt := range m.AuthenticationExtension.AdmissionControllers {
-		b.router.AddTransactionAdmissionController(xt.Handler)
-		klog.Infof("registering authentication admission controller %T for module %s", xt.Handler, m.Name)
-	}
-	for _, xt := range m.AuthenticationExtension.TransitionControllers {
-		b.router.AddTransactionPostAuthenticationController(xt.Handler)
-		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
-	}
+	// TODO register admission + mutating admission + hooks
+	b.registerAuthenticationExtensions(m)
+
 	return
 }
 
@@ -219,6 +204,34 @@ func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.R
 	}
 
 	return nil
+}
+
+// registerModuleDependencies dependencies onto other modules
+func (b *Builder) registerModuleDependencies(m module.Descriptor, role *rbacv1alpha1.Role) error {
+	for _, st := range m.Needs {
+		err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
+		if err != nil {
+			return fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
+		}
+	}
+
+	return nil
+}
+
+func (b *Builder) registerAuthenticationExtensions(m module.Descriptor) {
+	if m.AuthenticationExtension == nil {
+		return
+	}
+
+	// add authentication admission controllers
+	for _, xt := range m.AuthenticationExtension.AdmissionControllers {
+		b.router.AddTransactionAdmissionController(xt.Handler)
+		klog.Infof("registering authentication admission controller %T for module %s", xt.Handler, m.Name)
+	}
+	for _, xt := range m.AuthenticationExtension.TransitionControllers {
+		b.router.AddTransactionPostAuthenticationController(xt.Handler)
+		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
+	}
 }
 
 func isModuleNameEmpty(name string) bool {
