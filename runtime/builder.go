@@ -114,33 +114,20 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 	if isModuleNameEmpty(m.Name) {
 		return nil, nil, errEmptyModuleName
 	}
+
+	roleName := roleNameForModule(m.Name)
 	role = &rbacv1alpha1.Role{
-		Id: roleNameForModule(m.Name),
+		Id: roleName,
 	}
+
 	binding = &rbacv1alpha1.RoleBinding{
 		Subject: m.Name,
-		RoleRef: roleNameForModule(m.Name),
+		RoleRef: roleName,
 	}
-	// install state transition controllers
-	for _, ctrl := range m.StateTransitionControllers {
-		// add state transition controller to the router
-		err = b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
-		if err != nil {
-			return
-		}
-		// add deliver rights for the state transition
-		err = role.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
-		if err != nil {
-			return
-		}
-		// if the state transition is marked as external we extend the external_account role
-		if ctrl.External {
-			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+
+	err = b.registerStateTranstionControllers(m, role)
+	if err != nil {
+		return
 	}
 
 	// register admission controllers
@@ -188,6 +175,35 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
 	}
 	return
+}
+
+func (b *Builder) registerStateTranstionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
+
+	for _, ctrl := range m.StateTransitionControllers {
+		// add state transition controller to the router
+		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
+		if err != nil {
+			return err
+		}
+
+		// add deliver rights for the state transition
+		err = role.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
+		if err != nil {
+			return err
+		}
+
+		// if the state transition is marked as external we extend the external_account role
+		if ctrl.External {
+			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
+			if err != nil {
+				return err
+			}
+		}
+
+		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
+	}
+
+	return nil
 }
 
 func isModuleNameEmpty(name string) bool {
