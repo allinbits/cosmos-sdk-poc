@@ -1,6 +1,7 @@
 package module
 
 import (
+	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
@@ -20,7 +21,7 @@ type Descriptor struct {
 
 type admissionController struct {
 	StateTransition meta.StateTransition
-	Controller      controller.Admission
+	Controller      admission.Controller
 }
 
 type mutatingAdmissionController struct {
@@ -62,7 +63,7 @@ func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransiti
 	return b
 }
 
-func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *DescriptorBuilder {
+func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl admission.Controller) *DescriptorBuilder {
 	b.descriptor.AdmissionControllers = append(b.descriptor.AdmissionControllers, admissionController{transition, ctrl})
 	return b
 }

@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -23,7 +24,7 @@ func (b BindRoleController) Deliver(req controller.StateTransitionRequest) (cont
 	})
 }
 
-func NewBindRoleAdmission(client module.Client) controller.Admission {
+func NewBindRoleAdmission(client module.Client) admission.Controller {
 	return BindRoleAdmission{client: client}
 }
 
@@ -31,12 +32,12 @@ type BindRoleAdmission struct {
 	client module.Client
 }
 
-func (b BindRoleAdmission) Validate(request controller.AdmissionRequest) (controller.AdmissionResponse, error) {
+func (b BindRoleAdmission) Validate(request admission.StateTransitionRequest) error {
 	msg := request.Transition.(*v1alpha1.MsgBindRole)
 	if err := b.roleExists(msg.RoleId); err != nil {
-		return controller.AdmissionResponse{}, err
+		return err
 	}
-	return controller.AdmissionResponse{}, nil
+	return nil
 }
 
 func (b BindRoleAdmission) roleExists(id string) error {

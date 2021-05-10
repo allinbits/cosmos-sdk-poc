@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"k8s.io/klog/v2"
 
@@ -147,7 +148,7 @@ func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition met
 		opt(deliverOpt)
 	}
 	if !deliverOpt.skipAdmissionController {
-		err := r.runAdmissionChain(stateTransition)
+		err := r.runAdmissionChain(subjects, stateTransition)
 		if err != nil {
 			return err
 		}
@@ -181,15 +182,18 @@ func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition met
 	return nil
 }
 
-// runAdmissionChain runs the controller.Admission handlers related to the
+// runAdmissionChain runs the controller.Controller handlers related to the
 // provided state transition.
-func (r *Runtime) runAdmissionChain(transition meta.StateTransition) error {
+func (r *Runtime) runAdmissionChain(subjects *authentication.Subjects, transition meta.StateTransition) error {
 	ctrls, err := r.router.GetAdmissionControllers(transition)
 	if err != nil {
 		return fmt.Errorf("unable to execute request: %s", meta.Name(transition))
 	}
 	for _, ctrl := range ctrls {
-		_, err = ctrl.Validate(controller.AdmissionRequest{Transition: transition})
+		err = ctrl.Validate(admission.StateTransitionRequest{
+			Transition: transition,
+			Subjects:   subjects,
+		})
 		if err != nil {
 			return fmt.Errorf("%w: %s", errors.ErrBadRequest, err.Error())
 		}

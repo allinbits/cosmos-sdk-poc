@@ -6,6 +6,7 @@ import (
 
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/controller"
 	rterr "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -40,28 +41,28 @@ type CreateRoleAdmissionController struct {
 	rtClient *runtimev1alpha1.Client
 }
 
-func (c CreateRoleAdmissionController) Validate(req controller.AdmissionRequest) (controller.AdmissionResponse, error) {
+func (c CreateRoleAdmissionController) Validate(req admission.StateTransitionRequest) error {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	if msg.NewRole == nil {
-		return controller.AdmissionResponse{}, fmt.Errorf("new role is nil")
+		return fmt.Errorf("new role is nil")
 	}
 	role := msg.NewRole
 	// NOTE we check only for role id and nothing else
 	// as we might want to create a role which has access to nothing
 	if role.Id == "" {
-		return controller.AdmissionResponse{}, fmt.Errorf("no role id defined")
+		return fmt.Errorf("no role id defined")
 	}
 	if err := c.roleNotExist(msg.NewRole.Id); err != nil {
-		return controller.AdmissionResponse{}, err
+		return err
 	}
 	if err := c.verifyStateObjects(msg.NewRole); err != nil {
-		return controller.AdmissionResponse{}, err
+		return err
 	}
 	if err := c.verifyStateTransitions(msg.NewRole); err != nil {
-		return controller.AdmissionResponse{}, err
+		return err
 	}
 	// pass
-	return controller.AdmissionResponse{}, nil
+	return nil
 }
 
 func (c CreateRoleAdmissionController) roleNotExist(id string) error {

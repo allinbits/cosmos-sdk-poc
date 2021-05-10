@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -15,14 +16,14 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 func NewRouter() *Router {
 	return &Router{
 		stateTransitionControllers:          map[string]controller.StateTransition{},
-		stateTransitionAdmissionControllers: map[string][]controller.Admission{}}
+		stateTransitionAdmissionControllers: map[string][]admission.Controller{}}
 }
 
 type Router struct {
 	transactionAdmissionControllers          []authentication.AdmissionController
 	transactionPostAuthenticationControllers []authentication.TransitionController
 	stateTransitionControllers               map[string]controller.StateTransition
-	stateTransitionAdmissionControllers      map[string][]controller.Admission
+	stateTransitionAdmissionControllers      map[string][]admission.Controller
 }
 
 func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler controller.StateTransition) error {
@@ -43,7 +44,7 @@ func (r *Router) GetStateTransitionController(transition meta.StateTransition) (
 	return handler, nil
 }
 
-func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTransition, handler controller.Admission) error {
+func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTransition, handler admission.Controller) error {
 	name := meta.Name(transition)
 	if _, exists := r.stateTransitionAdmissionControllers[name]; !exists {
 		r.stateTransitionAdmissionControllers[name] = nil
@@ -52,7 +53,7 @@ func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTran
 	return nil
 }
 
-func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]controller.Admission, error) {
+func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]admission.Controller, error) {
 	ctrls, exists := r.stateTransitionAdmissionControllers[meta.Name(transition)]
 	if !exists {
 		return nil, nil

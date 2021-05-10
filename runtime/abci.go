@@ -91,7 +91,7 @@ func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckT
 	}
 	// run admission checks on single state transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.runAdmissionChain(transition)
+		err = a.rt.runAdmissionChain(tx.Subjects(), transition)
 		if err != nil {
 			return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 		}
