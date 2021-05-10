@@ -14,8 +14,8 @@ func NewModule() module.Module {
 type Module struct {
 }
 
-func (m Module) Initialize(client module.Client, builder *module.Builder) {
-	builder.
+func (m Module) Initialize(client module.Client) module.Descriptor {
+	return module.NewDescriptorBuilder().
 		Named(Subject).
 		OwnsStateObject(&v1alpha1.Stage{}).
 		OwnsStateObject(&v1alpha1.BeginBlockState{}).
@@ -31,5 +31,5 @@ func (m Module) Initialize(client module.Client, builder *module.Builder) {
 		HandlesStateTransition(&v1alpha1.MsgSetDeliverTxState{}, deliverTxHandler(client), false).
 		HandlesStateTransition(&v1alpha1.MsgSetEndBlockState{}, endBlockHandler(client), false).
 		HandlesStateTransition(&v1alpha1.MsgSetValidatorUpdates{}, validatorUpdatesHandler(client), false).
-		WithGenesis(newGenesisHandler(client))
+		WithGenesis(newGenesisHandler(client)).Build()
 }

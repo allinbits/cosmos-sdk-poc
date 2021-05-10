@@ -29,7 +29,7 @@ func DeliverSkipAdmissionControllers(opt *deliverOptions) {
 type Runtime struct {
 	initialized bool
 
-	modules []*module.Descriptor
+	modules []module.Descriptor
 
 	authn authentication.Authenticator
 

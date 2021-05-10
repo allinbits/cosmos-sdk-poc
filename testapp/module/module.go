@@ -25,10 +25,10 @@ func NewModule() Module {
 type Module struct {
 }
 
-func (m Module) Initialize(client module.Client, builder *module.Builder) {
-	builder.
+func (m Module) Initialize(client module.Client) module.Descriptor {
+	return module.NewDescriptorBuilder().
 		Named("testing").
-		WithGenesis(newGenesisController(client))
+		WithGenesis(newGenesisController(client)).Build()
 }
 
 func newGenesisController(client module.Client) genesisController {

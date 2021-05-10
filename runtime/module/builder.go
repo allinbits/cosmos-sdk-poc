@@ -39,22 +39,22 @@ type stateObject struct {
 	StateObject meta.StateObject
 }
 
-func NewModuleBuilder() *Builder {
-	return &Builder{Descriptor: new(Descriptor)}
+func NewDescriptorBuilder() *DescriptorBuilder {
+	return &DescriptorBuilder{descriptor: Descriptor{}}
 }
 
-// Builder is used to build a module
-type Builder struct {
-	Descriptor *Descriptor
+// DescriptorBuilder is used to build a module descriptor
+type DescriptorBuilder struct {
+	descriptor Descriptor
 }
 
-func (b *Builder) Named(name string) *Builder {
-	b.Descriptor.Name = name
+func (b *DescriptorBuilder) Named(name string) *DescriptorBuilder {
+	b.descriptor.Name = name
 	return b
 }
 
-func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition, external bool) *Builder {
-	b.Descriptor.StateTransitionControllers = append(b.Descriptor.StateTransitionControllers, stateTransitionController{
+func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition, external bool) *DescriptorBuilder {
+	b.descriptor.StateTransitionControllers = append(b.descriptor.StateTransitionControllers, stateTransitionController{
 		StateTransition: transition,
 		Controller:      ctrl,
 		External:        external,
@@ -62,30 +62,34 @@ func (b *Builder) HandlesStateTransition(transition meta.StateTransition, ctrl c
 	return b
 }
 
-func (b *Builder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *Builder {
-	b.Descriptor.AdmissionControllers = append(b.Descriptor.AdmissionControllers, admissionController{transition, ctrl})
+func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl controller.Admission) *DescriptorBuilder {
+	b.descriptor.AdmissionControllers = append(b.descriptor.AdmissionControllers, admissionController{transition, ctrl})
 	return b
 }
 
-func (b *Builder) OwnsStateObject(object meta.StateObject) *Builder {
-	b.Descriptor.StateObjects = append(b.Descriptor.StateObjects, stateObject{object})
+func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject) *DescriptorBuilder {
+	b.descriptor.StateObjects = append(b.descriptor.StateObjects, stateObject{object})
 	return b
 }
 
-func (b *Builder) WithGenesis(ctrl controller.Genesis) *Builder {
-	b.Descriptor.GenesisHandler = ctrl
+func (b *DescriptorBuilder) WithGenesis(ctrl controller.Genesis) *DescriptorBuilder {
+	b.descriptor.GenesisHandler = ctrl
 
 	return b
 }
 
-func (b *Builder) ExtendsAuthentication(xt AuthenticationExtension) *Builder {
+func (b *DescriptorBuilder) ExtendsAuthentication(xt AuthenticationExtension) *DescriptorBuilder {
 	authXtB := NewAuthenticationExtensionBuilder()
 	xt.Initialize(authXtB)
-	b.Descriptor.AuthenticationExtension = authXtB.descriptor
+	b.descriptor.AuthenticationExtension = authXtB.descriptor
 	return b
 }
 
-func (b *Builder) NeedsStateTransition(transition meta.StateTransition) *Builder {
-	b.Descriptor.Needs = append(b.Descriptor.Needs, transition)
+func (b *DescriptorBuilder) NeedsStateTransition(transition meta.StateTransition) *DescriptorBuilder {
+	b.descriptor.Needs = append(b.descriptor.Needs, transition)
 	return b
+}
+
+func (b *DescriptorBuilder) Build() Descriptor {
+	return b.descriptor
 }

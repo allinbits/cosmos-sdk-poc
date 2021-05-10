@@ -11,13 +11,13 @@ func NewModule() Module { return Module{} }
 type Module struct {
 }
 
-func (m Module) Initialize(client module.Client, builder *module.Builder) {
-	builder.
+func (m Module) Initialize(client module.Client) module.Descriptor {
+	return module.NewDescriptorBuilder().
 		Named("runtime").
 		OwnsStateObject(&v1alpha1.StateObjectsList{}).
 		OwnsStateObject(&v1alpha1.StateTransitionsList{}).
 		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsController(client), false).
-		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false)
+		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false).Build()
 }
 
 func newCreateStateObjectsController(client module.Client) controller.StateTransitionFn {

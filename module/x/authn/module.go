@@ -17,9 +17,10 @@ func NewModule() *Module {
 	return &Module{}
 }
 
-func (m *Module) Initialize(c module.Client, builder *module.Builder) {
+func (m *Module) Initialize(c module.Client) module.Descriptor {
 	m.authenticator = newAuthenticator(c)
-	builder.
+
+	return module.NewDescriptorBuilder().
 		Named("authn").
 		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountController(c), true).
 		HandlesAdmission(&v1alpha1.MsgCreateAccount{}, NewCreateAccountAdmissionController()).
@@ -28,7 +29,7 @@ func (m *Module) Initialize(c module.Client, builder *module.Builder) {
 		OwnsStateObject(&v1alpha1.CurrentAccountNumber{}).
 		ExtendsAuthentication(extensions.New(c)).
 		WithGenesis(genesis{c: c}).
-		NeedsStateTransition(&rbacv1alpha1.MsgBindRole{})
+		NeedsStateTransition(&rbacv1alpha1.MsgBindRole{}).Build()
 }
 
 func (m *Module) GetAuthenticator() authentication.Authenticator {

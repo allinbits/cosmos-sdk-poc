@@ -23,10 +23,11 @@ func (m *Module) AddInitialRole(role *v1alpha1.Role, binding *v1alpha1.RoleBindi
 	m.genesis.addInitialRole(role, binding)
 }
 
-func (m *Module) Initialize(client module.Client, builder *module.Builder) {
+func (m *Module) Initialize(client module.Client) module.Descriptor {
 	m.authorizer = NewAuthorizer(client)
 	m.genesis = newGenesis(client)
-	builder.
+
+	return module.NewDescriptorBuilder().
 		Named("rbac").
 		OwnsStateObject(&v1alpha1.Role{}).
 		OwnsStateObject(&v1alpha1.RoleBinding{}).
@@ -34,7 +35,7 @@ func (m *Module) Initialize(client module.Client, builder *module.Builder) {
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionController(client)).
 		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleController(client), false).
 		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client)).
-		WithGenesis(m.genesis)
+		WithGenesis(m.genesis).Build()
 }
 
 func newGenesis(client module.Client) *genesis {
@@ -55,7 +56,7 @@ func (g *genesis) addInitialRole(role *v1alpha1.Role, binding *v1alpha1.RoleBind
 
 func (g *genesis) SetDefault() error {
 	// we create the initial roles and bindings of the associated roles
-	// they are module roles created at runtime.Builder.Build() level
+	// they are module roles created at runtime.DescriptorBuilder.Build() level
 	// we do it via deliver because we want to make sure the creation
 	// goes through proper checks.
 	for i, r := range g.roles {
