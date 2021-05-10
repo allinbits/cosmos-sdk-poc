@@ -124,7 +124,7 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 		RoleRef: roleName,
 	}
 
-	err = b.registerStateTranstionControllers(m, role)
+	err = b.registerStateTransitionControllers(m, role)
 	if err != nil {
 		return
 	}
@@ -150,7 +150,7 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 	return
 }
 
-func (b *Builder) registerStateTranstionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
+func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, ctrl := range m.StateTransitionControllers {
 		// add state transition controller to the router
 		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
