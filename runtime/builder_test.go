@@ -12,7 +12,8 @@ import (
 type TestModule struct {
 }
 
-func (t TestModule) Initialize(client module.Client, builder *module.Builder) {
+func (t TestModule) Initialize(_ module.Client) module.Descriptor {
+	return module.Descriptor{}
 }
 
 func TestNewBuilder_ModuleWithoutName(t *testing.T) {

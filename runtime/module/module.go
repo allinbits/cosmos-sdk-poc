@@ -8,5 +8,5 @@ type Client interface {
 
 // Module defines a basic module which handles changes
 type Module interface {
-	Initialize(client Client, builder *Builder)
+	Initialize(client Client) Descriptor
 }

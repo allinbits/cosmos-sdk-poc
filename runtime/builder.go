@@ -49,7 +49,7 @@ func NewBuilder() *Builder {
 // Builder is used to create a new runtime from scratch
 type Builder struct {
 	installedModules map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
-	modules          []*module.Descriptor
+	modules          []module.Descriptor
 
 	externalRole *rbacv1alpha1.Role
 	rbac         *rbac.Module
@@ -65,11 +65,11 @@ func (b *Builder) AddModule(m module.Module) {
 	type subjectSetter interface {
 		SetSubject(subject string)
 	}
-	mb := module.NewModuleBuilder()
+
 	mc := client.New(newRuntimeAsServer(b.rt))
-	m.Initialize(mc, mb)
-	mc.(subjectSetter).SetSubject(mb.Descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
-	b.modules = append(b.modules, mb.Descriptor)
+	descriptor := m.Initialize(mc)
+	mc.(subjectSetter).SetSubject(descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
+	b.modules = append(b.modules, descriptor)
 }
 
 func (b *Builder) SetAuthenticator(authn authentication.Authenticator) {
@@ -109,7 +109,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) install(m *module.Descriptor) (role *rbacv1alpha1.Role, binding *rbacv1alpha1.RoleBinding, err error) {
+func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding *rbacv1alpha1.RoleBinding, err error) {
 	// check name
 	if isModuleNameEmpty(m.Name) {
 		return nil, nil, errEmptyModuleName

@@ -13,12 +13,12 @@ func NewModule() Module {
 type Module struct {
 }
 
-func (m Module) Initialize(client module.Client, builder *module.Builder) {
-	builder.
+func (m Module) Initialize(client module.Client) module.Descriptor {
+	return module.NewDescriptorBuilder().
 		Named("bank").
 		OwnsStateObject(&v1alpha1.Balance{}).
 		HandlesStateTransition(&v1alpha1.MsgSendCoins{}, NewSendCoinsHandler(v1alpha1.NewClient(client)), true).
 		HandlesStateTransition(&v1alpha1.MsgSetBalance{}, NewSetCoinsHandler(client), false).
 		NeedsStateTransition(&authn.MsgCreateAccount{}).
-		WithGenesis(newGenesisHandler())
+		WithGenesis(newGenesisHandler()).Build()
 }

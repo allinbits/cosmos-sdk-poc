@@ -13,9 +13,9 @@ func NewModule() Module {
 type Module struct {
 }
 
-func (m Module) Initialize(client module.Client, builder *module.Builder) {
-	builder.
+func (m Module) Initialize(client module.Client) module.Descriptor {
+	return module.NewDescriptorBuilder().
 		Named("distribution").
 		ExtendsAuthentication(extensions.NewAuthentication(client)).
-		NeedsStateTransition(&bank.MsgSendCoins{})
+		NeedsStateTransition(&bank.MsgSendCoins{}).Build()
 }
