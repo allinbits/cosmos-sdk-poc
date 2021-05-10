@@ -4,12 +4,12 @@ import "strings"
 
 type ImmutableSubjects interface {
 	List() []string
-	AuthorizedBy(subject ...string) bool
+	Contains(subject ...string) bool
 }
 
 type MutableSubjects interface {
+	ImmutableSubjects
 	Add(subject string)
-	Remove(subject string) bool
 }
 
 func NewEmptySubjects() *Subjects {
@@ -18,9 +18,9 @@ func NewEmptySubjects() *Subjects {
 	}
 }
 
-func NewSubjects(subjects ...string) *Subjects {
-	s := &Subjects{authenticatedSubjects: make(map[string]struct{}, len(subjects))}
-	for _, sub := range subjects {
+func NewSubjects(ss ...string) *Subjects {
+	s := &Subjects{authenticatedSubjects: make(map[string]struct{}, len(ss))}
+	for _, sub := range ss {
 		s.authenticatedSubjects[sub] = struct{}{}
 	}
 	return s
@@ -33,23 +33,32 @@ type Subjects struct {
 	authenticatedSubjects map[string]struct{}
 }
 
-func (s *Subjects) HasAuthenticated(subject string) bool {
-	_, ok := s.authenticatedSubjects[subject]
+func (x *Subjects) Contains(ss ...string) bool {
+	for _, s := range ss {
+		if !x.contains(s) {
+			return false
+		}
+	}
+	return true
+}
+
+func (x *Subjects) contains(subject string) bool {
+	_, ok := x.authenticatedSubjects[subject]
 	return ok
 }
 
-func (s *Subjects) Add(subject string) {
-	s.authenticatedSubjects[subject] = struct{}{}
+func (x *Subjects) Add(subject string) {
+	x.authenticatedSubjects[subject] = struct{}{}
 }
 
-func (s *Subjects) List() []string {
-	l := make([]string, 0, len(s.authenticatedSubjects))
-	for k := range s.authenticatedSubjects {
+func (x *Subjects) List() []string {
+	l := make([]string, 0, len(x.authenticatedSubjects))
+	for k := range x.authenticatedSubjects {
 		l = append(l, k)
 	}
 	return l
 }
 
-func (s *Subjects) String() string {
-	return strings.Join(s.List(), ",")
+func (x *Subjects) String() string {
+	return strings.Join(x.List(), ",")
 }
