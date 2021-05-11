@@ -1,4 +1,4 @@
-package controller
+package statetransition
 
 import "encoding/json"
 

@@ -1,4 +1,4 @@
-package controller
+package statetransition
 
 import (
 	"github.com/fdymylja/tmos/runtime/meta"

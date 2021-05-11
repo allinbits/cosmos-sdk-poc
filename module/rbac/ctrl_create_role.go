@@ -7,14 +7,14 @@ import (
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/admission"
-	"github.com/fdymylja/tmos/runtime/controller"
 	rterr "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 	"github.com/scylladb/go-set/strset"
 )
 
-func NewCreateRoleController(client module.Client) controller.StateTransition {
+func NewCreateRoleController(client module.Client) statetransition.Handler {
 	return CreateRoleController{
 		client: client,
 	}
@@ -24,9 +24,9 @@ type CreateRoleController struct {
 	client module.Client
 }
 
-func (c CreateRoleController) Deliver(req controller.StateTransitionRequest) (controller.StateTransitionResponse, error) {
+func (c CreateRoleController) Deliver(req statetransition.Request) (statetransition.Response, error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
-	return controller.StateTransitionResponse{}, c.client.Create(msg.NewRole)
+	return statetransition.Response{}, c.client.Create(msg.NewRole)
 }
 
 func NewCreateRoleAdmissionController(client module.Client) CreateRoleAdmissionController {

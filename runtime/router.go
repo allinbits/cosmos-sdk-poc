@@ -6,8 +6,8 @@ import (
 
 	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/authentication"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 var ErrTransitionAlreadyRegistered = errors.New("router: state transition already registered")
@@ -15,18 +15,18 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 
 func NewRouter() *Router {
 	return &Router{
-		stateTransitionControllers:          map[string]controller.StateTransition{},
+		stateTransitionControllers:          map[string]statetransition.Handler{},
 		stateTransitionAdmissionControllers: map[string][]admission.Handler{}}
 }
 
 type Router struct {
 	transactionAdmissionControllers          []authentication.AdmissionController
 	transactionPostAuthenticationControllers []authentication.TransitionController
-	stateTransitionControllers               map[string]controller.StateTransition
+	stateTransitionControllers               map[string]statetransition.Handler
 	stateTransitionAdmissionControllers      map[string][]admission.Handler
 }
 
-func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler controller.StateTransition) error {
+func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler statetransition.Handler) error {
 	name := meta.Name(transition)
 	if _, exists := r.stateTransitionControllers[name]; exists {
 		return fmt.Errorf("%w: %s", ErrTransitionAlreadyRegistered, name)
@@ -35,7 +35,7 @@ func (r *Router) AddStateTransitionController(transition meta.StateTransition, h
 	return nil
 }
 
-func (r *Router) GetStateTransitionController(transition meta.StateTransition) (controller.StateTransition, error) {
+func (r *Router) GetStateTransitionController(transition meta.StateTransition) (statetransition.Handler, error) {
 	name := meta.Name(transition)
 	handler, exists := r.stateTransitionControllers[name]
 	if !exists {

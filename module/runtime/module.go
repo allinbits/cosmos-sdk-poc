@@ -3,8 +3,8 @@ package runtime
 import (
 	"github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 func NewModule() Module { return Module{} }
@@ -21,15 +21,15 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false).Build()
 }
 
-func newCreateStateObjectsController(client module.Client) controller.StateTransitionFn {
-	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+func newCreateStateObjectsController(client module.Client) statetransition.HandlerFunc {
+	return func(req statetransition.Request) (resp statetransition.Response, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateObjectsList)
 		return resp, client.Create(&v1alpha1.StateObjectsList{StateObjects: msg.StateObjects})
 	}
 }
 
-func newCreateStateTransitionsController(client module.Client) controller.StateTransitionFn {
-	return func(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+func newCreateStateTransitionsController(client module.Client) statetransition.HandlerFunc {
+	return func(req statetransition.Request) (resp statetransition.Response, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateTransitionsList)
 		return resp, client.Create(&v1alpha1.StateTransitionsList{
 			StateTransitions: msg.StateTransitions,

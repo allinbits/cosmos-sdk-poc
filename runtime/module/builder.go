@@ -2,14 +2,14 @@ package module
 
 import (
 	"github.com/fdymylja/tmos/runtime/admission"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 // Descriptor describes the full functionality set of a Module
 type Descriptor struct {
 	Name                           string
-	GenesisHandler                 controller.Genesis
+	GenesisHandler                 statetransition.Genesis
 	AdmissionControllers           []admissionController
 	MutatingAdmissionControllers   []mutatingAdmissionController
 	StateTransitionControllers     []stateTransitionController
@@ -29,7 +29,7 @@ type mutatingAdmissionController struct {
 
 type stateTransitionController struct {
 	StateTransition meta.StateTransition
-	Controller      controller.StateTransition
+	Controller      statetransition.Handler
 	External        bool
 }
 
@@ -54,7 +54,7 @@ func (b *DescriptorBuilder) Named(name string) *DescriptorBuilder {
 	return b
 }
 
-func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl controller.StateTransition, external bool) *DescriptorBuilder {
+func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.Handler, external bool) *DescriptorBuilder {
 	b.descriptor.StateTransitionControllers = append(b.descriptor.StateTransitionControllers, stateTransitionController{
 		StateTransition: transition,
 		Controller:      ctrl,
@@ -73,7 +73,7 @@ func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject) *Descriptor
 	return b
 }
 
-func (b *DescriptorBuilder) WithGenesis(ctrl controller.Genesis) *DescriptorBuilder {
+func (b *DescriptorBuilder) WithGenesis(ctrl statetransition.Genesis) *DescriptorBuilder {
 	b.descriptor.GenesisHandler = ctrl
 
 	return b

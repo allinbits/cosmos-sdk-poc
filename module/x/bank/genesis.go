@@ -3,13 +3,13 @@ package bank
 import (
 	"encoding/json"
 
-	"github.com/fdymylja/tmos/runtime/controller"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 type genesisHandler struct {
 }
 
-func newGenesisHandler() controller.Genesis {
+func newGenesisHandler() statetransition.Genesis {
 	return &genesisHandler{}
 }
 

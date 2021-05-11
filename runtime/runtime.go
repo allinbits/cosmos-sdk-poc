@@ -12,9 +12,9 @@ import (
 
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authorization"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 	"github.com/fdymylja/tmos/runtime/store/badger"
 )
 
@@ -170,7 +170,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		return err
 	}
 	// deliver the request
-	_, err = handler.Deliver(controller.StateTransitionRequest{
+	_, err = handler.Deliver(statetransition.Request{
 		Users:      users,
 		Transition: stateTransition,
 	})

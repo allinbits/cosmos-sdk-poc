@@ -3,12 +3,12 @@ package rbac
 import (
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/admission"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func NewBindRoleController(client module.Client) controller.StateTransition {
+func NewBindRoleController(client module.Client) statetransition.Handler {
 	return BindRoleController{client: client}
 }
 
@@ -16,9 +16,9 @@ type BindRoleController struct {
 	client module.Client
 }
 
-func (b BindRoleController) Deliver(req controller.StateTransitionRequest) (controller.StateTransitionResponse, error) {
+func (b BindRoleController) Deliver(req statetransition.Request) (statetransition.Response, error) {
 	msg := req.Transition.(*v1alpha1.MsgBindRole)
-	return controller.StateTransitionResponse{}, b.client.Create(&v1alpha1.RoleBinding{
+	return statetransition.Response{}, b.client.Create(&v1alpha1.RoleBinding{
 		Subject: msg.Subject,
 		RoleRef: msg.RoleId,
 	})

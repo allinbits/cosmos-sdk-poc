@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 
 	"github.com/fdymylja/tmos/module/abci/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func newGenesisHandler(client module.Client) controller.Genesis {
+func newGenesisHandler(client module.Client) statetransition.Genesis {
 	return genesis{client}
 }
 

@@ -6,10 +6,10 @@ import (
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	authv1alpha1 "github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/module/x/bank/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/controller"
 	errors2 "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 func NewSendCoinsHandler(client *v1alpha1.Client) SendCoinsHandler {
@@ -20,7 +20,7 @@ type SendCoinsHandler struct {
 	c *v1alpha1.Client
 }
 
-func (s SendCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+func (s SendCoinsHandler) Deliver(req statetransition.Request) (resp statetransition.Response, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSendCoins)
 
 	senderBalance, err := s.c.GetBalance(msg.FromAddress)
@@ -118,7 +118,7 @@ type SetCoinsHandler struct {
 	c module.Client
 }
 
-func (s SetCoinsHandler) Deliver(req controller.StateTransitionRequest) (resp controller.StateTransitionResponse, err error) {
+func (s SetCoinsHandler) Deliver(req statetransition.Request) (resp statetransition.Response, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSetBalance)
 	// set balance i guess
 	balance := new(v1alpha1.Balance)
