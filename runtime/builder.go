@@ -112,70 +112,115 @@ func (b *Builder) Build() (*Runtime, error) {
 }
 
 func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding *rbacv1alpha1.RoleBinding, err error) {
-	// check name
 	if isModuleNameEmpty(m.Name) {
 		return nil, nil, errEmptyModuleName
 	}
+
+	roleName := roleNameForModule(m.Name)
 	role = &rbacv1alpha1.Role{
-		Id: roleNameForModule(m.Name),
+		Id: roleName,
 	}
+
 	binding = &rbacv1alpha1.RoleBinding{
 		Subject: m.Name,
-		RoleRef: roleNameForModule(m.Name),
+		RoleRef: roleName,
 	}
-	// install state transition controllers
+
+	err = b.registerStateTransitionControllers(m, role)
+	if err != nil {
+		return
+	}
+
+	err = b.registerAdmissionControllers(m)
+	if err != nil {
+		return
+	}
+
+	err = b.registerStateObjects(m, role)
+	if err != nil {
+		return
+	}
+
+	err = b.registerModuleDependencies(m, role)
+	if err != nil {
+		return
+	}
+
+	// TODO register admission + mutating admission + hooks
+	b.registerAuthenticationExtensions(m)
+
+	return
+}
+
+func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, ctrl := range m.StateTransitionControllers {
 		// add state transition controller to the router
-		err = b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
+		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
-			return
+			return err
 		}
+
 		// add deliver rights for the state transition
 		err = role.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
 		if err != nil {
-			return
+			return err
 		}
+
 		// if the state transition is marked as external we extend the external_account role
 		if ctrl.External {
 			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
 			if err != nil {
-				return nil, nil, err
+				return err
 			}
 		}
+
 		klog.Infof("registered state transition %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
 
-	// register admission controllers
+	return nil
+}
+
+func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
 	for _, ctrl := range m.AdmissionControllers {
-		err = b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
+		err := b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
-			return
+			return err
 		}
 		klog.Infof("registered admission controller %s for module %s", meta.Name(ctrl.StateTransition), m.Name)
 	}
 
-	// register state objects
+	return nil
+}
+
+func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, so := range m.StateObjects {
-		err = b.store.RegisterStateObject(so.StateObject)
+		err := b.store.RegisterStateObject(so.StateObject)
 		if err != nil {
-			return
+			return err
 		}
 		err = extendRoleForStateObject(role, so.StateObject)
 		if err != nil {
-			return
+			return err
 		}
 		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
 	}
-	// register dependencies onto other modules
+
+	return nil
+}
+
+// registerModuleDependencies dependencies onto other modules
+func (b *Builder) registerModuleDependencies(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, st := range m.Needs {
-		err = role.Extend(runtimev1alpha1.Verb_Deliver, st)
+		err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
+			return fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
 		}
 	}
 
-	// TODO register admission + mutating admission + hooks
-	// register authentication extensions
+	return nil
+}
+
+func (b *Builder) registerAuthenticationExtensions(m module.Descriptor) {
 	if m.AuthenticationExtension == nil {
 		return
 	}
@@ -189,7 +234,6 @@ func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding
 		b.router.AddTransactionPostAuthenticationController(xt.Handler)
 		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
 	}
-	return
 }
 
 func isModuleNameEmpty(name string) bool {
