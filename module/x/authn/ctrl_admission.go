@@ -13,7 +13,7 @@ func NewCreateAccountAdmissionController() CreateAccountAdmissionController {
 
 type CreateAccountAdmissionController struct{}
 
-func (CreateAccountAdmissionController) Validate(request admission.StateTransitionRequest) (err error) {
+func (CreateAccountAdmissionController) Validate(request admission.Request) (err error) {
 	msg := request.Transition.(*v1alpha1.MsgCreateAccount)
 	// validate message
 	if msg.Account == nil {

@@ -41,7 +41,7 @@ type CreateRoleAdmissionController struct {
 	rtClient *runtimev1alpha1.Client
 }
 
-func (c CreateRoleAdmissionController) Validate(req admission.StateTransitionRequest) error {
+func (c CreateRoleAdmissionController) Validate(req admission.Request) error {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	if msg.NewRole == nil {
 		return fmt.Errorf("new role is nil")

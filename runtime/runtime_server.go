@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
@@ -23,18 +23,18 @@ func (s server) Get(id meta.ID, object meta.StateObject) error {
 	return s.rt.Get(id, object)
 }
 
-func (s server) Create(subject string, object meta.StateObject) error {
-	return s.rt.Create(subject, object)
+func (s server) Create(users user.Users, object meta.StateObject) error {
+	return s.rt.Create(users, object)
 }
 
-func (s server) Update(subject string, object meta.StateObject) error {
-	return s.rt.Update(subject, object)
+func (s server) Update(users user.Users, object meta.StateObject) error {
+	return s.rt.Update(users, object)
 }
 
-func (s server) Delete(subject string, object meta.StateObject) error {
-	return s.rt.Delete(subject, object)
+func (s server) Delete(users user.Users, object meta.StateObject) error {
+	return s.rt.Delete(users, object)
 }
 
-func (s server) Deliver(subjects *authentication.Subjects, transition meta.StateTransition) error {
-	return s.rt.deliver(subjects, transition)
+func (s server) Deliver(users user.Users, transition meta.StateTransition) error {
+	return s.rt.deliver(users, transition)
 }

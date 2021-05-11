@@ -6,6 +6,7 @@ import (
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/admission"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"k8s.io/klog/v2"
 
@@ -31,6 +32,7 @@ func DeliverSkipAdmissionControllers() DeliverOption {
 
 type Runtime struct {
 	initialized bool
+	user        user.Users
 
 	modules []module.Descriptor
 
@@ -60,11 +62,11 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as RBAC can have access to it.
 	klog.Infof("initializing runtime controller default state")
-	err := r.deliver(authentication.NewEmptySubjects(), &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
+	err := r.deliver(r.user, &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
 	if err != nil {
 		return err
 	}
-	err = r.deliver(authentication.NewEmptySubjects(), &runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
+	err = r.deliver(r.user, &runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
 	if err != nil {
 		return err
 	}
@@ -117,47 +119,47 @@ func (r *Runtime) List() {
 	panic("implement me")
 }
 
-func (r *Runtime) Create(subject string, object meta.StateObject) error {
-	if err := r.authorized(runtimev1alpha1.Verb_Create, object, subject); err != nil {
+func (r *Runtime) Create(users user.Users, object meta.StateObject) error {
+	if err := r.authorized(runtimev1alpha1.Verb_Create, object, users); err != nil {
 		return err
 	}
 	return convertStoreError(r.store.Create(object))
 }
 
-func (r *Runtime) Update(subject string, object meta.StateObject) error {
-	if err := r.authorized(runtimev1alpha1.Verb_Update, object, subject); err != nil {
+func (r *Runtime) Update(users user.Users, object meta.StateObject) error {
+	if err := r.authorized(runtimev1alpha1.Verb_Update, object, users); err != nil {
 		return err
 	}
 	return convertStoreError(r.store.Update(object))
 }
 
-func (r *Runtime) Delete(subject string, object meta.StateObject) error {
-	if err := r.authorized(runtimev1alpha1.Verb_Delete, object, subject); err != nil {
+func (r *Runtime) Delete(users user.Users, object meta.StateObject) error {
+	if err := r.authorized(runtimev1alpha1.Verb_Delete, object, users); err != nil {
 		return err
 	}
 	return convertStoreError(r.store.Delete(object))
 }
 
-func (r *Runtime) Deliver(subjects *authentication.Subjects, transition meta.StateTransition, opts ...DeliverOption) (err error) {
+func (r *Runtime) Deliver(subjects user.Users, transition meta.StateTransition, opts ...DeliverOption) (err error) {
 	return r.deliver(subjects, transition, opts...)
 }
 
 // deliver delivers a meta.StateTransition to the handling controller
 // returns error in case of routing errors or execution errors.
-func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition meta.StateTransition, opts ...DeliverOption) (err error) {
+func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition, opts ...DeliverOption) (err error) {
 	deliverOpt := new(deliverOptions)
 	for _, opt := range opts {
 		opt(deliverOpt)
 	}
 	if !deliverOpt.skipAdmissionController {
-		err := r.runAdmissionChain(subjects, stateTransition)
+		err := r.runAdmissionChain(users, stateTransition)
 		if err != nil {
 			return err
 		}
 	}
 	// identity here should be used for authorization checks
 	// ex: identity is module/user then can it call the state transition?
-	if err = r.authorized(runtimev1alpha1.Verb_Deliver, stateTransition, subjects.List()...); err != nil {
+	if err = r.authorized(runtimev1alpha1.Verb_Deliver, stateTransition, users); err != nil {
 		return err
 	}
 	// execute pre state transitions hooks
@@ -169,7 +171,7 @@ func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition met
 	}
 	// deliver the request
 	_, err = handler.Deliver(controller.StateTransitionRequest{
-		Subjects:   subjects,
+		Users:      users,
 		Transition: stateTransition,
 	})
 	if err != nil {
@@ -186,15 +188,15 @@ func (r *Runtime) deliver(subjects *authentication.Subjects, stateTransition met
 
 // runAdmissionChain runs the controller.Handler handlers related to the
 // provided state transition.
-func (r *Runtime) runAdmissionChain(subjects *authentication.Subjects, transition meta.StateTransition) error {
+func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTransition) error {
 	ctrls, err := r.router.GetAdmissionControllers(transition)
 	if err != nil {
 		return fmt.Errorf("unable to execute request: %s", meta.Name(transition))
 	}
 	for _, ctrl := range ctrls {
-		err = ctrl.Validate(admission.StateTransitionRequest{
+		err = ctrl.Validate(admission.Request{
 			Transition: transition,
-			Subjects:   subjects,
+			Users:      users,
 		})
 		if err != nil {
 			return fmt.Errorf("%w: %s", errors.ErrBadRequest, err.Error())
@@ -226,11 +228,11 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 	return nil
 }
 
-func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, subjects ...string) error {
+func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, users user.Users) error {
 	if !r.rbacEnabled {
 		return nil
 	}
-	err := r.rbac.Allowed(verb, resource, subjects...)
+	err := r.rbac.Allowed(verb, resource, users)
 	if err == nil {
 		return nil
 	}

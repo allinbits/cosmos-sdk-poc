@@ -2,6 +2,7 @@ package authentication
 
 import (
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
@@ -15,8 +16,8 @@ type TxDecoder interface {
 type Tx interface {
 	// StateTransitions returns the state transitions
 	StateTransitions() []meta.StateTransition
-	// Subjects returns the entities authenticated in the transaction
-	Subjects() *Subjects
+	// Users returns the entities authenticated in the transaction
+	Users() user.Users
 	// Fee returns the fees of the transaction
 	// as a slice of *coin.Coin
 	Fee() []*coin.Coin

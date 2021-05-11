@@ -9,6 +9,7 @@ import (
 	"github.com/fdymylja/tmos/module/runtime"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -99,6 +100,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	b.rt.router = b.router
 	b.rt.modules = b.modules
 	b.rt.rbac = b.rbac.AsAuthorizer()
+	b.rt.user = user.NewUsersFromString(user.Runtime)
 	switch b.decoder {
 	case nil:
 		klog.Warningf("no decoder - transactions sent to the ABCI application will be rejected")

@@ -32,7 +32,7 @@ type BindRoleAdmission struct {
 	client module.Client
 }
 
-func (b BindRoleAdmission) Validate(request admission.StateTransitionRequest) error {
+func (b BindRoleAdmission) Validate(request admission.Request) error {
 	msg := request.Transition.(*v1alpha1.MsgBindRole)
 	if err := b.roleExists(msg.RoleId); err != nil {
 		return err

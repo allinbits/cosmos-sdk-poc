@@ -1,7 +1,9 @@
 package client
 
+import "github.com/fdymylja/tmos/runtime/authentication/user"
+
 type deliverOptions struct {
-	impersonate []string
+	impersonate user.Users
 }
 
 type DeliverOption func(opt *deliverOptions)
@@ -10,7 +12,7 @@ type DeliverOption func(opt *deliverOptions)
 // to deliver a meta.StateTransition impersonating another subject(s).
 func DeliverImpersonating(subjects ...string) DeliverOption {
 	return func(opt *deliverOptions) {
-		opt.impersonate = append(opt.impersonate, subjects...)
+		opt.impersonate = user.NewUsersFromString(subjects...)
 	}
 }
 

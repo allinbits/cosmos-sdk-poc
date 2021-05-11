@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
@@ -9,10 +9,10 @@ import (
 // which other module.Client can interact with.
 type RuntimeServer interface {
 	Get(id meta.ID, object meta.StateObject) error
-	Create(subject string, object meta.StateObject) error
-	Update(subject string, object meta.StateObject) error
-	Delete(subject string, object meta.StateObject) error
-	Deliver(subjects *authentication.Subjects, transition meta.StateTransition) error
+	Create(users user.Users, object meta.StateObject) error
+	Update(users user.Users, object meta.StateObject) error
+	Delete(users user.Users, object meta.StateObject) error
+	Deliver(users user.Users, transition meta.StateTransition) error
 }
 
 // RuntimeClient is the client that modules use to interact
@@ -35,7 +35,7 @@ func New(runtime RuntimeServer) RuntimeClient {
 
 // client is the runtime.Runtime client used internally by modules to interact with each other and the store.
 type client struct {
-	subject string // subject carries identity info regarding the module
+	users   user.Users
 	runtime RuntimeServer
 }
 
@@ -44,31 +44,29 @@ func (c *client) Get(id meta.ID, object meta.StateObject, opts ...GetOption) err
 }
 
 func (c *client) Create(object meta.StateObject, opts ...CreateOption) error {
-	return c.runtime.Create(c.subject, object)
+	return c.runtime.Create(c.users, object)
 }
 
 func (c *client) Update(object meta.StateObject, opts ...UpdateOption) error {
-	return c.runtime.Update(c.subject, object)
+	return c.runtime.Update(c.users, object)
 }
 
 func (c *client) Delete(object meta.StateObject, opts ...DeleteOption) error {
-	return c.runtime.Delete(c.subject, object)
+	return c.runtime.Delete(c.users, object)
 }
 
 func (c *client) Deliver(transition meta.StateTransition, opts ...DeliverOption) error {
 	o := new(deliverOptions)
+	// apply options
 	for _, opt := range opts {
 		opt(o)
 	}
-	subjects := authentication.NewEmptySubjects()
-	subjects.Add(c.subject)
-	// add impersonation subjects
-	for _, impersonating := range o.impersonate {
-		subjects.Add(impersonating)
-	}
-	return c.runtime.Deliver(subjects, transition)
+	// impersonate users if defined
+	users := user.NewUsersUnion(c.users, o.impersonate)
+
+	return c.runtime.Deliver(users, transition)
 }
 
-func (c *client) SetSubject(subject string) {
-	c.subject = subject
+func (c *client) SetUser(u user.Users) {
+	c.users = u
 }

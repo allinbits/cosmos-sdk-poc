@@ -6,7 +6,7 @@ import (
 	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
 	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
@@ -17,15 +17,15 @@ import (
 
 func NewABCIApplication(rt *Runtime) ABCIApplication {
 	return ABCIApplication{
-		rt:          rt,
-		abciSubject: authentication.NewSubjects("abci"),
+		rt:   rt,
+		user: user.NewUsersFromString(user.ABCI),
 	}
 }
 
 // ABCIApplication is a Runtime orchestrated by Tendermint
 type ABCIApplication struct {
-	rt          *Runtime
-	abciSubject *authentication.Subjects
+	rt   *Runtime
+	user user.Users
 }
 
 func (a ABCIApplication) Info(info types.RequestInfo) types.ResponseInfo {
@@ -91,7 +91,7 @@ func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckT
 	}
 	// run admission checks on single state transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.runAdmissionChain(tx.Subjects(), transition)
+		err = a.rt.runAdmissionChain(tx.Users(), transition)
 		if err != nil {
 			return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 		}
@@ -115,7 +115,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 		}
 	}
 	// set init chain info
-	err := a.rt.Deliver(a.abciSubject, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
+	err := a.rt.Deliver(a.user, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
 	if err != nil {
 		panic(err)
 	}
@@ -131,7 +131,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.ResponseBeginBlock {
 	block := new(abci.RequestBeginBlock)
 	block.FromLegacyProto(&tmBlock)
-	err := a.rt.Deliver(a.abciSubject, &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
+	err := a.rt.Deliver(a.user, &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
 	if err != nil {
 		panic(err)
 	}
@@ -162,7 +162,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	// cache again
 	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.Deliver(tx.Subjects(), transition, DeliverSkipAdmissionControllers())
+		err = a.rt.Deliver(tx.Users(), transition, DeliverSkipAdmissionControllers())
 		if err != nil {
 			return errors.ToABCIResponse(0, 0, err)
 		}
@@ -174,7 +174,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 
 func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {
 	// we set the abci endblcok state given us by tendermint so other modules can access it
-	err := a.rt.Deliver(a.abciSubject, &abcictrl.MsgSetEndBlockState{
+	err := a.rt.Deliver(a.user, &abcictrl.MsgSetEndBlockState{
 		EndBlock: &abci.RequestEndBlock{
 			Height: block.Height,
 		},
