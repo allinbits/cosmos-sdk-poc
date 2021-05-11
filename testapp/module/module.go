@@ -43,7 +43,7 @@ type genesisController struct {
 	bank  *bank.Client
 }
 
-func (g genesisController) SetDefault() error {
+func (g genesisController) Default() error {
 	pkB, err := hex.DecodeString(pubKeyAsAny)
 	if err != nil {
 		return err
@@ -77,6 +77,6 @@ func (g genesisController) Import(state json.RawMessage) error {
 	panic("implement me")
 }
 
-func (g genesisController) Export(state json.RawMessage) error {
+func (g genesisController) Export() (json.RawMessage, error) {
 	panic("implement me")
 }

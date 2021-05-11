@@ -5,10 +5,9 @@ import (
 
 	"github.com/fdymylja/tmos/module/abci/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/module"
-	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func newGenesisHandler(client module.Client) statetransition.Genesis {
+func newGenesisHandler(client module.Client) module.GenesisHandler {
 	return genesis{client}
 }
 
@@ -16,7 +15,7 @@ type genesis struct {
 	client module.Client
 }
 
-func (g genesis) SetDefault() error {
+func (g genesis) Default() error {
 	// set initial stage
 	err := g.client.Create(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_InitChain})
 	if err != nil {
@@ -60,6 +59,6 @@ func (g genesis) Import(state json.RawMessage) error {
 	return nil
 }
 
-func (g genesis) Export(state json.RawMessage) error {
+func (g genesis) Export() (state json.RawMessage, err error) {
 	panic("implement me")
 }

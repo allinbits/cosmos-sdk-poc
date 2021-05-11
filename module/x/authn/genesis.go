@@ -11,7 +11,7 @@ type genesis struct {
 	c module.Client
 }
 
-func (g genesis) SetDefault() error {
+func (g genesis) Default() error {
 	err := g.c.Create(&v1alpha1.Params{
 		MaxMemoCharacters:      1000000,
 		TxSigLimit:             1000000,
@@ -35,6 +35,6 @@ func (g genesis) Import(state json.RawMessage) error {
 	panic("implement me")
 }
 
-func (g genesis) Export(state json.RawMessage) error {
+func (g genesis) Export() (json.RawMessage, error) {
 	panic("implement me")
 }

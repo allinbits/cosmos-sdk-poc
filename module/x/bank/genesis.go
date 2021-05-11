@@ -3,17 +3,17 @@ package bank
 import (
 	"encoding/json"
 
-	"github.com/fdymylja/tmos/runtime/statetransition"
+	"github.com/fdymylja/tmos/runtime/module"
 )
 
 type genesisHandler struct {
 }
 
-func newGenesisHandler() statetransition.Genesis {
+func newGenesisHandler() module.GenesisHandler {
 	return &genesisHandler{}
 }
 
-func (g genesisHandler) SetDefault() error {
+func (g genesisHandler) Default() error {
 	return nil
 }
 
@@ -22,6 +22,6 @@ func (g genesisHandler) Import(state json.RawMessage) error {
 	return nil
 }
 
-func (g genesisHandler) Export(state json.RawMessage) error {
+func (g genesisHandler) Export() (state json.RawMessage, err error) {
 	panic("implement me")
 }

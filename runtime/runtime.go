@@ -78,7 +78,7 @@ func (r *Runtime) InitGenesis() error {
 			continue
 		}
 		klog.Infof("initializing genesis state for %s", m.Name)
-		if err := m.GenesisHandler.SetDefault(); err != nil {
+		if err := m.GenesisHandler.Default(); err != nil {
 			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
 		}
 	}

@@ -7,7 +7,9 @@ import (
 
 // Request is the request forwarded to the Handler controller
 type Request struct {
-	Users      user.Users
+	// Users contains information on the entities that have authorized the meta.StateTransition
+	Users user.Users
+	// Transition is the meta.StateTransition that needs to be processed
 	Transition meta.StateTransition
 }
 
@@ -17,7 +19,7 @@ type Response struct {
 
 // Handler identifies the state transition controller
 type Handler interface {
-	// Deliver forwards a request for state change
+	// Deliver is called when the Request needs to be processed
 	Deliver(req Request) (Response, error)
 }
 

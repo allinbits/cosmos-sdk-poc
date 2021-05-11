@@ -9,7 +9,7 @@ import (
 // Descriptor describes the full functionality set of a Module
 type Descriptor struct {
 	Name                           string
-	GenesisHandler                 statetransition.Genesis
+	GenesisHandler                 GenesisHandler
 	AdmissionControllers           []admissionController
 	MutatingAdmissionControllers   []mutatingAdmissionController
 	StateTransitionControllers     []stateTransitionController
@@ -73,7 +73,7 @@ func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject) *Descriptor
 	return b
 }
 
-func (b *DescriptorBuilder) WithGenesis(ctrl statetransition.Genesis) *DescriptorBuilder {
+func (b *DescriptorBuilder) WithGenesis(ctrl GenesisHandler) *DescriptorBuilder {
 	b.descriptor.GenesisHandler = ctrl
 
 	return b

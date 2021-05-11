@@ -54,7 +54,7 @@ func (g *genesis) addInitialRole(role *v1alpha1.Role, binding *v1alpha1.RoleBind
 	g.bindings = append(g.bindings, binding)
 }
 
-func (g *genesis) SetDefault() error {
+func (g *genesis) Default() error {
 	// we create the initial roles and bindings of the associated roles
 	// they are module roles created at runtime.DescriptorBuilder.Build() level
 	// we do it via deliver because we want to make sure the creation
@@ -83,6 +83,6 @@ func (g *genesis) Import(state json.RawMessage) error {
 	panic("implement me")
 }
 
-func (g *genesis) Export(state json.RawMessage) error {
+func (g *genesis) Export() (json.RawMessage, error) {
 	panic("implement me")
 }
