@@ -64,12 +64,12 @@ type Builder struct {
 // AddModule adds a new module.Module to the list of modules to install
 func (b *Builder) AddModule(m module.Module) {
 	type subjectSetter interface {
-		SetSubject(subject string)
+		SetUser(users user.Users)
 	}
 
 	mc := client.New(newRuntimeAsServer(b.rt))
 	descriptor := m.Initialize(mc)
-	mc.(subjectSetter).SetSubject(descriptor.Name) // set the authentication name for the module TODO: we should do this a lil better
+	mc.(subjectSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
 	b.modules = append(b.modules, descriptor)
 }
 

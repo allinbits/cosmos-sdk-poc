@@ -3,7 +3,7 @@ package bank_test
 import (
 	"testing"
 
-	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func TestSendCoins(t *testing.T) {
 	require.NoError(t, err)
 	rt.EnableRBAC()
 
-	err = rt.Create("bank", &v1alpha1.Balance{
+	err = rt.Create(user.NewUsersFromString("bank"), &v1alpha1.Balance{
 		Address: "frojdi",
 		Balance: []*coin.Coin{
 			{
@@ -38,7 +38,7 @@ func TestSendCoins(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = rt.Deliver(authentication.NewSubjects("bank"), &v1alpha1.MsgSendCoins{
+	err = rt.Deliver(user.NewUsersFromString("bank"), &v1alpha1.MsgSendCoins{
 		FromAddress: "frojdi",
 		ToAddress:   "jonathan",
 		Amount: []*coin.Coin{

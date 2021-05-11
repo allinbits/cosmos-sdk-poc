@@ -7,6 +7,7 @@ import (
 	"github.com/fdymylja/tmos/module/x/authn/crypto"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 )
 
 // NewDecoder instantiates a new *Decoder instance
@@ -78,20 +79,20 @@ func (d *Decoder) Decode(txBytes []byte) (authentication.Tx, error) {
 		raw:         raw,
 		bytes:       txBytes,
 		transitions: transitions,
-		signers:     signers,
+		signers:     user.NewUsersFromString(signers...),
 		pubKeys:     pubKeys,
 		payer:       payer,
 	}, nil
 }
 
-func (d *Decoder) authInfo(info *v1alpha1.AuthInfo, signatures [][]byte) (string, *authentication.Subjects, []Signer, error) {
+func (d *Decoder) authInfo(info *v1alpha1.AuthInfo, signatures [][]byte) (string, []string, []Signer, error) {
 	if len(info.SignerInfos) == 0 {
 		return "", nil, nil, fmt.Errorf("tx: no signer provided")
 	}
 	if len(signatures) != len(info.SignerInfos) {
 		return "", nil, nil, fmt.Errorf("tx: signers and signatures number mimsatch")
 	}
-	subjects := authentication.NewEmptySubjects()
+	var usersStr []string
 
 	var signers []Signer
 	feePayer := ""
@@ -120,7 +121,7 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo, signatures [][]byte) (string
 		if err != nil {
 			return "", nil, nil, fmt.Errorf("tx: unable to bechify address of public key at index %d: %w", i, err)
 		}
-		subjects.Add(addr)
+		usersStr = append(usersStr, addr)
 		signers = append(signers, Signer{
 			Address:   addr,
 			PubKey:    pk,
@@ -133,10 +134,10 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo, signatures [][]byte) (string
 	}
 	// override fee payer if provided
 	if info.Fee == nil {
-		return feePayer, subjects, signers, nil
+		return feePayer, usersStr, signers, nil
 	}
 	if info.Fee.Payer != "" {
 		feePayer = info.Fee.Payer
 	}
-	return feePayer, subjects, signers, nil
+	return feePayer, usersStr, signers, nil
 }

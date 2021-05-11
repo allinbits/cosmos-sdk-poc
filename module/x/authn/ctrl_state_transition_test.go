@@ -3,7 +3,7 @@ package authn
 import (
 	"testing"
 
-	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/stretchr/testify/require"
 
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
@@ -18,7 +18,7 @@ func TestCreateAccountController(t *testing.T) {
 	require.NoError(t, err)
 
 	err = rt.Deliver(
-		authentication.NewEmptySubjects(),
+		user.NewUsers(),
 		&v1alpha1.MsgCreateAccount{
 			Account: &v1alpha1.Account{
 				Address: "test",

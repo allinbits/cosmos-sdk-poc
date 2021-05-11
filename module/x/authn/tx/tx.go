@@ -5,6 +5,7 @@ import (
 	"github.com/fdymylja/tmos/module/x/authn/crypto"
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
@@ -23,7 +24,7 @@ type Wrapper struct {
 	raw         *v1alpha1.Tx
 	bytes       []byte
 	transitions []meta.StateTransition
-	signers     *authentication.Subjects
+	signers     user.Users
 	pubKeys     []Signer
 	payer       string
 }
@@ -32,7 +33,7 @@ func (t *Wrapper) StateTransitions() []meta.StateTransition {
 	return t.transitions
 }
 
-func (t *Wrapper) Subjects() *authentication.Subjects {
+func (t *Wrapper) Users() user.Users {
 	return t.signers
 }
 

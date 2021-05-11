@@ -53,7 +53,7 @@ type accountExists struct {
 func (a accountExists) Validate(tx authentication.Tx) error {
 	// assert that all signer accounts exist
 	for _, sig := range tx.Users().List() {
-		_, err := a.c.GetAccount(sig)
+		_, err := a.c.GetAccount(sig.GetName())
 		if err != nil {
 			return err
 		}
@@ -204,7 +204,7 @@ type increaseSequence struct {
 func (i increaseSequence) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
 	signers := req.Tx.Users()
 	for _, signer := range signers.List() {
-		err := i.c.IncreaseSequence(signer)
+		err := i.c.IncreaseSequence(signer.GetName())
 		if err != nil {
 			return authentication.DeliverResponse{}, err
 		}

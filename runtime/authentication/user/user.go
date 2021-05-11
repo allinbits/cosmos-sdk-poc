@@ -24,7 +24,7 @@ type DefaultUsers struct {
 	users map[string]User
 }
 
-func (d DefaultUsers) add(u User) bool {
+func (d *DefaultUsers) add(u User) bool {
 	_, exists := d.users[u.GetName()]
 	if exists {
 		return false
@@ -33,7 +33,7 @@ func (d DefaultUsers) add(u User) bool {
 	return true
 }
 
-func (d DefaultUsers) Has(names ...string) bool {
+func (d *DefaultUsers) Has(names ...string) bool {
 	for _, name := range names {
 		if !d.has(name) {
 			return false
@@ -42,13 +42,17 @@ func (d DefaultUsers) Has(names ...string) bool {
 	return true
 }
 
-func (d DefaultUsers) has(name string) bool {
+func (d *DefaultUsers) has(name string) bool {
 	_, exists := d.users[name]
 	return exists
 }
 
-func (d DefaultUsers) List() []User {
-	panic("implement me")
+func (d *DefaultUsers) List() []User {
+	u := make([]User, 0, len(d.users))
+	for _, user := range d.users {
+		u = append(u, user)
+	}
+	return u
 }
 
 func NewUsersFromString(users ...string) Users {
@@ -56,7 +60,7 @@ func NewUsersFromString(users ...string) Users {
 	for _, user := range users {
 		u[user] = DefaultUser(user)
 	}
-	return DefaultUsers{users: u}
+	return &DefaultUsers{users: u}
 }
 
 func NewUsers(users ...User) Users {
@@ -64,12 +68,16 @@ func NewUsers(users ...User) Users {
 	for _, user := range users {
 		u[user.GetName()] = user
 	}
-	return DefaultUsers{users: u}
+	return &DefaultUsers{users: u}
 }
 
 func NewUsersUnion(groups ...Users) Users {
-	users := DefaultUsers{users: map[string]User{}}
+	users := &DefaultUsers{users: map[string]User{}}
 	for _, g := range groups {
+		// in case of nil users we skip
+		if g == nil {
+			continue
+		}
 		for _, user := range g.List() {
 			users.add(user)
 		}
