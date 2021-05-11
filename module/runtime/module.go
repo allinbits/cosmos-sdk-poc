@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/module"
 )
@@ -13,7 +14,7 @@ type Module struct {
 
 func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
-		Named("runtime").
+		Named(user.Runtime).
 		OwnsStateObject(&v1alpha1.StateObjectsList{}).
 		OwnsStateObject(&v1alpha1.StateTransitionsList{}).
 		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsController(client), false).

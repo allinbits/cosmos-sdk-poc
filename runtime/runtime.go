@@ -38,7 +38,7 @@ type Runtime struct {
 
 	authn authentication.TxDecoder
 
-	rbac        authorization.RBAC
+	rbac        authorization.Authorizer
 	rbacEnabled bool
 
 	router *Router
@@ -60,7 +60,7 @@ func (r *Runtime) InitGenesis() error {
 		return fmt.Errorf("runtime: already initialized")
 	}
 	// initialize the initial runtime components information
-	// so that modules such as RBAC can have access to it.
+	// so that modules such as Authorizer can have access to it.
 	klog.Infof("initializing runtime controller default state")
 	err := r.deliver(r.user, &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
 	if err != nil {
@@ -232,8 +232,12 @@ func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, user
 	if !r.rbacEnabled {
 		return nil
 	}
-	err := r.rbac.Allowed(verb, resource, users)
-	if err == nil {
+	decision, err := r.rbac.Authorize(authorization.Attributes{
+		Verb:     verb,
+		Resource: resource,
+		Users:    users,
+	})
+	if err == nil && decision == authorization.DecisionAllow {
 		return nil
 	}
 	return fmt.Errorf("%w: %s", errors.ErrUnauthorized, err)

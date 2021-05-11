@@ -2,10 +2,9 @@ package abci
 
 import (
 	"github.com/fdymylja/tmos/module/abci/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/module"
 )
-
-const Subject = "abci"
 
 func NewModule() module.Module {
 	return Module{}
@@ -16,7 +15,7 @@ type Module struct {
 
 func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
-		Named(Subject).
+		Named(user.ABCI).
 		OwnsStateObject(&v1alpha1.Stage{}).
 		OwnsStateObject(&v1alpha1.BeginBlockState{}).
 		OwnsStateObject(&v1alpha1.DeliverTxState{}).

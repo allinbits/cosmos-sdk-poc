@@ -5,16 +5,15 @@ import (
 
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/scylladb/go-set/strset"
 )
 
-var _ authorization.RBAC = Authorizer{}
+var _ authorization.Authorizer = Authorizer{}
 
-func NewAuthorizer(c module.Client) authorization.RBAC {
+func NewAuthorizer(c module.Client) authorization.Authorizer {
 	return Authorizer{c: c}
 }
 
@@ -22,22 +21,22 @@ type Authorizer struct {
 	c module.Client
 }
 
-func (a Authorizer) Allowed(verb runtimev1alpha1.Verb, resource meta.Type, users user.Users) error {
-	usersStr := make([]string, len(users.List()))
-	for i, u := range users.List() {
+func (a Authorizer) Authorize(attributes authorization.Attributes) (authorization.Decision, error) {
+	usersStr := make([]string, len(attributes.Users.List()))
+	for i, u := range attributes.Users.List() {
 		usersStr[i] = u.GetName()
 	}
 
 	roles, err := a.fetchRoles(usersStr...)
 	if err != nil {
-		return err
+		return authorization.DecisionDeny, err
 	}
 	// check if role is allowed to access the resource
-	set := a.getResourcesSet(verb, roles)
-	if !set.Has(meta.Name(resource)) {
-		return fmt.Errorf("no subject in %s has role %s towards resource %s", usersStr, verb, meta.Name(resource))
+	set := a.getResourcesSet(attributes.Verb, roles)
+	if !set.Has(meta.Name(attributes.Resource)) {
+		return authorization.DecisionDeny, fmt.Errorf("no subject in %s has role %s towards resource %s", usersStr, attributes.Verb, meta.Name(attributes.Resource))
 	}
-	return nil
+	return authorization.DecisionAllow, nil
 }
 
 func (a Authorizer) fetchRoles(subjects ...string) ([]*v1alpha1.Role, error) {

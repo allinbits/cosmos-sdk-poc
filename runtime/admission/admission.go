@@ -35,3 +35,25 @@ type HandlerFunc func(req Request) error
 func (h HandlerFunc) Validate(req Request) error {
 	return h(req)
 }
+
+// Chain contains multiple Handler and executes them in a chain
+// NOTE: each Handler MUST handle the same meta.StateTransition
+type Chain struct {
+	handlers []Handler
+}
+
+func (c Chain) Validate(req Request) error {
+	for _, handler := range c.handlers {
+		err := handler.Validate(req)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// NewChain instantiates a new Chain of Handler
+// NOTE: each Handler MUST handle the same meta.StateTransition
+func NewChain(handlers ...Handler) Chain {
+	return Chain{handlers: handlers}
+}

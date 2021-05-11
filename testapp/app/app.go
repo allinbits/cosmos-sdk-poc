@@ -29,6 +29,22 @@ func init() {
 	flag.StringVar(&configFile, "config", "testapp/app/config/config.toml", "Path to config.toml")
 }
 
+func NewApp() abci.Application {
+	rtb := runtime.NewBuilder()
+	authentication := authn.NewModule()
+	rtb.AddModule(authentication)
+	rtb.SetDecoder(authentication.GetAuthenticator())
+	rtb.AddModule(bank.NewModule())
+	rtb.AddModule(distribution.NewModule())
+	rtb.AddModule(testmodule.NewModule())
+	rt, err := rtb.Build()
+	if err != nil {
+		panic(err)
+	}
+	tmApp := runtime.NewABCIApplication(rt)
+	return tmApp
+}
+
 func New() {
 	rtb := runtime.NewBuilder()
 	authentication := authn.NewModule()

@@ -6,8 +6,26 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-// RBAC defines an authorizer module in the runtime.Runtime based on Role Based Access Control
-type RBAC interface {
-	// Allowed checks if the provided subjects are allowed to do the Verb action on the defined resource
-	Allowed(verb runtimev1alpha1.Verb, resource meta.Type, users user.Users) error
+// Decision defines the Authorizer choice regarding the request
+type Decision int
+
+const (
+	DecisionDeny Decision = iota
+	DecisionAllow
+	DecisionNoOpinion
+)
+
+// Attributes contains
+type Attributes struct {
+	// Verb returns the runtime verb associated with the request
+	Verb runtimev1alpha1.Verb
+	// Resource contains the resource name being accessed
+	Resource meta.Type
+	// Users contains the information of the users who made the request
+	Users user.Users
+}
+
+// Authorizer makes an authorization decision by inspecting the Attributes
+type Authorizer interface {
+	Authorize(attributes Attributes) (decision Decision, err error)
 }

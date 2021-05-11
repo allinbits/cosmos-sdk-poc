@@ -15,6 +15,7 @@ type Signer struct {
 	Address   string
 	PubKey    crypto.PubKey
 	Signature []byte
+	Sequence  uint64
 }
 
 // Wrapper wraps the raw *v1alpha1.Tx but contains parsed information

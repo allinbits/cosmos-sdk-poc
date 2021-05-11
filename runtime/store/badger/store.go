@@ -74,6 +74,7 @@ func (s *Store) Update(object meta.StateObject) error {
 		panic(err)
 	}
 	s.kv.set(k, b)
+	klog.Infof("updating: %s %s", k, object)
 	return nil
 }
 

@@ -11,11 +11,11 @@ import (
 func NewModule() *Module { return &Module{} }
 
 type Module struct {
-	authorizer authorization.RBAC
+	authorizer authorization.Authorizer
 	genesis    *genesis
 }
 
-func (m *Module) AsAuthorizer() authorization.RBAC {
+func (m *Module) AsAuthorizer() authorization.Authorizer {
 	return m.authorizer
 }
 

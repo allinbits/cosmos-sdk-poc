@@ -225,7 +225,6 @@ type sigVerifier struct {
 }
 
 func (a sigVerifier) Validate(aTx authentication.Tx) error {
-
 	wrapper := aTx.(*tx.Wrapper)
 	raw := wrapper.TxRaw()
 	sigs := wrapper.Signers()
@@ -243,7 +242,10 @@ func (a sigVerifier) Validate(aTx authentication.Tx) error {
 		if acc.PubKey == nil {
 			return fmt.Errorf("pub key not set on account %s", signer.Address)
 		}
-
+		// check sequence
+		if acc.Sequence != signer.Sequence {
+			return fmt.Errorf("invalid sequence %d expected %d", signer.Sequence, acc.Sequence)
+		}
 		expectedBytes, err := DirectSignBytes(raw.BodyBytes, raw.AuthInfoBytes, chainID, acc.AccountNumber)
 		if err != nil {
 			return err

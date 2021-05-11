@@ -126,6 +126,7 @@ func (d *Decoder) authInfo(info *v1alpha1.AuthInfo, signatures [][]byte) (string
 			Address:   addr,
 			PubKey:    pk,
 			Signature: signatures[i],
+			Sequence:  sig.Sequence,
 		})
 		// set fee payer as first signer
 		if i == 0 {
