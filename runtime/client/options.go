@@ -8,7 +8,7 @@ type deliverOptions struct {
 
 type DeliverOption func(opt *deliverOptions)
 
-// DeliverImpersonating is a client.Handle option which allows the client
+// DeliverImpersonating is a client.Exec option which allows the client
 // to deliver a meta.StateTransition impersonating another subject(s).
 func DeliverImpersonating(subjects ...string) DeliverOption {
 	return func(opt *deliverOptions) {

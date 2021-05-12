@@ -169,7 +169,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		return err
 	}
 	// deliver the request
-	_, err = handler.Handle(statetransition.ExecutionRequest{
+	_, err = handler.Exec(statetransition.ExecutionRequest{
 		Users:      users,
 		Transition: stateTransition,
 	})

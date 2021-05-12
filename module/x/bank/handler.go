@@ -20,7 +20,7 @@ type SendCoinsHandler struct {
 	c *v1alpha1.Client
 }
 
-func (s SendCoinsHandler) Handle(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func (s SendCoinsHandler) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSendCoins)
 
 	senderBalance, err := s.c.GetBalance(msg.FromAddress)
@@ -118,7 +118,7 @@ type SetCoinsHandler struct {
 	c module.Client
 }
 
-func (s SetCoinsHandler) Handle(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func (s SetCoinsHandler) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgSetBalance)
 	// set balance i guess
 	balance := new(v1alpha1.Balance)

@@ -15,7 +15,7 @@ type BindRoleController struct {
 	client module.Client
 }
 
-func (b BindRoleController) Handle(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
+func (b BindRoleController) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgBindRole)
 	return statetransition.ExecutionResponse{}, b.client.Create(&v1alpha1.RoleBinding{
 		Subject: msg.Subject,

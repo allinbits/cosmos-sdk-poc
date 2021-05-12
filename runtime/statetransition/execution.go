@@ -20,12 +20,12 @@ type ExecutionResponse struct{}
 // which handles the state transition and modifies state
 // based on the received execution request.
 type ExecutionHandler interface {
-	// Handle is called when the ExecutionRequest needs to be processed
-	Handle(req ExecutionRequest) (ExecutionResponse, error)
+	// Exec is called when the ExecutionRequest needs to be processed
+	Exec(req ExecutionRequest) (ExecutionResponse, error)
 }
 
 type ExecutionHandlerFunc func(req ExecutionRequest) (resp ExecutionResponse, err error)
 
-func (s ExecutionHandlerFunc) Handle(req ExecutionRequest) (ExecutionResponse, error) {
+func (s ExecutionHandlerFunc) Exec(req ExecutionRequest) (ExecutionResponse, error) {
 	return s(req)
 }

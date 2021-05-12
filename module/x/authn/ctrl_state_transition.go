@@ -15,7 +15,7 @@ type CreateAccountController struct {
 	c module.Client
 }
 
-func (m *CreateAccountController) Handle(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func (m *CreateAccountController) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateAccount)
 	// get last account number
 	lastAccNum := new(v1alpha1.CurrentAccountNumber)

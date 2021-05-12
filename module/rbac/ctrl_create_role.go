@@ -23,7 +23,7 @@ type CreateRoleController struct {
 	client module.Client
 }
 
-func (c CreateRoleController) Handle(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
+func (c CreateRoleController) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	return statetransition.ExecutionResponse{}, c.client.Create(msg.NewRole)
 }
