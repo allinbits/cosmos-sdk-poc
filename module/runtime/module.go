@@ -21,15 +21,15 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false).Build()
 }
 
-func newCreateStateObjectsController(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func newCreateStateObjectsController(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateObjectsList)
 		return resp, client.Create(&v1alpha1.StateObjectsList{StateObjects: msg.StateObjects})
 	}
 }
 
-func newCreateStateTransitionsController(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func newCreateStateTransitionsController(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateTransitionsList)
 		return resp, client.Create(&v1alpha1.StateTransitionsList{
 			StateTransitions: msg.StateTransitions,

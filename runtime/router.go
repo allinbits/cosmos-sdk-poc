@@ -14,7 +14,7 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 
 func NewRouter() *Router {
 	return &Router{
-		stateTransitionControllers:          map[string]statetransition.Handler{},
+		stateTransitionControllers:          map[string]statetransition.ExecutionHandler{},
 		stateTransitionAdmissionControllers: map[string][]statetransition.AdmissionHandler{},
 	}
 }
@@ -22,11 +22,11 @@ func NewRouter() *Router {
 type Router struct {
 	transactionAdmissionControllers          []authentication.AdmissionController
 	transactionPostAuthenticationControllers []authentication.TransitionController
-	stateTransitionControllers               map[string]statetransition.Handler
+	stateTransitionControllers               map[string]statetransition.ExecutionHandler
 	stateTransitionAdmissionControllers      map[string][]statetransition.AdmissionHandler
 }
 
-func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler statetransition.Handler) error {
+func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler statetransition.ExecutionHandler) error {
 	name := meta.Name(transition)
 	if _, exists := r.stateTransitionControllers[name]; exists {
 		return fmt.Errorf("%w: %s", ErrTransitionAlreadyRegistered, name)
@@ -35,7 +35,7 @@ func (r *Router) AddStateTransitionController(transition meta.StateTransition, h
 	return nil
 }
 
-func (r *Router) GetStateTransitionController(transition meta.StateTransition) (statetransition.Handler, error) {
+func (r *Router) GetStateTransitionController(transition meta.StateTransition) (statetransition.ExecutionHandler, error) {
 	name := meta.Name(transition)
 	handler, exists := r.stateTransitionControllers[name]
 	if !exists {

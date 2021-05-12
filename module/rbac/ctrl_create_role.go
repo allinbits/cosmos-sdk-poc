@@ -13,7 +13,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-func NewCreateRoleController(client module.Client) statetransition.Handler {
+func NewCreateRoleController(client module.Client) statetransition.ExecutionHandler {
 	return CreateRoleController{
 		client: client,
 	}
@@ -23,9 +23,9 @@ type CreateRoleController struct {
 	client module.Client
 }
 
-func (c CreateRoleController) Handle(req statetransition.Request) (statetransition.Response, error) {
+func (c CreateRoleController) Handle(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
-	return statetransition.Response{}, c.client.Create(msg.NewRole)
+	return statetransition.ExecutionResponse{}, c.client.Create(msg.NewRole)
 }
 
 func NewCreateRoleAdmissionController(client module.Client) CreateRoleAdmissionController {

@@ -2,13 +2,12 @@ package statetransition
 
 import (
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // AdmissionRequest is the request sent to admission controllers
 type AdmissionRequest struct {
 	// Transition defines the meta.StateTransition that needs to be validated
-	Transition meta.StateTransition
+	Transition StateTransition
 	// Users contains the authentication.Users that have authorized
 	// the state transition
 	Users user.Users
