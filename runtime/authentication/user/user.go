@@ -1,5 +1,7 @@
 package user
 
+import "fmt"
+
 // User uniquely identifies a user in the authentication context
 type User interface {
 	// GetName returns the unique name of the user in the system
@@ -7,18 +9,21 @@ type User interface {
 	// GetExtra can be used by custom authenticators/authorizers combos
 	// to attach data to User
 	GetExtra() map[string][]string
+	fmt.Stringer
 }
 
 // Users defines multiple User instances
 type Users interface {
 	Has(names ...string) bool
 	List() []User
+	fmt.Stringer
 }
 
 type DefaultUser string
 
 func (d DefaultUser) GetName() string               { return (string)(d) }
 func (d DefaultUser) GetExtra() map[string][]string { return nil }
+func (d DefaultUser) String() string                { return (string)(d) }
 
 type DefaultUsers struct {
 	users map[string]User
@@ -53,6 +58,14 @@ func (d *DefaultUsers) List() []User {
 		u = append(u, user)
 	}
 	return u
+}
+
+func (d *DefaultUsers) String() string {
+	uStr := make([]string, 0, len(d.users))
+	for _, u := range d.users {
+		uStr = append(uStr, u.String())
+	}
+	return fmt.Sprintf("%s", uStr)
 }
 
 func NewUsersFromString(users ...string) Users {
