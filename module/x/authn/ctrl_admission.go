@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/module/x/authn/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/admission"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 func NewCreateAccountAdmissionController() CreateAccountAdmissionController {
@@ -13,7 +13,7 @@ func NewCreateAccountAdmissionController() CreateAccountAdmissionController {
 
 type CreateAccountAdmissionController struct{}
 
-func (CreateAccountAdmissionController) Validate(request admission.Request) (err error) {
+func (CreateAccountAdmissionController) Validate(request statetransition.AdmissionRequest) (err error) {
 	msg := request.Transition.(*v1alpha1.MsgCreateAccount)
 	// validate message
 	if msg.Account == nil {

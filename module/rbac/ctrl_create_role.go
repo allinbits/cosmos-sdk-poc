@@ -6,7 +6,6 @@ import (
 
 	"github.com/fdymylja/tmos/module/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/admission"
 	rterr "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -24,7 +23,7 @@ type CreateRoleController struct {
 	client module.Client
 }
 
-func (c CreateRoleController) Deliver(req statetransition.Request) (statetransition.Response, error) {
+func (c CreateRoleController) Handle(req statetransition.Request) (statetransition.Response, error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	return statetransition.Response{}, c.client.Create(msg.NewRole)
 }
@@ -41,7 +40,7 @@ type CreateRoleAdmissionController struct {
 	rtClient *runtimev1alpha1.Client
 }
 
-func (c CreateRoleAdmissionController) Validate(req admission.Request) error {
+func (c CreateRoleAdmissionController) Validate(req statetransition.AdmissionRequest) error {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	if msg.NewRole == nil {
 		return fmt.Errorf("new role is nil")

@@ -14,17 +14,16 @@ type Request struct {
 }
 
 // Response is the response returned by Handler controller
-type Response struct {
-}
+type Response struct{}
 
 // Handler identifies the state transition controller
 type Handler interface {
-	// Deliver is called when the Request needs to be processed
-	Deliver(req Request) (Response, error)
+	// Handle is called when the Request needs to be processed
+	Handle(req Request) (Response, error)
 }
 
 type HandlerFunc func(req Request) (resp Response, err error)
 
-func (s HandlerFunc) Deliver(req Request) (Response, error) {
+func (s HandlerFunc) Handle(req Request) (Response, error) {
 	return s(req)
 }

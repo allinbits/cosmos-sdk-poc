@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"k8s.io/klog/v2"
@@ -170,7 +169,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		return err
 	}
 	// deliver the request
-	_, err = handler.Deliver(statetransition.Request{
+	_, err = handler.Handle(statetransition.Request{
 		Users:      users,
 		Transition: stateTransition,
 	})
@@ -186,7 +185,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 	return nil
 }
 
-// runAdmissionChain runs the controller.Handler handlers related to the
+// runAdmissionChain runs the controller.AdmissionHandler handlers related to the
 // provided state transition.
 func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTransition) error {
 	ctrls, err := r.router.GetAdmissionControllers(transition)
@@ -194,7 +193,7 @@ func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTrans
 		return fmt.Errorf("unable to execute request: %s", meta.Name(transition))
 	}
 	for _, ctrl := range ctrls {
-		err = ctrl.Validate(admission.Request{
+		err = ctrl.Validate(statetransition.AdmissionRequest{
 			Transition: transition,
 			Users:      users,
 		})

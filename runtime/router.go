@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/admission"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/statetransition"
@@ -16,14 +15,15 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 func NewRouter() *Router {
 	return &Router{
 		stateTransitionControllers:          map[string]statetransition.Handler{},
-		stateTransitionAdmissionControllers: map[string][]admission.Handler{}}
+		stateTransitionAdmissionControllers: map[string][]statetransition.AdmissionHandler{},
+	}
 }
 
 type Router struct {
 	transactionAdmissionControllers          []authentication.AdmissionController
 	transactionPostAuthenticationControllers []authentication.TransitionController
 	stateTransitionControllers               map[string]statetransition.Handler
-	stateTransitionAdmissionControllers      map[string][]admission.Handler
+	stateTransitionAdmissionControllers      map[string][]statetransition.AdmissionHandler
 }
 
 func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler statetransition.Handler) error {
@@ -44,7 +44,7 @@ func (r *Router) GetStateTransitionController(transition meta.StateTransition) (
 	return handler, nil
 }
 
-func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTransition, handler admission.Handler) error {
+func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTransition, handler statetransition.AdmissionHandler) error {
 	name := meta.Name(transition)
 	if _, exists := r.stateTransitionAdmissionControllers[name]; !exists {
 		r.stateTransitionAdmissionControllers[name] = nil
@@ -53,7 +53,7 @@ func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTran
 	return nil
 }
 
-func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]admission.Handler, error) {
+func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]statetransition.AdmissionHandler, error) {
 	ctrls, exists := r.stateTransitionAdmissionControllers[meta.Name(transition)]
 	if !exists {
 		return nil, nil
