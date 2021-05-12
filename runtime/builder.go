@@ -30,16 +30,15 @@ func NewBuilder() *Builder {
 		store:            badger.NewStore(),
 		rt:               &Runtime{},
 	}
+
 	// we already add the core modules in order
 	// in theory we could add a dependency system
 	// for genesis initialization, but for now lets keep it simple.
-	runtimeModule := runtime.NewModule() // needs to be first as it has state transitions/state object info
-	rbacModule := rbac.NewModule()       // needs to be second as it provides the authorization layer
-	b.rbac = rbacModule                  // we set the rbac module inside so that we can prepare initial genesis with rbac
-	abciModule := abci.NewModule()       // abci third so other modules can have access to this information
-	b.AddModule(runtimeModule)
-	b.AddModule(rbacModule)
-	b.AddModule(abciModule)
+	b.AddModule(runtime.NewModule()) // needs to be first as it has state transitions/state object info
+	b.rbac = rbac.NewModule()        // we set the rbac module inside so that we can prepare initial genesis with rbac
+	b.AddModule(b.rbac)              // needs to be second as it provides the authorization layer
+	b.AddModule(abci.NewModule())    // abci third so other modules can have access to this information
+
 	// we add the initial external role, with basically no authorization towards no resource.
 	b.externalRole = &rbacv1alpha1.Role{
 		Id: rbacv1alpha1.ExternalAccountRoleID,
@@ -86,6 +85,7 @@ func (b *Builder) Build() (*Runtime, error) {
 			return nil, fmt.Errorf("error while installing module %s: %w", md.Name, err)
 		}
 	}
+
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
