@@ -25,10 +25,14 @@ var (
 // NewBuilder creates a new Builder for the Runtime
 func NewBuilder() *Builder {
 	b := &Builder{
-		installedModules: map[string]struct{}{},
-		router:           NewRouter(),
-		store:            badger.NewStore(),
-		rt:               &Runtime{},
+		moduleDescriptors: nil,
+		moduleRoles:       map[string]*rbacv1alpha1.Role{},
+		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
+		rbac:              nil,
+		decoder:           nil,
+		router:            NewRouter(),
+		store:             badger.NewStore(),
+		rt:                &Runtime{},
 	}
 
 	// we already add the core modules in order
@@ -48,9 +52,9 @@ func NewBuilder() *Builder {
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	installedModules  map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
 	moduleDescriptors []module.Descriptor
 
+	moduleRoles  map[string]*rbacv1alpha1.Role
 	externalRole *rbacv1alpha1.Role
 	rbac         *rbac.Module
 	decoder      authentication.TxDecoder
@@ -62,13 +66,13 @@ type Builder struct {
 
 // AddModule adds a new module.Module to the list of modules to install
 func (b *Builder) AddModule(m module.Module) {
-	type subjectSetter interface {
+	type userSetter interface {
 		SetUser(users user.Users)
 	}
 
 	mc := client.New(newRuntimeAsServer(b.rt))
 	descriptor := m.Initialize(mc)
-	mc.(subjectSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
+	mc.(userSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
 	b.moduleDescriptors = append(b.moduleDescriptors, descriptor)
 }
 
@@ -78,15 +82,16 @@ func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
 
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
-	for _, md := range b.moduleDescriptors {
-		// install first the state objects
-		// install the state transition handlers
-		err := b.install(md)
-		if err != nil {
-			return nil, fmt.Errorf("error while installing module %s: %w", md.Name, err)
-		}
+	err := b.installModules(b.moduleDescriptors)
+	if err != nil {
+		return nil, fmt.Errorf("unable to install modules: %w", err)
 	}
-
+	for moduleName, moduleRole := range b.moduleRoles {
+		b.rbac.AddInitialRole(moduleRole, &rbacv1alpha1.RoleBinding{
+			Subject: moduleName,
+			RoleRef: moduleRole.Id,
+		})
+	}
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
@@ -104,60 +109,8 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) install(m module.Descriptor) error {
-	// check if already installed
-	if _, exists := b.installedModules[m.Name]; exists {
-		return fmt.Errorf("double registration of module named %s", m.Name)
-	}
-
-	if isModuleNameEmpty(m.Name) {
-		return errEmptyModuleName
-	}
-
-	roleName := roleNameForModule(m.Name)
-	role := &rbacv1alpha1.Role{
-		Id: roleName,
-	}
-
-	binding := &rbacv1alpha1.RoleBinding{
-		Subject: m.Name,
-		RoleRef: roleName,
-	}
-
-	err := b.registerStateTransitionControllers(m, role)
-	if err != nil {
-		return err
-	}
-
-	err = b.registerAdmissionControllers(m)
-	if err != nil {
-		return err
-	}
-
-	err = b.registerStateObjects(m, role)
-	if err != nil {
-		return err
-	}
-
-	err = b.registerModuleDependencies(m, role)
-	if err != nil {
-		return err
-	}
-
-	// TODO register admission + mutating admission + hooks
-	b.registerAuthenticationExtensions(m)
-
-	// add initial role to rbac
-	b.rbac.AddInitialRole(role, binding)
-
-	// mark as installed module
-	b.installedModules[m.Name] = struct{}{}
-
-	return nil
-}
-
 func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
-	for _, ctrl := range m.StateTransitionControllers {
+	for _, ctrl := range m.StateTransitionExecutionHandlers {
 		// add state transition controller to the router
 		err := b.router.AddStateTransitionExecutionHandler(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
@@ -185,7 +138,7 @@ func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *
 }
 
 func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
-	for _, ctrl := range m.AdmissionControllers {
+	for _, ctrl := range m.StateTransitionAdmissionHandlers {
 		err := b.router.AddStateTransitionAdmissionHandler(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
 			return err
@@ -212,32 +165,163 @@ func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.R
 	return nil
 }
 
-// registerModuleDependencies dependencies onto other modules
-func (b *Builder) registerModuleDependencies(m module.Descriptor, role *rbacv1alpha1.Role) error {
-	for _, st := range m.Needs {
-		err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
+func (b *Builder) installStateObjects(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		moduleRole := b.moduleRoles[m.Name]
+		err := b.registerStateObjects(m, moduleRole)
 		if err != nil {
-			return fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
+			return fmt.Errorf("unable to install state objects for module %s: %w", m.Name, err)
 		}
 	}
-
 	return nil
 }
 
-func (b *Builder) registerAuthenticationExtensions(m module.Descriptor) {
-	if m.AuthenticationExtension == nil {
-		return
+func (b *Builder) initEmptyRoles(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		if isModuleNameEmpty(m.Name) {
+			return errEmptyModuleName
+		}
+		// check if module role exists already
+		if _, exists := b.moduleRoles[m.Name]; exists {
+			return fmt.Errorf("module already registered %s", m.Name)
+		}
+		b.moduleRoles[m.Name] = &rbacv1alpha1.Role{Id: roleNameForModule(m.Name)}
 	}
+	return nil
+}
 
-	// add authentication admission controllers
-	for _, xt := range m.AuthenticationExtension.AdmissionControllers {
-		b.router.AddTransactionAdmissionController(xt.Handler)
-		klog.Infof("registering authentication admission controller %T for module %s", xt.Handler, m.Name)
+func (b *Builder) installStateTransitions(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		role := b.moduleRoles[m.Name]
+		err := b.registerStateTransitionControllers(m, role)
+		if err != nil {
+			return fmt.Errorf("unable to install state transitions for module %s: %w", m.Name, err)
+		}
 	}
-	for _, xt := range m.AuthenticationExtension.TransitionControllers {
-		b.router.AddTransactionPostAuthenticationController(xt.Handler)
-		klog.Infof("registering authentication post admission controller %T for module %s", xt.Handler, m.Name)
+	return nil
+}
+
+func (b *Builder) installStateTransitionAdmissionHandlers(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		err := b.registerAdmissionControllers(m)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (b *Builder) installStateTransitionPreExecHandlers(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		for _, h := range m.StateTransitionPreExecHandlers {
+			err := b.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
+			if err != nil {
+				return fmt.Errorf("unable to install state transition pre execution handler for module %s: %w", m.Name, err)
+			}
+			klog.Infof(
+				"registered state transition pre execution handler %T for state transition %s by module %s",
+				h.Handler,
+				meta.Name(h.StateTransition),
+				m.Name)
+		}
+	}
+	return nil
+}
+
+func (b *Builder) installStateTransitionPostExecHandlers(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		for _, h := range m.StateTransitionPostExecutionHandlers {
+			err := b.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
+			if err != nil {
+				return fmt.Errorf("unable to install state transition post execution handler for module %s: %w", m.Name, err)
+			}
+			klog.Infof(
+				"registered state transition post execution handler %T for state transition %s by module %s",
+				h.Handler,
+				meta.Name(h.StateTransition),
+				m.Name)
+		}
+	}
+	return nil
+}
+
+func (b *Builder) installModules(descriptors []module.Descriptor) error {
+	// initialize empty roles for modules
+	if err := b.initEmptyRoles(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to initialize module roles: %w", err)
+	}
+	// first we install state objects
+	if err := b.installStateObjects(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install state objects: %w", err)
+	}
+	// after we install state transitions
+	if err := b.installStateTransitions(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install state transitions: %w", err)
+	}
+	// then state transition admission controllers
+	if err := b.installStateTransitionAdmissionHandlers(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install state transition admission handlers: %w", err)
+	}
+	// then state transition pre exec handlers
+	if err := b.installStateTransitionPreExecHandlers(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install state transition pre execution handlers: %w", err)
+	}
+	// then state transition post exec handlers
+	if err := b.installStateTransitionPostExecHandlers(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install state transition post execution handlers: %w", err)
+	}
+	// then transaction admission handlers
+	if err := b.installAuthenticationAdmissionHandlers(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install authentication admission handlers: %w", err)
+	}
+	// then transaction post authentication handlers
+	if err := b.installPostAuthenticationHandlers(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install post authentication handlers: %w", err)
+	}
+	// then dependencies
+	if err := b.installDependencies(b.moduleDescriptors); err != nil {
+		return fmt.Errorf("unable to install module dependencies: %w", err)
+	}
+	return nil
+}
+
+func (b *Builder) installAuthenticationAdmissionHandlers(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		if m.AuthenticationExtension == nil {
+			continue
+		}
+		for _, h := range m.AuthenticationExtension.AdmissionControllers {
+			b.router.AddTransactionAdmissionController(h.Handler)
+			klog.Infof("registered transaction admission controller %T for module %s", h.Handler, m.Name)
+		}
+	}
+	return nil
+}
+
+func (b *Builder) installPostAuthenticationHandlers(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		if m.AuthenticationExtension == nil {
+			continue
+		}
+		for _, h := range m.AuthenticationExtension.TransitionControllers {
+			b.router.AddTransactionPostAuthenticationController(h.Handler)
+			klog.Infof("registered transaction post authentication controller %T for module %s", h.Handler, m.Name)
+		}
+	}
+	return nil
+}
+
+func (b *Builder) installDependencies(descriptors []module.Descriptor) error {
+	for _, m := range descriptors {
+		role := b.moduleRoles[m.Name]
+		for _, st := range m.Needs {
+			err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
+			if err != nil {
+				return fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
+			}
+		}
+	}
+	return nil
 }
 
 func isModuleNameEmpty(name string) bool {

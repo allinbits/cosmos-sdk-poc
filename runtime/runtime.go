@@ -31,7 +31,7 @@ func DeliverSkipAdmissionControllers() DeliverOption {
 
 type Runtime struct {
 	initialized bool
-	user        user.Users
+	user        user.Users // user uniquely identifies Runtime as a user.User in the system
 
 	modules []module.Descriptor
 

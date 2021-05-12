@@ -7,32 +7,36 @@ import (
 
 // Descriptor describes the full functionality set of a Module
 type Descriptor struct {
-	Name                           string
-	GenesisHandler                 GenesisHandler
-	AdmissionControllers           []admissionController
-	MutatingAdmissionControllers   []mutatingAdmissionController
-	StateTransitionControllers     []stateTransitionController
-	PostStateTransitionControllers []postStateTransitionController
-	StateObjects                   []stateObject
-	Needs                          []meta.StateTransition
-	AuthenticationExtension        *AuthenticationExtensionDescriptor
+	Name                                 string
+	GenesisHandler                       GenesisHandler
+	StateTransitionAdmissionHandlers     []stateTransitionAdmissionHandlers
+	StateTransitionPreExecHandlers       []stateTransitionPreExecutionHandler
+	StateTransitionExecutionHandlers     []stateTransitionExecutionHandler
+	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
+	StateObjects                         []stateObject
+	Needs                                []meta.StateTransition
+	AuthenticationExtension              *AuthenticationExtensionDescriptor
 }
 
-type admissionController struct {
+type stateTransitionAdmissionHandlers struct {
 	StateTransition meta.StateTransition
 	Controller      statetransition.AdmissionHandler
 }
 
-type mutatingAdmissionController struct {
+type stateTransitionPreExecutionHandler struct {
+	StateTransition meta.StateTransition
+	Handler         statetransition.PreExecutionHandler
 }
 
-type stateTransitionController struct {
+type stateTransitionExecutionHandler struct {
 	StateTransition meta.StateTransition
 	Controller      statetransition.ExecutionHandler
 	External        bool
 }
 
-type postStateTransitionController struct {
+type stateTransitionPostExecutionHandler struct {
+	StateTransition statetransition.StateTransition
+	Handler         statetransition.PostExecutionHandler
 }
 
 type stateObject struct {
@@ -54,7 +58,7 @@ func (b *DescriptorBuilder) Named(name string) *DescriptorBuilder {
 }
 
 func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.ExecutionHandler, external bool) *DescriptorBuilder {
-	b.descriptor.StateTransitionControllers = append(b.descriptor.StateTransitionControllers, stateTransitionController{
+	b.descriptor.StateTransitionExecutionHandlers = append(b.descriptor.StateTransitionExecutionHandlers, stateTransitionExecutionHandler{
 		StateTransition: transition,
 		Controller:      ctrl,
 		External:        external,
@@ -63,7 +67,7 @@ func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransiti
 }
 
 func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl statetransition.AdmissionHandler) *DescriptorBuilder {
-	b.descriptor.AdmissionControllers = append(b.descriptor.AdmissionControllers, admissionController{transition, ctrl})
+	b.descriptor.StateTransitionAdmissionHandlers = append(b.descriptor.StateTransitionAdmissionHandlers, stateTransitionAdmissionHandlers{transition, ctrl})
 	return b
 }
 

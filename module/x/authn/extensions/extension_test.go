@@ -31,7 +31,7 @@ func TestSigVerification(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := tm.DeliverTx(types2.RequestDeliverTx{Tx: xd})
-	require.Equal(t, resp.Code, uint32(0))
+	require.Equal(t, resp.Code, uint32(0), resp.Log)
 
 	newTx, err := module.Sign(privKey, "test", accountAddress, "some_rankdf_a'ccount", types.NewCoins(types.NewCoin("test", types.NewInt(500))))
 	if err != nil {
