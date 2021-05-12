@@ -15,13 +15,13 @@ type CreateAccountController struct {
 	c module.Client
 }
 
-func (m *CreateAccountController) Handle(req statetransition.Request) (resp statetransition.Response, err error) {
+func (m *CreateAccountController) Handle(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateAccount)
 	// get last account number
 	lastAccNum := new(v1alpha1.CurrentAccountNumber)
 	err = m.c.Get(v1alpha1.CurrentAccountNumberID, lastAccNum)
 	if err != nil {
-		return statetransition.Response{}, err
+		return statetransition.ExecutionResponse{}, err
 	}
 	// create account
 	account := &v1alpha1.Account{

@@ -9,25 +9,25 @@ import (
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func setInitChainInfo(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func setInitChainInfo(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetInitChain)
 		// set init chain info
 		err = client.Update(&v1alpha1.InitChainInfo{ChainId: msg.InitChainInfo.ChainId})
 		if err != nil {
-			return statetransition.Response{}, err
+			return statetransition.ExecutionResponse{}, err
 		}
 		// set stage init chain
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_InitChain})
 		if err != nil {
-			return statetransition.Response{}, err
+			return statetransition.ExecutionResponse{}, err
 		}
-		return statetransition.Response{}, nil
+		return statetransition.ExecutionResponse{}, nil
 	}
 }
 
-func checkTxHandler(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func checkTxHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetCheckTxState)
 		switch msg.CheckTx.Type {
 		case abci.CheckTxType_NEW:
@@ -48,8 +48,8 @@ func checkTxHandler(client module.Client) statetransition.HandlerFunc {
 	}
 }
 
-func beginBlockHandler(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func beginBlockHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetBeginBlockState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_BeginBlock})
 		if err != nil {
@@ -64,25 +64,25 @@ func beginBlockHandler(client module.Client) statetransition.HandlerFunc {
 	}
 }
 
-func endBlockHandler(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func endBlockHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetEndBlockState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_EndBlock})
 		if err != nil {
-			return statetransition.Response{}, err
+			return statetransition.ExecutionResponse{}, err
 		}
 		err = client.Update(&v1alpha1.EndBlockState{
 			EndBlock: msg.EndBlock,
 		})
 		if err != nil {
-			return statetransition.Response{}, err
+			return statetransition.ExecutionResponse{}, err
 		}
 		return
 	}
 }
 
-func deliverTxHandler(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func deliverTxHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetDeliverTxState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_DeliverTx})
 		if err != nil {
@@ -93,22 +93,22 @@ func deliverTxHandler(client module.Client) statetransition.HandlerFunc {
 	}
 }
 
-func validatorUpdatesHandler(client module.Client) statetransition.HandlerFunc {
-	return func(req statetransition.Request) (resp statetransition.Response, err error) {
+func validatorUpdatesHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetValidatorUpdates)
 		stage := new(v1alpha1.Stage)
 		err = client.Get(v1alpha1.StageID, stage)
 		if err != nil {
-			return statetransition.Response{}, err
+			return statetransition.ExecutionResponse{}, err
 		}
 		// this handler can only be executed during begin and endblock stages
 		if stage.Stage != v1alpha1.ABCIStage_InitChain && stage.Stage != v1alpha1.ABCIStage_EndBlock {
-			return statetransition.Response{}, fmt.Errorf("validator updates can be done only during EndBlock and InitChain, stage is %s", stage.Stage)
+			return statetransition.ExecutionResponse{}, fmt.Errorf("validator updates can be done only during EndBlock and InitChain, stage is %s", stage.Stage)
 		}
 		// update validator set
 		err = client.Update(&v1alpha1.ValidatorUpdates{ValidatorUpdates: msg.ValidatorUpdates})
 		if err != nil {
-			return statetransition.Response{}, err
+			return statetransition.ExecutionResponse{}, err
 		}
 		return
 	}
