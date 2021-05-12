@@ -105,7 +105,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	case nil:
 		klog.Warningf("no decoder - transactions sent to the ABCI application will be rejected")
 	default:
-		b.rt.authn = b.decoder
+		b.rt.txDecoder = b.decoder
 	}
 
 	return b.rt, nil

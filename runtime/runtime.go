@@ -36,7 +36,7 @@ type Runtime struct {
 
 	modules []module.Descriptor
 
-	authn authentication.TxDecoder
+	txDecoder authentication.TxDecoder
 
 	rbac        authorization.Authorizer
 	rbacEnabled bool

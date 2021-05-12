@@ -80,7 +80,7 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 
 func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckTx {
 	// decode tx
-	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
+	tx, err := a.rt.txDecoder.DecodeTx(tmTx.Tx)
 	if err != nil {
 		return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 	}
@@ -143,7 +143,7 @@ func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.Respo
 
 func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDeliverTx {
 	// decode tx
-	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
+	tx, err := a.rt.txDecoder.DecodeTx(tmTx.Tx)
 	if err != nil {
 		return errors.ToABCIResponse(0, 0, err)
 	}
