@@ -10,7 +10,7 @@ import (
 
 // Module implements the authentication.Module
 type Module struct {
-	authenticator authentication.TxDecoder
+	txDecoder authentication.TxDecoder
 }
 
 func NewModule() *Module {
@@ -18,7 +18,7 @@ func NewModule() *Module {
 }
 
 func (m *Module) Initialize(c module.Client) module.Descriptor {
-	m.authenticator = newAuthenticator(c)
+	m.txDecoder = newAuthenticator(c)
 
 	return module.NewDescriptorBuilder().
 		Named("authn").
@@ -32,6 +32,6 @@ func (m *Module) Initialize(c module.Client) module.Descriptor {
 		NeedsStateTransition(&rbacv1alpha1.MsgBindRole{}).Build()
 }
 
-func (m *Module) GetAuthenticator() authentication.TxDecoder {
-	return m.authenticator
+func (m *Module) GetTxDecoder() authentication.TxDecoder {
+	return m.txDecoder
 }
