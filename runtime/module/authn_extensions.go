@@ -7,11 +7,11 @@ type AuthenticationExtension interface {
 }
 
 type authenticationAdmissionController struct {
-	Handler authentication.AdmissionController
+	Handler authentication.AdmissionHandler
 }
 
 type authenticationTransitionController struct {
-	Handler authentication.TransitionController
+	Handler authentication.PostAuthenticationHandler
 }
 
 // AuthenticationExtensionDescriptor describes an AuthenticationExtension
@@ -29,12 +29,12 @@ type AuthenticationExtensionBuilder struct {
 	descriptor *AuthenticationExtensionDescriptor
 }
 
-func (a *AuthenticationExtensionBuilder) WithAdmissionController(ctrl authentication.AdmissionController) *AuthenticationExtensionBuilder {
+func (a *AuthenticationExtensionBuilder) WithAdmissionController(ctrl authentication.AdmissionHandler) *AuthenticationExtensionBuilder {
 	a.descriptor.AdmissionControllers = append(a.descriptor.AdmissionControllers, authenticationAdmissionController{Handler: ctrl})
 	return a
 }
 
-func (a *AuthenticationExtensionBuilder) WithTransitionController(ctrl authentication.TransitionController) *AuthenticationExtensionBuilder {
+func (a *AuthenticationExtensionBuilder) WithTransitionController(ctrl authentication.PostAuthenticationHandler) *AuthenticationExtensionBuilder {
 	a.descriptor.TransitionControllers = append(a.descriptor.TransitionControllers, authenticationTransitionController{Handler: ctrl})
 	return a
 }

@@ -21,7 +21,7 @@ func (a Authentication) Initialize(builder *module.AuthenticationExtensionBuilde
 		WithTransitionController(NewFeeDeduction(a.client))
 }
 
-func NewFeeChecker(c module.Client) authentication.AdmissionController {
+func NewFeeChecker(c module.Client) authentication.AdmissionHandler {
 	return FeeChecker{bank: bankv1aplha1.NewClient(c)}
 }
 
@@ -50,7 +50,7 @@ func (x FeeChecker) Validate(req authentication.Tx) (err error) {
 	return nil
 }
 
-func NewFeeDeduction(c module.Client) authentication.TransitionController {
+func NewFeeDeduction(c module.Client) authentication.PostAuthenticationHandler {
 	return FeeDeduction{bank: bankv1aplha1.NewClient(c)}
 }
 
@@ -59,7 +59,7 @@ type FeeDeduction struct {
 	bank *bankv1aplha1.Client
 }
 
-func (x FeeDeduction) Deliver(req authentication.DeliverRequest) (resp authentication.DeliverResponse, err error) {
+func (x FeeDeduction) Exec(req authentication.PostAuthenticationRequest) (resp authentication.PostAuthenticationResponse, err error) {
 	// move coins and send them to fee collector
 	return resp, x.bank.Send(req.Tx.Payer(), "fee_collector", req.Tx.Fee())
 }

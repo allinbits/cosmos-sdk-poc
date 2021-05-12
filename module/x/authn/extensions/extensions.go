@@ -159,9 +159,9 @@ func newConsumeGasForTxSize(c module.Client) consumeGasForTxSize {
 type consumeGasForTxSize struct {
 }
 
-func (s consumeGasForTxSize) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
+func (s consumeGasForTxSize) Exec(req authentication.PostAuthenticationRequest) (authentication.PostAuthenticationResponse, error) {
 	// TODO
-	return authentication.DeliverResponse{}, nil
+	return authentication.PostAuthenticationResponse{}, nil
 }
 
 func newSetPubKeys(c module.Client) setPubKeys {
@@ -174,12 +174,12 @@ type setPubKeys struct {
 	c *v1alpha1.Client
 }
 
-func (s setPubKeys) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
+func (s setPubKeys) Exec(req authentication.PostAuthenticationRequest) (authentication.PostAuthenticationResponse, error) {
 	wrapper := req.Tx.(*tx.Wrapper)
 	for _, sig := range wrapper.Signers() {
 		acc, err := s.c.GetAccount(sig.Address)
 		if err != nil {
-			return authentication.DeliverResponse{}, err
+			return authentication.PostAuthenticationResponse{}, err
 		}
 		// skip if its set
 		if acc.PubKey != nil {
@@ -187,10 +187,10 @@ func (s setPubKeys) Deliver(req authentication.DeliverRequest) (authentication.D
 		}
 		err = s.c.UpdatePublicKey(sig.Address, sig.PubKey)
 		if err != nil {
-			return authentication.DeliverResponse{}, err
+			return authentication.PostAuthenticationResponse{}, err
 		}
 	}
-	return authentication.DeliverResponse{}, nil
+	return authentication.PostAuthenticationResponse{}, nil
 }
 
 func newIncreaseSequence(c module.Client) increaseSequence {
@@ -201,15 +201,15 @@ type increaseSequence struct {
 	c *v1alpha1.Client
 }
 
-func (i increaseSequence) Deliver(req authentication.DeliverRequest) (authentication.DeliverResponse, error) {
+func (i increaseSequence) Exec(req authentication.PostAuthenticationRequest) (authentication.PostAuthenticationResponse, error) {
 	signers := req.Tx.Users()
 	for _, signer := range signers.List() {
 		err := i.c.IncreaseSequence(signer.GetName())
 		if err != nil {
-			return authentication.DeliverResponse{}, err
+			return authentication.PostAuthenticationResponse{}, err
 		}
 	}
-	return authentication.DeliverResponse{}, nil
+	return authentication.PostAuthenticationResponse{}, nil
 }
 
 func newSigVerifier(c module.Client) sigVerifier {

@@ -204,7 +204,7 @@ func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTrans
 	return nil
 }
 
-// runTxAdmissionChain runs the authentication.AdmissionController handlers
+// runTxAdmissionChain runs the authentication.AdmissionHandler handlers
 func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 	ctrls := r.router.GetTransactionAdmissionControllers()
 	for _, ctrl := range ctrls {
@@ -219,7 +219,7 @@ func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 	ctrls := r.router.GetTransactionPostAuthenticationControllers()
 	for _, ctrl := range ctrls {
-		_, err := ctrl.Deliver(authentication.DeliverRequest{Tx: tx})
+		_, err := ctrl.Exec(authentication.PostAuthenticationRequest{Tx: tx})
 		if err != nil {
 			return fmt.Errorf("%w: %s", errors.ErrBadRequest, err)
 		}

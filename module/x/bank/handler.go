@@ -88,7 +88,7 @@ func (s SendCoinsHandler) getBalanceFrom(address string) (*v1alpha1.Balance, err
 // createAccountIfNotExist creates a new account since it has received balance
 // so its public key can be sent
 // TODO: is this really required?
-// TODO: This should be done via Deliver to AUTH.
+// TODO: This should be done via Exec to AUTH.
 func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
 	acc := new(authv1alpha1.Account)
 	err := s.c.Get(meta.NewStringID(address), acc)

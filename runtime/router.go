@@ -20,8 +20,8 @@ func NewRouter() *Router {
 }
 
 type Router struct {
-	transactionAdmissionControllers          []authentication.AdmissionController
-	transactionPostAuthenticationControllers []authentication.TransitionController
+	transactionAdmissionControllers          []authentication.AdmissionHandler
+	transactionPostAuthenticationControllers []authentication.PostAuthenticationHandler
 	stateTransitionControllers               map[string]statetransition.ExecutionHandler
 	stateTransitionAdmissionControllers      map[string][]statetransition.AdmissionHandler
 }
@@ -61,19 +61,19 @@ func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]sta
 	return ctrls, nil
 }
 
-func (r *Router) GetTransactionAdmissionControllers() []authentication.AdmissionController {
+func (r *Router) GetTransactionAdmissionControllers() []authentication.AdmissionHandler {
 	return r.transactionAdmissionControllers
 }
 
-func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionController) {
+func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionHandler) {
 	r.transactionAdmissionControllers = append(r.transactionAdmissionControllers, ctrl)
 }
 
-func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.TransitionController {
+func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.PostAuthenticationHandler {
 	return r.transactionPostAuthenticationControllers
 }
 
-func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.TransitionController) {
+func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.PostAuthenticationHandler) {
 	r.transactionPostAuthenticationControllers = append(r.transactionPostAuthenticationControllers, ctrl)
 }
 
