@@ -49,8 +49,8 @@ func NewBuilder() *Builder {
 
 // Builder is used to create a new runtime from scratch
 type Builder struct {
-	installedModules map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
-	modules          []module.Descriptor
+	installedModules  map[string]struct{} // installedModules is used to check if multiple modules with the same name are being installed
+	moduleDescriptors []module.Descriptor
 
 	externalRole *rbacv1alpha1.Role
 	rbac         *rbac.Module
@@ -70,7 +70,7 @@ func (b *Builder) AddModule(m module.Module) {
 	mc := client.New(newRuntimeAsServer(b.rt))
 	descriptor := m.Initialize(mc)
 	mc.(subjectSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
-	b.modules = append(b.modules, descriptor)
+	b.moduleDescriptors = append(b.moduleDescriptors, descriptor)
 }
 
 func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
@@ -80,25 +80,25 @@ func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
 	// install all modules
-	for _, m := range b.modules {
+	for _, md := range b.moduleDescriptors {
 		// check if already installed
-		if _, exists := b.installedModules[m.Name]; exists {
-			return nil, fmt.Errorf("double registration of module named %s", m.Name)
+		if _, exists := b.installedModules[md.Name]; exists {
+			return nil, fmt.Errorf("double registration of module named %s", md.Name)
 		}
-		role, binding, err := b.install(m)
+		role, binding, err := b.install(md)
 		if err != nil {
-			return nil, fmt.Errorf("error while installing module %s: %w", m.Name, err)
+			return nil, fmt.Errorf("error while installing module %s: %w", md.Name, err)
 		}
 		// add initial role to rbac
 		b.rbac.AddInitialRole(role, binding)
 		// mark as installed module
-		b.installedModules[m.Name] = struct{}{}
+		b.installedModules[md.Name] = struct{}{}
 	}
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
 	b.rt.router = b.router
-	b.rt.modules = b.modules
+	b.rt.modules = b.moduleDescriptors
 	b.rt.rbac = b.rbac.AsAuthorizer()
 	b.rt.user = user.NewUsersFromString(user.Runtime)
 	switch b.decoder {
