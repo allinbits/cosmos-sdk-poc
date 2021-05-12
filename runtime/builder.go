@@ -81,18 +81,10 @@ func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
 func (b *Builder) Build() (*Runtime, error) {
 	// install all modules
 	for _, md := range b.moduleDescriptors {
-		// check if already installed
-		if _, exists := b.installedModules[md.Name]; exists {
-			return nil, fmt.Errorf("double registration of module named %s", md.Name)
-		}
-		role, binding, err := b.install(md)
+		err := b.install(md)
 		if err != nil {
 			return nil, fmt.Errorf("error while installing module %s: %w", md.Name, err)
 		}
-		// add initial role to rbac
-		b.rbac.AddInitialRole(role, binding)
-		// mark as installed module
-		b.installedModules[md.Name] = struct{}{}
 	}
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
@@ -111,45 +103,56 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) install(m module.Descriptor) (role *rbacv1alpha1.Role, binding *rbacv1alpha1.RoleBinding, err error) {
+func (b *Builder) install(m module.Descriptor) error {
+	// check if already installed
+	if _, exists := b.installedModules[m.Name]; exists {
+		return fmt.Errorf("double registration of module named %s", m.Name)
+	}
+
 	if isModuleNameEmpty(m.Name) {
-		return nil, nil, errEmptyModuleName
+		return errEmptyModuleName
 	}
 
 	roleName := roleNameForModule(m.Name)
-	role = &rbacv1alpha1.Role{
+	role := &rbacv1alpha1.Role{
 		Id: roleName,
 	}
 
-	binding = &rbacv1alpha1.RoleBinding{
+	binding := &rbacv1alpha1.RoleBinding{
 		Subject: m.Name,
 		RoleRef: roleName,
 	}
 
-	err = b.registerStateTransitionControllers(m, role)
+	err := b.registerStateTransitionControllers(m, role)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = b.registerAdmissionControllers(m)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = b.registerStateObjects(m, role)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = b.registerModuleDependencies(m, role)
 	if err != nil {
-		return
+		return err
 	}
 
 	// TODO register admission + mutating admission + hooks
 	b.registerAuthenticationExtensions(m)
 
-	return
+	// add initial role to rbac
+	b.rbac.AddInitialRole(role, binding)
+
+	// mark as installed module
+	b.installedModules[m.Name] = struct{}{}
+
+	return nil
 }
 
 func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
