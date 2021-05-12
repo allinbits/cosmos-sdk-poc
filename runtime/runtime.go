@@ -164,7 +164,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 	// execute pre state transitions hooks
 	err = r.RunPreStateTransitionHooks(stateTransition)
 	// get the handler
-	handler, err := r.router.GetStateTransitionController(stateTransition)
+	handler, err := r.router.GetStateTransitionExecutionHandler(stateTransition)
 	if err != nil {
 		return err
 	}
@@ -188,9 +188,9 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 // runAdmissionChain runs the controller.AdmissionHandler handlers related to the
 // provided state transition.
 func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTransition) error {
-	ctrls, err := r.router.GetAdmissionControllers(transition)
+	ctrls, err := r.router.GetStateTransitionAdmissionControllers(transition)
 	if err != nil {
-		return fmt.Errorf("unable to execute request: %s", meta.Name(transition))
+		return fmt.Errorf("unable to execute request %s: %w", meta.Name(transition), err)
 	}
 	for _, ctrl := range ctrls {
 		err = ctrl.Validate(statetransition.AdmissionRequest{

@@ -78,8 +78,9 @@ func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
 
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
-	// install all modules
 	for _, md := range b.moduleDescriptors {
+		// install first the state objects
+		// install the state transition handlers
 		err := b.install(md)
 		if err != nil {
 			return nil, fmt.Errorf("error while installing module %s: %w", md.Name, err)
@@ -158,7 +159,7 @@ func (b *Builder) install(m module.Descriptor) error {
 func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, ctrl := range m.StateTransitionControllers {
 		// add state transition controller to the router
-		err := b.router.AddStateTransitionController(ctrl.StateTransition, ctrl.Controller)
+		err := b.router.AddStateTransitionExecutionHandler(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
 			return err
 		}
@@ -185,7 +186,7 @@ func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *
 
 func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
 	for _, ctrl := range m.AdmissionControllers {
-		err := b.router.AddStateTransitionAdmissionController(ctrl.StateTransition, ctrl.Controller)
+		err := b.router.AddStateTransitionAdmissionHandler(ctrl.StateTransition, ctrl.Controller)
 		if err != nil {
 			return err
 		}
