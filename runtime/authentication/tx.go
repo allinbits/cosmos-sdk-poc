@@ -1,6 +1,8 @@
 package authentication
 
 import (
+	"fmt"
+
 	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -30,4 +32,16 @@ type Tx interface {
 	Raw() interface{}
 	// RawBytes returns the raw transaction bytes
 	RawBytes() []byte
+}
+
+var _ TxDecoder = AlwaysFailingTxDecoder{}
+
+func NewAlwaysFailingTxDecoder() AlwaysFailingTxDecoder {
+	return AlwaysFailingTxDecoder{}
+}
+
+type AlwaysFailingTxDecoder struct{}
+
+func (d AlwaysFailingTxDecoder) DecodeTx(txBytes []byte) (Tx, error) {
+	return nil, fmt.Errorf("authentication: no tx decoder set up")
 }
