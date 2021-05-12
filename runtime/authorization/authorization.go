@@ -12,7 +12,6 @@ type Decision int
 const (
 	DecisionDeny Decision = iota
 	DecisionAllow
-	DecisionNoOpinion
 )
 
 // Attributes contains
