@@ -14,16 +14,22 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 
 func NewRouter() *Router {
 	return &Router{
-		stateTransitionControllers:          map[string]statetransition.ExecutionHandler{},
-		stateTransitionAdmissionControllers: map[string][]statetransition.AdmissionHandler{},
+		transactionAdmissionControllers:          nil,
+		transactionPostAuthenticationControllers: nil,
+		stateTransitionAdmissionControllers:      map[string][]statetransition.AdmissionHandler{},
+		stateTransitionPreExecutionHandlers:      map[string][]statetransition.PreExecutionHandler{},
+		stateTransitionControllers:               map[string]statetransition.ExecutionHandler{},
+		stateTransitionPostExecutionHandlers:     map[string][]statetransition.PostExecutionHandler{},
 	}
 }
 
 type Router struct {
 	transactionAdmissionControllers          []authentication.AdmissionHandler
 	transactionPostAuthenticationControllers []authentication.PostAuthenticationHandler
-	stateTransitionControllers               map[string]statetransition.ExecutionHandler
 	stateTransitionAdmissionControllers      map[string][]statetransition.AdmissionHandler
+	stateTransitionPreExecutionHandlers      map[string][]statetransition.PreExecutionHandler
+	stateTransitionControllers               map[string]statetransition.ExecutionHandler
+	stateTransitionPostExecutionHandlers     map[string][]statetransition.PostExecutionHandler
 }
 
 func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler statetransition.ExecutionHandler) error {
