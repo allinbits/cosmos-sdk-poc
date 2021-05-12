@@ -82,16 +82,18 @@ func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
 
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
-	err := b.installModules(b.moduleDescriptors)
+	err := b.installModules()
 	if err != nil {
 		return nil, fmt.Errorf("unable to install modules: %w", err)
 	}
+
 	for moduleName, moduleRole := range b.moduleRoles {
 		b.rbac.AddInitialRole(moduleRole, &rbacv1alpha1.RoleBinding{
 			Subject: moduleName,
 			RoleRef: moduleRole.Id,
 		})
 	}
+
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
@@ -165,8 +167,8 @@ func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.R
 	return nil
 }
 
-func (b *Builder) installStateObjects(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installStateObjects() error {
+	for _, m := range b.moduleDescriptors {
 		moduleRole := b.moduleRoles[m.Name]
 		err := b.registerStateObjects(m, moduleRole)
 		if err != nil {
@@ -176,8 +178,8 @@ func (b *Builder) installStateObjects(descriptors []module.Descriptor) error {
 	return nil
 }
 
-func (b *Builder) initEmptyRoles(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) initEmptyRoles() error {
+	for _, m := range b.moduleDescriptors {
 		if isModuleNameEmpty(m.Name) {
 			return errEmptyModuleName
 		}
@@ -190,8 +192,8 @@ func (b *Builder) initEmptyRoles(descriptors []module.Descriptor) error {
 	return nil
 }
 
-func (b *Builder) installStateTransitions(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installStateTransitions() error {
+	for _, m := range b.moduleDescriptors {
 		role := b.moduleRoles[m.Name]
 		err := b.registerStateTransitionControllers(m, role)
 		if err != nil {
@@ -201,8 +203,8 @@ func (b *Builder) installStateTransitions(descriptors []module.Descriptor) error
 	return nil
 }
 
-func (b *Builder) installStateTransitionAdmissionHandlers(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installStateTransitionAdmissionHandlers() error {
+	for _, m := range b.moduleDescriptors {
 		err := b.registerAdmissionControllers(m)
 		if err != nil {
 			return err
@@ -211,8 +213,8 @@ func (b *Builder) installStateTransitionAdmissionHandlers(descriptors []module.D
 	return nil
 }
 
-func (b *Builder) installStateTransitionPreExecHandlers(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installStateTransitionPreExecHandlers() error {
+	for _, m := range b.moduleDescriptors {
 		for _, h := range m.StateTransitionPreExecHandlers {
 			err := b.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
@@ -228,8 +230,8 @@ func (b *Builder) installStateTransitionPreExecHandlers(descriptors []module.Des
 	return nil
 }
 
-func (b *Builder) installStateTransitionPostExecHandlers(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installStateTransitionPostExecHandlers() error {
+	for _, m := range b.moduleDescriptors {
 		for _, h := range m.StateTransitionPostExecutionHandlers {
 			err := b.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
@@ -245,48 +247,57 @@ func (b *Builder) installStateTransitionPostExecHandlers(descriptors []module.De
 	return nil
 }
 
-func (b *Builder) installModules(descriptors []module.Descriptor) error {
+func (b *Builder) installModules() error {
 	// initialize empty roles for modules
-	if err := b.initEmptyRoles(b.moduleDescriptors); err != nil {
+	if err := b.initEmptyRoles(); err != nil {
 		return fmt.Errorf("unable to initialize module roles: %w", err)
 	}
+
 	// first we install state objects
-	if err := b.installStateObjects(b.moduleDescriptors); err != nil {
+	if err := b.installStateObjects(); err != nil {
 		return fmt.Errorf("unable to install state objects: %w", err)
 	}
+
 	// after we install state transitions
-	if err := b.installStateTransitions(b.moduleDescriptors); err != nil {
+	if err := b.installStateTransitions(); err != nil {
 		return fmt.Errorf("unable to install state transitions: %w", err)
 	}
+
 	// then state transition admission controllers
-	if err := b.installStateTransitionAdmissionHandlers(b.moduleDescriptors); err != nil {
+	if err := b.installStateTransitionAdmissionHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition admission handlers: %w", err)
 	}
+
 	// then state transition pre exec handlers
-	if err := b.installStateTransitionPreExecHandlers(b.moduleDescriptors); err != nil {
+	if err := b.installStateTransitionPreExecHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition pre execution handlers: %w", err)
 	}
+
 	// then state transition post exec handlers
-	if err := b.installStateTransitionPostExecHandlers(b.moduleDescriptors); err != nil {
+	if err := b.installStateTransitionPostExecHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition post execution handlers: %w", err)
 	}
+
 	// then transaction admission handlers
-	if err := b.installAuthenticationAdmissionHandlers(b.moduleDescriptors); err != nil {
+	if err := b.installAuthenticationAdmissionHandlers(); err != nil {
 		return fmt.Errorf("unable to install authentication admission handlers: %w", err)
 	}
+
 	// then transaction post authentication handlers
-	if err := b.installPostAuthenticationHandlers(b.moduleDescriptors); err != nil {
+	if err := b.installPostAuthenticationHandlers(); err != nil {
 		return fmt.Errorf("unable to install post authentication handlers: %w", err)
 	}
+
 	// then dependencies
-	if err := b.installDependencies(b.moduleDescriptors); err != nil {
+	if err := b.installDependencies(); err != nil {
 		return fmt.Errorf("unable to install module dependencies: %w", err)
 	}
+
 	return nil
 }
 
-func (b *Builder) installAuthenticationAdmissionHandlers(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installAuthenticationAdmissionHandlers() error {
+	for _, m := range b.moduleDescriptors {
 		if m.AuthenticationExtension == nil {
 			continue
 		}
@@ -298,8 +309,8 @@ func (b *Builder) installAuthenticationAdmissionHandlers(descriptors []module.De
 	return nil
 }
 
-func (b *Builder) installPostAuthenticationHandlers(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installPostAuthenticationHandlers() error {
+	for _, m := range b.moduleDescriptors {
 		if m.AuthenticationExtension == nil {
 			continue
 		}
@@ -311,8 +322,8 @@ func (b *Builder) installPostAuthenticationHandlers(descriptors []module.Descrip
 	return nil
 }
 
-func (b *Builder) installDependencies(descriptors []module.Descriptor) error {
-	for _, m := range descriptors {
+func (b *Builder) installDependencies() error {
+	for _, m := range b.moduleDescriptors {
 		role := b.moduleRoles[m.Name]
 		for _, st := range m.Needs {
 			err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
