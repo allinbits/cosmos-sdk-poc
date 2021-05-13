@@ -1,0 +1,74 @@
+syntax="proto3";
+
+package tmos.abci.v1alpha1;
+
+import "core/abci/tendermint/abci/types.proto";
+
+option go_package = "github.com/fdymylja/tmos/core/abci/v1alpha1";
+
+enum ABCIStage {
+  Unknown = 0;
+  InitChain = 1;
+  BeginBlock = 2;
+  CheckTx = 3;
+  ReCheckTx = 4;
+  DeliverTx = 5;
+  EndBlock = 6;
+  Commit = 7;
+}
+
+message CurrentBlock {
+  uint64 block_number = 1;
+}
+
+message Stage {
+  ABCIStage stage = 1;
+}
+
+message InitChainInfo {
+  string chain_id = 1;
+}
+
+message BeginBlockState {
+  tendermint.abci.RequestBeginBlock begin_block = 1;
+}
+
+message CheckTxState {
+  tendermint.abci.RequestCheckTx check_tx = 1;
+}
+
+message DeliverTxState {
+  tendermint.abci.RequestDeliverTx deliver_tx = 1;
+}
+
+message MsgSetBeginBlockState {
+  tendermint.abci.RequestBeginBlock begin_block = 1;
+}
+
+message MsgSetCheckTxState {
+  tendermint.abci.RequestCheckTx check_tx = 1;
+}
+
+message MsgSetDeliverTxState {
+  tendermint.abci.RequestDeliverTx deliver_tx = 1;
+}
+
+message MsgSetEndBlockState {
+  tendermint.abci.RequestEndBlock end_block = 1;
+}
+
+message MsgSetInitChain {
+  InitChainInfo init_chain_info = 1;
+}
+
+message ValidatorUpdates {
+  repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
+}
+
+message MsgSetValidatorUpdates {
+  repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
+}
+
+message EndBlockState {
+  tendermint.abci.RequestEndBlock end_block = 1;
+}

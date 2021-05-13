@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/runtime/authentication"
-	"github.com/fdymylja/tmos/runtime/controller"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
 var ErrTransitionAlreadyRegistered = errors.New("router: state transition already registered")
@@ -14,72 +14,155 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 
 func NewRouter() *Router {
 	return &Router{
-		stateTransitionControllers:          map[string]controller.StateTransition{},
-		stateTransitionAdmissionControllers: map[string][]controller.Admission{}}
+		transactionAdmissionHandlers:          nil,
+		transactionPostAuthenticationHandlers: nil,
+
+		stateTransitionAdmissionHandlers:     map[string][]statetransition.AdmissionHandler{},
+		stateTransitionPreExecutionHandlers:  map[string][]statetransition.PreExecutionHandler{},
+		stateTransitionExecutionHandlers:     map[string]statetransition.ExecutionHandler{},
+		stateTransitionPostExecutionHandlers: map[string][]statetransition.PostExecutionHandler{},
+	}
 }
 
 type Router struct {
-	transactionAdmissionControllers          []authentication.AdmissionController
-	transactionPostAuthenticationControllers []authentication.TransitionController
-	stateTransitionControllers               map[string]controller.StateTransition
-	stateTransitionAdmissionControllers      map[string][]controller.Admission
+	transactionAdmissionHandlers          []authentication.AdmissionHandler
+	transactionPostAuthenticationHandlers []authentication.PostAuthenticationHandler
+
+	stateTransitionAdmissionHandlers     map[string][]statetransition.AdmissionHandler
+	stateTransitionPreExecutionHandlers  map[string][]statetransition.PreExecutionHandler
+	stateTransitionExecutionHandlers     map[string]statetransition.ExecutionHandler
+	stateTransitionPostExecutionHandlers map[string][]statetransition.PostExecutionHandler
 }
 
-func (r *Router) AddStateTransitionController(transition meta.StateTransition, handler controller.StateTransition) error {
+// Admission handlers
+
+func (r *Router) AddStateTransitionAdmissionHandler(transition meta.StateTransition, handler statetransition.AdmissionHandler) error {
 	name := meta.Name(transition)
-	if _, exists := r.stateTransitionControllers[name]; exists {
-		return fmt.Errorf("%w: %s", ErrTransitionAlreadyRegistered, name)
+	// check if state transition exists
+	if _, exists := r.stateTransitionAdmissionHandlers[name]; !exists {
+		r.stateTransitionAdmissionHandlers[name] = nil
 	}
-	r.stateTransitionControllers[name] = handler
+	r.stateTransitionAdmissionHandlers[name] = append(r.stateTransitionAdmissionHandlers[name], handler)
 	return nil
 }
 
-func (r *Router) GetStateTransitionController(transition meta.StateTransition) (controller.StateTransition, error) {
-	name := meta.Name(transition)
-	handler, exists := r.stateTransitionControllers[name]
-	if !exists {
-		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, name)
+func (r *Router) GetStateTransitionAdmissionControllers(transition meta.StateTransition) ([]statetransition.AdmissionHandler, error) {
+	if !r.knownStateTransition(transition) {
+		return nil, fmt.Errorf(
+			"%w: unable to provide state transition admission controllers for unknown state transition %s",
+			ErrTransitionNotFound,
+			r.name(transition),
+		)
 	}
-	return handler, nil
-}
-
-func (r *Router) AddStateTransitionAdmissionController(transition meta.StateTransition, handler controller.Admission) error {
-	name := meta.Name(transition)
-	if _, exists := r.stateTransitionAdmissionControllers[name]; !exists {
-		r.stateTransitionAdmissionControllers[name] = nil
-	}
-	r.stateTransitionAdmissionControllers[name] = append(r.stateTransitionAdmissionControllers[name], handler)
-	return nil
-}
-
-func (r *Router) GetAdmissionControllers(transition meta.StateTransition) ([]controller.Admission, error) {
-	ctrls, exists := r.stateTransitionAdmissionControllers[meta.Name(transition)]
+	ctrls, exists := r.stateTransitionAdmissionHandlers[meta.Name(transition)]
 	if !exists {
 		return nil, nil
 	}
 	return ctrls, nil
 }
 
-func (r *Router) GetTransactionAdmissionControllers() []authentication.AdmissionController {
-	return r.transactionAdmissionControllers
+// Pre execution handlers
+
+func (r *Router) AddStateTransitionPreExecutionHandler(transition meta.StateTransition, handler statetransition.PreExecutionHandler) error {
+	// check if it was already registered
+	if !r.knownStateTransition(transition) {
+		return fmt.Errorf("%w: unable to register state transition pre execution handler for unknown state transition %s", ErrTransitionNotFound, meta.Name(transition))
+	}
+	name := r.name(transition)
+	// initialize slice if it does not exist
+	if _, exists := r.stateTransitionPreExecutionHandlers[name]; !exists {
+		r.stateTransitionPreExecutionHandlers[name] = nil
+	}
+	// register handler
+	r.stateTransitionPreExecutionHandlers[name] = append(r.stateTransitionPreExecutionHandlers[name], handler)
+	return nil
 }
 
-func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionController) {
-	r.transactionAdmissionControllers = append(r.transactionAdmissionControllers, ctrl)
+func (r *Router) GetStateTransitionPreExecutionHandlers(transition meta.StateTransition) ([]statetransition.PreExecutionHandler, error) {
+	if !r.knownStateTransition(transition) {
+		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, r.name(transition))
+	}
+	preExecHandlers, exists := r.stateTransitionPreExecutionHandlers[r.name(transition)]
+	if !exists {
+		return nil, nil
+	}
+	return preExecHandlers, nil
 }
 
-func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.TransitionController {
-	return r.transactionPostAuthenticationControllers
+// Execution Handlers
+
+func (r *Router) AddStateTransitionExecutionHandler(transition meta.StateTransition, handler statetransition.ExecutionHandler) error {
+	name := r.name(transition)
+	if r.knownStateTransition(transition) {
+		return fmt.Errorf("%w: %s", ErrTransitionAlreadyRegistered, name)
+	}
+	r.stateTransitionExecutionHandlers[name] = handler
+	return nil
 }
 
-func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.TransitionController) {
-	r.transactionPostAuthenticationControllers = append(r.transactionPostAuthenticationControllers, ctrl)
+func (r *Router) GetStateTransitionExecutionHandler(transition meta.StateTransition) (statetransition.ExecutionHandler, error) {
+	name := meta.Name(transition)
+	handler, exists := r.stateTransitionExecutionHandlers[name]
+	if !exists {
+		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, name)
+	}
+	return handler, nil
+}
+
+// Post Execution handlers
+
+func (r *Router) AddStateTransitionPostExecutionHandler(transition meta.StateTransition, handler statetransition.PostExecutionHandler) error {
+	name := r.name(transition)
+	if !r.knownStateTransition(transition) {
+		return fmt.Errorf("%w: unable to register state transition post execution handler for unknown state transition %s", ErrTransitionNotFound, name)
+	}
+	if _, exists := r.stateTransitionPostExecutionHandlers[name]; !exists {
+		r.stateTransitionPostExecutionHandlers[name] = nil
+	}
+	r.stateTransitionPostExecutionHandlers[name] = append(r.stateTransitionPostExecutionHandlers[name], handler)
+	return nil
+}
+
+func (r *Router) GetStateTransitionPostExecutionHandlers(transition meta.StateTransition) ([]statetransition.PostExecutionHandler, error) {
+	if !r.knownStateTransition(transition) {
+		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, r.name(transition))
+	}
+	postExecHandlers, exists := r.stateTransitionPostExecutionHandlers[r.name(transition)]
+	if !exists {
+		return nil, nil
+	}
+	return postExecHandlers, nil
+}
+
+func (r *Router) GetTransactionAdmissionControllers() []authentication.AdmissionHandler {
+	return r.transactionAdmissionHandlers
+}
+
+func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionHandler) {
+	r.transactionAdmissionHandlers = append(r.transactionAdmissionHandlers, ctrl)
+}
+
+func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.PostAuthenticationHandler {
+	return r.transactionPostAuthenticationHandlers
+}
+
+func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.PostAuthenticationHandler) {
+	r.transactionPostAuthenticationHandlers = append(r.transactionPostAuthenticationHandlers, ctrl)
 }
 
 func (r *Router) ListStateTransitions() []string {
-	sts := make([]string, 0, len(r.stateTransitionControllers))
-	for st := range r.stateTransitionControllers {
+	sts := make([]string, 0, len(r.stateTransitionExecutionHandlers))
+	for st := range r.stateTransitionExecutionHandlers {
 		sts = append(sts, st)
 	}
 	return sts
+}
+
+func (r *Router) knownStateTransition(transition meta.StateTransition) bool {
+	_, known := r.stateTransitionExecutionHandlers[meta.Name(transition)]
+	return known
+}
+
+func (r *Router) name(transition meta.StateTransition) string {
+	return meta.Name(transition)
 }

@@ -12,7 +12,8 @@ import (
 type TestModule struct {
 }
 
-func (t TestModule) Initialize(client module.Client, builder *module.Builder) {
+func (t TestModule) Initialize(_ module.Client) module.Descriptor {
+	return module.Descriptor{}
 }
 
 func TestNewBuilder_ModuleWithoutName(t *testing.T) {
@@ -21,5 +22,5 @@ func TestNewBuilder_ModuleWithoutName(t *testing.T) {
 
 	_, err := builder.Build()
 	require.NotNil(t, err)
-	require.Contains(t, err.Error(), "empty module name")
+	require.Contains(t, err.Error(), "empty core name")
 }

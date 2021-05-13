@@ -19,7 +19,7 @@ func TestBroadcastTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%#v", status)
-	xd, err := Sign(privKey, status.NodeInfo.Network, accountAddress, "some_random_a'ccount", types.NewCoins(types.NewCoin("test", types.NewInt(500))))
+	xd, err := Sign(privKey, status.NodeInfo.Network, accountAddress, "some_rankdf_a'ccount", types.NewCoins(types.NewCoin("test", types.NewInt(500))))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,9 +35,9 @@ func TestQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := tm.ABCIQuery(context.Background(), "get/tmos.x.bank.v1alpha1.Balance/test17hrfajk9ukj6tkkcy2ftgsmr3fp9hk9rkzcc7w", nil)
+	resp, err := tm.ABCIQuery(context.Background(), "Get/tmos.x.authn.v1alpha1.Account/test17hrfajk9ukj6tkkcy2ftgsmr3fp9hk9rkzcc7w", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%s", resp.Response.Value)
+	t.Logf("%s %s", resp.Response.Log, resp.Response.Value)
 }

@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
-	authn "github.com/fdymylja/tmos/module/x/authn/v1alpha1"
-	bank "github.com/fdymylja/tmos/module/x/bank/v1alpha1"
+	v1alpha13 "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/module"
+	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
+	"github.com/fdymylja/tmos/x/bank/v1alpha1"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -20,36 +20,36 @@ func NewModule() Module {
 	return Module{}
 }
 
-// Module implements a simple test module which during init genesis
+// Module implements a simple test core which during init genesis
 // sets a default account with some money
 type Module struct {
 }
 
-func (m Module) Initialize(client module.Client, builder *module.Builder) {
-	builder.
+func (m Module) Initialize(client module.Client) module.Descriptor {
+	return module.NewDescriptorBuilder().
 		Named("testing").
-		WithGenesis(newGenesisController(client))
+		WithGenesis(newGenesisController(client)).Build()
 }
 
 func newGenesisController(client module.Client) genesisController {
 	return genesisController{
-		authn: authn.NewClient(client),
-		bank:  bank.NewClient(client),
+		authn: v1alpha12.NewClient(client),
+		bank:  v1alpha1.NewClient(client),
 	}
 }
 
 type genesisController struct {
-	authn *authn.Client
-	bank  *bank.Client
+	authn *v1alpha12.Client
+	bank  *v1alpha1.Client
 }
 
-func (g genesisController) SetDefault() error {
+func (g genesisController) Default() error {
 	pkB, err := hex.DecodeString(pubKeyAsAny)
 	if err != nil {
 		return err
 	}
 	// create account
-	acc := &authn.Account{
+	acc := &v1alpha12.Account{
 		Address: accountAddress,
 		PubKey: &anypb.Any{
 			TypeUrl: pubKeyType,
@@ -61,7 +61,7 @@ func (g genesisController) SetDefault() error {
 		return err
 	}
 	// set an initial balance for the given account
-	err = g.bank.SetBalance(acc.Address, []*coin.Coin{
+	err = g.bank.SetBalance(acc.Address, []*v1alpha13.Coin{
 		{
 			Denom:  "test",
 			Amount: "5000000000",
@@ -77,6 +77,6 @@ func (g genesisController) Import(state json.RawMessage) error {
 	panic("implement me")
 }
 
-func (g genesisController) Export(state json.RawMessage) error {
+func (g genesisController) Export() (json.RawMessage, error) {
 	panic("implement me")
 }

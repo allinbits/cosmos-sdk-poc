@@ -3,10 +3,10 @@ package runtime
 import (
 	"strings"
 
-	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
-	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
-	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/core/abci/tendermint/abci"
+	abcictrl "github.com/fdymylja/tmos/core/abci/v1alpha1"
+	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
@@ -16,12 +16,16 @@ import (
 )
 
 func NewABCIApplication(rt *Runtime) ABCIApplication {
-	return ABCIApplication{rt: rt}
+	return ABCIApplication{
+		rt:   rt,
+		user: user.NewUsersFromString(user.ABCI),
+	}
 }
 
 // ABCIApplication is a Runtime orchestrated by Tendermint
 type ABCIApplication struct {
-	rt *Runtime
+	rt   *Runtime
+	user user.Users
 }
 
 func (a ABCIApplication) Info(info types.RequestInfo) types.ResponseInfo {
@@ -76,7 +80,7 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 
 func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckTx {
 	// decode tx
-	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
+	tx, err := a.rt.txDecoder.DecodeTx(tmTx.Tx)
 	if err != nil {
 		return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 	}
@@ -87,7 +91,7 @@ func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckT
 	}
 	// run admission checks on single state transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.runAdmissionChain(transition)
+		err = a.rt.runAdmissionChain(tx.Users(), transition)
 		if err != nil {
 			return types.ResponseCheckTx(errors.ToABCIResponse(0, 0, err))
 		}
@@ -111,10 +115,12 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 		}
 	}
 	// set init chain info
-	err := a.rt.Deliver(nil, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
+	err := a.rt.Deliver(a.user, &abcictrl.MsgSetInitChain{InitChainInfo: &abcictrl.InitChainInfo{ChainId: chain.ChainId}})
 	if err != nil {
 		panic(err)
 	}
+	// enable role based access control
+	a.rt.EnableRBAC()
 	return types.ResponseInitChain{
 		ConsensusParams: nil,
 		Validators:      chain.Validators,
@@ -125,7 +131,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.ResponseBeginBlock {
 	block := new(abci.RequestBeginBlock)
 	block.FromLegacyProto(&tmBlock)
-	err := a.rt.Deliver(authentication.NewSubjects(), &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
+	err := a.rt.Deliver(a.user, &abcictrl.MsgSetBeginBlockState{BeginBlock: block})
 	if err != nil {
 		panic(err)
 	}
@@ -137,17 +143,12 @@ func (a ABCIApplication) BeginBlock(tmBlock types.RequestBeginBlock) types.Respo
 
 func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDeliverTx {
 	// decode tx
-	tx, err := a.rt.authn.DecodeTx(tmTx.Tx)
+	tx, err := a.rt.txDecoder.DecodeTx(tmTx.Tx)
 	if err != nil {
 		return errors.ToABCIResponse(0, 0, err)
 	}
 	// run admission checks on tx
 	err = a.rt.runTxAdmissionChain(tx)
-	if err != nil {
-		return errors.ToABCIResponse(0, 0, err)
-	}
-	// do authentication
-	err = a.rt.authn.Authenticate(tx) // sig verification - weight 10
 	if err != nil {
 		return errors.ToABCIResponse(0, 0, err)
 	}
@@ -161,28 +162,19 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	// cache again
 	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.Deliver(tx.Subjects(), transition)
+		err = a.rt.Deliver(tx.Users(), transition, DeliverSkipAdmissionControllers())
 		if err != nil {
 			return errors.ToABCIResponse(0, 0, err)
 		}
 	}
 	// write cache
 	// success!
-	return types.ResponseDeliverTx{
-		Code:      0,
-		Data:      nil,
-		Log:       "",
-		Info:      "",
-		GasWanted: 0,
-		GasUsed:   0,
-		Events:    nil,
-		Codespace: "",
-	}
+	return types.ResponseDeliverTx{}
 }
 
 func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEndBlock {
 	// we set the abci endblcok state given us by tendermint so other modules can access it
-	err := a.rt.Deliver(nil, &abcictrl.MsgSetEndBlockState{
+	err := a.rt.Deliver(a.user, &abcictrl.MsgSetEndBlockState{
 		EndBlock: &abci.RequestEndBlock{
 			Height: block.Height,
 		},

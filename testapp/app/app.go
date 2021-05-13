@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/fdymylja/tmos/module/x/authn"
-	"github.com/fdymylja/tmos/module/x/bank"
-	"github.com/fdymylja/tmos/module/x/distribution"
 	"github.com/fdymylja/tmos/runtime"
 	testmodule "github.com/fdymylja/tmos/testapp/module"
+	authn2 "github.com/fdymylja/tmos/x/authn"
+	bank2 "github.com/fdymylja/tmos/x/bank"
+	distribution2 "github.com/fdymylja/tmos/x/distribution"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/config"
@@ -29,13 +29,29 @@ func init() {
 	flag.StringVar(&configFile, "config", "testapp/app/config/config.toml", "Path to config.toml")
 }
 
+func NewApp() abci.Application {
+	rtb := runtime.NewBuilder()
+	authentication := authn2.NewModule()
+	rtb.AddModule(authentication)
+	rtb.SetDecoder(authentication.GetTxDecoder())
+	rtb.AddModule(bank2.NewModule())
+	rtb.AddModule(distribution2.NewModule())
+	rtb.AddModule(testmodule.NewModule())
+	rt, err := rtb.Build()
+	if err != nil {
+		panic(err)
+	}
+	tmApp := runtime.NewABCIApplication(rt)
+	return tmApp
+}
+
 func New() {
 	rtb := runtime.NewBuilder()
-	authentication := authn.NewModule()
+	authentication := authn2.NewModule()
 	rtb.AddModule(authentication)
-	rtb.SetAuthenticator(authentication.GetAuthenticator())
-	rtb.AddModule(bank.NewModule())
-	rtb.AddModule(distribution.NewModule())
+	rtb.SetDecoder(authentication.GetTxDecoder())
+	rtb.AddModule(bank2.NewModule())
+	rtb.AddModule(distribution2.NewModule())
 	rtb.AddModule(testmodule.NewModule())
 	rt, err := rtb.Build()
 	if err != nil {
