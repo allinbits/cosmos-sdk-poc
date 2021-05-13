@@ -7,11 +7,10 @@
 package v1alpha1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -29,12 +28,21 @@ type Role struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // external_account
-	Gets     []string `protobuf:"bytes,2,rep,name=gets,proto3" json:"gets,omitempty"`
-	Lists    []string `protobuf:"bytes,3,rep,name=lists,proto3" json:"lists,omitempty"`
-	Creates  []string `protobuf:"bytes,4,rep,name=creates,proto3" json:"creates,omitempty"`
-	Updates  []string `protobuf:"bytes,5,rep,name=updates,proto3" json:"updates,omitempty"`
-	Deletes  []string `protobuf:"bytes,6,rep,name=deletes,proto3" json:"deletes,omitempty"`
+	// id is the unique of the role, it does not identify the subject
+	// it just identifies the role as multiple subjects can be bound
+	// to the same role via RoleBinding
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// gets represents the resources (state objects) which the role can runtime.Get
+	Gets []string `protobuf:"bytes,2,rep,name=gets,proto3" json:"gets,omitempty"`
+	// lists represents the resources (state objects) which the role can runtime.List
+	Lists []string `protobuf:"bytes,3,rep,name=lists,proto3" json:"lists,omitempty"`
+	// creates represents the resources (state objects) which the role can runtime.Create
+	Creates []string `protobuf:"bytes,4,rep,name=creates,proto3" json:"creates,omitempty"`
+	// updates represents the resources (state objects) which the role can runtime.Update
+	Updates []string `protobuf:"bytes,5,rep,name=updates,proto3" json:"updates,omitempty"`
+	// deletes represents the resources(state objects)  which the role can runtime.Delete
+	Deletes []string `protobuf:"bytes,6,rep,name=deletes,proto3" json:"deletes,omitempty"`
+	// delivers represents the resources (state transitions) which tre role can runtime.Deliver
 	Delivers []string `protobuf:"bytes,7,rep,name=delivers,proto3" json:"delivers,omitempty"`
 }
 
@@ -119,14 +127,16 @@ func (x *Role) GetDelivers() []string {
 	return nil
 }
 
-// RoleBinding binds a subject to a role
+// RoleBinding defines the role for a given subject
 type RoleBinding struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subject string `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`                // uniquely identifies the account
-	RoleRef string `protobuf:"bytes,2,opt,name=role_ref,json=roleRef,proto3" json:"role_ref,omitempty"` // points to Role
+	// subject defines which account the binding refers to
+	Subject string `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
+	// role_ref points to the Role associated with subject
+	RoleRef string `protobuf:"bytes,2,opt,name=role_ref,json=roleRef,proto3" json:"role_ref,omitempty"`
 }
 
 func (x *RoleBinding) Reset() {

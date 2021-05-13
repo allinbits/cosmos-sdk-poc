@@ -36,7 +36,7 @@ const (
 	Verb_Update Verb = 4
 	// Delete identifies the DELETE operation
 	Verb_Delete Verb = 5
-	// Exec identifies the DELIVER operation
+	// Deliver identifies the DELIVER operation
 	Verb_Deliver Verb = 6
 )
 
@@ -49,7 +49,7 @@ var (
 		3: "Create",
 		4: "Update",
 		5: "Delete",
-		6: "Exec",
+		6: "Deliver",
 	}
 	Verb_value = map[string]int32{
 		"Unknown": 0,
@@ -58,7 +58,7 @@ var (
 		"Create":  3,
 		"Update":  4,
 		"Delete":  5,
-		"Exec":    6,
+		"Deliver": 6,
 	}
 )
 
