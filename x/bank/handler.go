@@ -3,7 +3,7 @@ package bank
 import (
 	"errors"
 
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	v1alpha13 "github.com/fdymylja/tmos/module/coin/v1alpha1"
 	errors2 "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -29,7 +29,7 @@ func (s SendCoinsHandler) Exec(req statetransition.ExecutionRequest) (resp state
 	}
 
 	// subtract the coins
-	newSenderBalance, err := coin.SafeSub(senderBalance.Balance, msg.Amount)
+	newSenderBalance, err := v1alpha13.SafeSub(senderBalance.Balance, msg.Amount)
 	if err != nil {
 		return resp, err
 	}
@@ -47,8 +47,8 @@ func (s SendCoinsHandler) Exec(req statetransition.ExecutionRequest) (resp state
 	switch {
 	// if no error simply update the balance
 	case err == nil:
-		var newRecvBalance []*coin.Coin
-		newRecvBalance, err = coin.SafeAdd(recvBalance.Balance, msg.Amount)
+		var newRecvBalance []*v1alpha13.Coin
+		newRecvBalance, err = v1alpha13.SafeAdd(recvBalance.Balance, msg.Amount)
 		if err != nil {
 			return resp, err
 		}

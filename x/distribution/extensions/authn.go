@@ -1,7 +1,7 @@
 package extensions
 
 import (
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	v1alpha12 "github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/x/bank/v1alpha1"
@@ -41,7 +41,7 @@ func (x FeeChecker) Validate(req authentication.Tx) (err error) {
 	}
 
 	// check if it has enough coins
-	_, err = coin.SafeSub(balance.Balance, fee)
+	_, err = v1alpha12.SafeSub(balance.Balance, fee)
 	if err != nil {
 		return err
 	}

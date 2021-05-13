@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	v1alpha13 "github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/module"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/x/bank/v1alpha1"
@@ -61,7 +61,7 @@ func (g genesisController) Default() error {
 		return err
 	}
 	// set an initial balance for the given account
-	err = g.bank.SetBalance(acc.Address, []*coin.Coin{
+	err = g.bank.SetBalance(acc.Address, []*v1alpha13.Coin{
 		{
 			Denom:  "test",
 			Amount: "5000000000",

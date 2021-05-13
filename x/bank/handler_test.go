@@ -3,6 +3,7 @@ package bank_test
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 	authn2 "github.com/fdymylja/tmos/x/authn"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
 )
 
@@ -27,7 +27,7 @@ func TestSendCoins(t *testing.T) {
 
 	err = rt.Create(user.NewUsersFromString("bank"), &v1alpha12.Balance{
 		Address: "frojdi",
-		Balance: []*coin.Coin{
+		Balance: []*v1alpha1.Coin{
 			{
 				Denom:  "atom",
 				Amount: "1000",
@@ -41,7 +41,7 @@ func TestSendCoins(t *testing.T) {
 	err = rt.Deliver(user.NewUsersFromString("bank"), &v1alpha12.MsgSendCoins{
 		FromAddress: "frojdi",
 		ToAddress:   "jonathan",
-		Amount: []*coin.Coin{
+		Amount: []*v1alpha1.Coin{
 			{
 				Denom:  "atom",
 				Amount: "999",

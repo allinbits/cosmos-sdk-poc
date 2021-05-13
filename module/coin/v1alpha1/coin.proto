@@ -2,7 +2,7 @@ syntax="proto3";
 
 package tmos.core.coin.v1alpha1;
 
-option go_package = "github.com/fdymylja/tmos/module/core/coin/v1alpha1";
+option go_package = "github.com/fdymylja/tmos/module/coin/v1alpha1";
 
 // Coin defines a token with a denomination and an amount.
 message Coin {

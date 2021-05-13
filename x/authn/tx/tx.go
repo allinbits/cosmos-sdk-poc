@@ -1,7 +1,7 @@
 package tx
 
 import (
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	v1alpha12 "github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -38,7 +38,7 @@ func (t *Wrapper) Users() user.Users {
 	return t.signers
 }
 
-func (t *Wrapper) Fee() []*coin.Coin {
+func (t *Wrapper) Fee() []*v1alpha12.Coin {
 	return t.raw.AuthInfo.Fee.Amount
 }
 

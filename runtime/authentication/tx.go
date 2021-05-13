@@ -3,7 +3,7 @@ package authentication
 import (
 	"fmt"
 
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	"github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
@@ -22,7 +22,7 @@ type Tx interface {
 	Users() user.Users
 	// Fee returns the fees of the transaction
 	// as a slice of *coin.Coin
-	Fee() []*coin.Coin
+	Fee() []*v1alpha1.Coin
 	// Payer returns the subject who is paying for the transaction
 	Payer() string
 	// Raw returns the raw transaction as interface

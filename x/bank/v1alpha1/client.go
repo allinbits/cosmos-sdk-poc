@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
+	"github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 )
@@ -20,7 +20,7 @@ func (c *Client) GetBalance(address string) (*Balance, error) {
 	return balance, err
 }
 
-func (c *Client) Send(sender, recipient string, amount []*coin.Coin) error {
+func (c *Client) Send(sender, recipient string, amount []*v1alpha1.Coin) error {
 	return c.Client.Deliver(&MsgSendCoins{
 		FromAddress: sender,
 		ToAddress:   recipient,
@@ -28,7 +28,7 @@ func (c *Client) Send(sender, recipient string, amount []*coin.Coin) error {
 	})
 }
 
-func (c *Client) SetBalance(target string, amount []*coin.Coin) error {
+func (c *Client) SetBalance(target string, amount []*v1alpha1.Coin) error {
 	return c.Client.Deliver(&MsgSetBalance{
 		Address: target,
 		Amount:  amount,

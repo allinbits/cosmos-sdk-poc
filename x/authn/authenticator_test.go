@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/fdymylja/tmos/module/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	authn2 "github.com/fdymylja/tmos/x/authn"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
@@ -16,7 +17,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	coin "github.com/fdymylja/tmos/module/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
 )
 
@@ -37,7 +37,7 @@ func TestAuthenticator(t *testing.T) {
 	// initialize with money...
 	err = rt.Deliver(user.NewUsersFromString("bank"), &v1alpha13.MsgSetBalance{
 		Address: "frojdi",
-		Amount: []*coin.Coin{{
+		Amount: []*v1alpha1.Coin{{
 			Denom:  "test",
 			Amount: "5000",
 		}},
@@ -102,7 +102,7 @@ func timedOutTx(t *testing.T) []byte {
 			},
 		},
 		Fee: &v1alpha12.Fee{
-			Amount: []*coin.Coin{
+			Amount: []*v1alpha1.Coin{
 				{
 					Denom:  "test",
 					Amount: "1000",
