@@ -13,7 +13,7 @@ type Descriptor struct {
 	StateTransitionPreExecHandlers       []stateTransitionPreExecutionHandler
 	StateTransitionExecutionHandlers     []stateTransitionExecutionHandler
 	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
-	StateObjects                         []stateObject
+	StateObjects                         []meta.StateObject
 	Needs                                []meta.StateTransition
 	AuthenticationExtension              *AuthenticationExtensionDescriptor
 }
@@ -37,10 +37,6 @@ type stateTransitionExecutionHandler struct {
 type stateTransitionPostExecutionHandler struct {
 	StateTransition statetransition.StateTransition
 	Handler         statetransition.PostExecutionHandler
-}
-
-type stateObject struct {
-	StateObject meta.StateObject
 }
 
 func NewDescriptorBuilder() *DescriptorBuilder {
@@ -72,7 +68,7 @@ func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ct
 }
 
 func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject) *DescriptorBuilder {
-	b.descriptor.StateObjects = append(b.descriptor.StateObjects, stateObject{object})
+	b.descriptor.StateObjects = append(b.descriptor.StateObjects, object)
 	return b
 }
 

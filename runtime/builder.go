@@ -153,15 +153,15 @@ func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
 
 func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, so := range m.StateObjects {
-		err := b.store.RegisterStateObject(so.StateObject)
+		err := b.store.RegisterStateObject(so)
 		if err != nil {
 			return err
 		}
-		err = extendRoleForStateObject(role, so.StateObject)
+		err = extendRoleForStateObject(role, so)
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), m.Name)
+		klog.Infof("registered state object %s for module %s", meta.Name(so), m.Name)
 	}
 
 	return nil
