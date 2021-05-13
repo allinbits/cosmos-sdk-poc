@@ -3,7 +3,7 @@ package bank_test
 import (
 	"testing"
 
-	"github.com/fdymylja/tmos/module/coin/v1alpha1"
+	"github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 	authn2 "github.com/fdymylja/tmos/x/authn"

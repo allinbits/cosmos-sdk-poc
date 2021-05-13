@@ -4,7 +4,7 @@ package tmos.x.authn.v1alpha1;
 
 import "google/protobuf/any.proto";
 
-import "module/coin/v1alpha1/coin.proto";
+import "core/coin/v1alpha1/coin.proto";
 import "x/authn/v1alpha1/signing.proto";
 import "x/authn/crypto/v1alpha1/multisig.proto";
 

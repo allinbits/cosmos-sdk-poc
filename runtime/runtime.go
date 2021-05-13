@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"k8s.io/klog/v2"
@@ -78,7 +78,7 @@ func (r *Runtime) InitGenesis() error {
 		}
 		klog.Infof("initializing genesis state for %s", m.Name)
 		if err := m.GenesisHandler.Default(); err != nil {
-			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
+			return fmt.Errorf("runtime: failed genesis initalization for core %s: %w", m.Name, err)
 		}
 	}
 	klog.Infof("default genesis initialization completed")

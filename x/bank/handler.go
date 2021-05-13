@@ -3,7 +3,7 @@ package bank
 import (
 	"errors"
 
-	v1alpha13 "github.com/fdymylja/tmos/module/coin/v1alpha1"
+	v1alpha13 "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	errors2 "github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"

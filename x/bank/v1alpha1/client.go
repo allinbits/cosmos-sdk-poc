@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/fdymylja/tmos/module/coin/v1alpha1"
+	"github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 )

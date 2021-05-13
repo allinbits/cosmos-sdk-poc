@@ -3,9 +3,9 @@ package runtime
 import (
 	"strings"
 
-	"github.com/fdymylja/tmos/module/abci/tendermint/abci"
-	abcictrl "github.com/fdymylja/tmos/module/abci/v1alpha1"
-	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/core/abci/tendermint/abci"
+	abcictrl "github.com/fdymylja/tmos/core/abci/v1alpha1"
+	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"

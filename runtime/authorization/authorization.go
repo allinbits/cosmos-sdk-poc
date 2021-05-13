@@ -1,7 +1,7 @@
 package authorization
 
 import (
-	runtimev1alpha1 "github.com/fdymylja/tmos/module/runtime/v1alpha1"
+	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/meta"
 )

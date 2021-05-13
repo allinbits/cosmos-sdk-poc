@@ -3,7 +3,7 @@ syntax="proto3";
 
 package tmos.x.bank.v1alpha1;
 
-import "module/coin/v1alpha1/coin.proto";
+import "core/coin/v1alpha1/coin.proto";
 
 option go_package = "github.com/fdymylja/tmos/x/bank/v1alpha1";
 

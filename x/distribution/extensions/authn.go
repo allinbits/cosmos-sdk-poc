@@ -1,7 +1,7 @@
 package extensions
 
 import (
-	v1alpha12 "github.com/fdymylja/tmos/module/coin/v1alpha1"
+	v1alpha12 "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/x/bank/v1alpha1"

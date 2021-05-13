@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	v1alpha13 "github.com/fdymylja/tmos/module/coin/v1alpha1"
+	v1alpha13 "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/module"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	"github.com/fdymylja/tmos/x/bank/v1alpha1"
@@ -20,7 +20,7 @@ func NewModule() Module {
 	return Module{}
 }
 
-// Module implements a simple test module which during init genesis
+// Module implements a simple test core which during init genesis
 // sets a default account with some money
 type Module struct {
 }

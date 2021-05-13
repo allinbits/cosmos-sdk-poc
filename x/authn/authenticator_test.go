@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/fdymylja/tmos/module/coin/v1alpha1"
+	"github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	authn2 "github.com/fdymylja/tmos/x/authn"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"

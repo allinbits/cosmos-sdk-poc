@@ -1,7 +1,7 @@
 package authn
 
 import (
-	rbacv1alpha1 "github.com/fdymylja/tmos/module/rbac/v1alpha1"
+	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
 	extensions2 "github.com/fdymylja/tmos/x/authn/extensions"

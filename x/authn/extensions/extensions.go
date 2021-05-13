@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	abciv1alpha1 "github.com/fdymylja/tmos/module/abci/v1alpha1"
+	abciv1alpha1 "github.com/fdymylja/tmos/core/abci/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
 	crypto2 "github.com/fdymylja/tmos/x/authn/crypto"
