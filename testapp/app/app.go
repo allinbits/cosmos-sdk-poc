@@ -9,9 +9,9 @@ import (
 
 	"github.com/fdymylja/tmos/runtime"
 	testmodule "github.com/fdymylja/tmos/testapp/module"
-	authn2 "github.com/fdymylja/tmos/x/authn"
-	bank2 "github.com/fdymylja/tmos/x/bank"
-	distribution2 "github.com/fdymylja/tmos/x/distribution"
+	"github.com/fdymylja/tmos/x/authn"
+	"github.com/fdymylja/tmos/x/bank"
+	"github.com/fdymylja/tmos/x/distribution"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/config"
@@ -31,11 +31,11 @@ func init() {
 
 func NewApp() abci.Application {
 	rtb := runtime.NewBuilder()
-	authentication := authn2.NewModule()
+	authentication := authn.NewModule()
 	rtb.AddModule(authentication)
 	rtb.SetDecoder(authentication.GetTxDecoder())
-	rtb.AddModule(bank2.NewModule())
-	rtb.AddModule(distribution2.NewModule())
+	rtb.AddModule(bank.NewModule())
+	rtb.AddModule(distribution.NewModule())
 	rtb.AddModule(testmodule.NewModule())
 	rt, err := rtb.Build()
 	if err != nil {
@@ -47,11 +47,11 @@ func NewApp() abci.Application {
 
 func New() {
 	rtb := runtime.NewBuilder()
-	authentication := authn2.NewModule()
+	authentication := authn.NewModule()
 	rtb.AddModule(authentication)
 	rtb.SetDecoder(authentication.GetTxDecoder())
-	rtb.AddModule(bank2.NewModule())
-	rtb.AddModule(distribution2.NewModule())
+	rtb.AddModule(bank.NewModule())
+	rtb.AddModule(distribution.NewModule())
 	rtb.AddModule(testmodule.NewModule())
 	rt, err := rtb.Build()
 	if err != nil {

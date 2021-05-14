@@ -1,0 +1,40 @@
+syntax="proto3";
+
+package tmos.x.crisis.v1alpha1;
+
+option go_package = "github.com/fdymylja/tmos/x/crisis/v1alpha1";
+
+import "core/coin/v1alpha1/coin.proto";
+
+// MsgRegisterInvariant is used by modules to register invariant handlers
+message MsgRegisterInvariant {
+  // invariant_state_transition is the state transition that must be called
+  // when verifying the invariant
+  string invariant_state_transition = 1;
+  // unneeded fields but kept for backwards compatibility with the cosmos-sdk
+  string invariant_name = 2;
+  string invariant_module_name = 3;
+  string invariant_route = 4;
+}
+
+// MsgVerifyInvariantCosmosSDK matches the cosmos-sdk verify invariant
+message MsgVerifyInvariantCosmosSDK {
+  string sender = 1;
+  string invariant_module_name = 2;
+  string invariant_route = 3;
+}
+
+message MsgVerifyInvariant {
+  string sender = 1;
+  string invariant_handler = 2;
+}
+
+message InvariantHandler {
+  string state_transition = 1;
+  string module = 2;
+  string route = 3;
+}
+
+message Params {
+  core.coin.v1alpha1.Coin constant_fee = 1;
+}
