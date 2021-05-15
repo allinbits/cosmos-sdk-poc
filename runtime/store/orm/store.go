@@ -12,28 +12,45 @@ var (
 	ErrAlreadyRegistered = errors.New("store: object already registered")
 )
 
-type FieldEncoder func(value protoreflect.Value) []byte
-
 type KVStore interface {
 	Get(key []byte) (value []byte, exists bool)
 	Set(key, value []byte)
 	Has(key []byte) (exists bool)
 	Delete(key []byte) (exists bool)
+	Iterate(start, end []byte) KVStoreIterator
+}
+
+type KVStoreIterator interface {
+	Next()
+	Key() []byte
+	Value() []byte
+	Valid() bool
+	Close()
 }
 
 type ObjectSchema struct {
-	name              string
-	prefix            []byte
+	name   string
+	prefix []byte
+
 	primaryKey        protoreflect.FieldDescriptor
-	primaryKeyEncoder func(value protoreflect.Value) []byte
+	primaryKeyEncoder FieldEncoderFunc
 
 	secondaryKeys        map[string]protoreflect.FieldDescriptor
-	secondaryKeysEncoder map[string]func(value protoreflect.Value) []byte
+	secondaryKeysEncoder map[string]FieldEncoderFunc
+}
+
+func NewStore(kv KVStore) *Store {
+	return &Store{
+		knownObjects: map[string]struct{}{},
+		schemas:      map[string]*ObjectSchema{},
+		kv:           kv,
+	}
 }
 
 type Store struct {
 	knownObjects map[string]struct{}
-	schemas      map[string]ObjectSchema
+	schemas      map[string]*ObjectSchema
+	kv           KVStore
 }
 
 type RegisterObjectOptions struct {
@@ -47,7 +64,7 @@ type RegisterObjectOptions struct {
 }
 
 func (s *Store) RegisterObject(o meta.StateObject, options RegisterObjectOptions) error {
-	if !s.knownObject(o) {
+	if s.knownObject(o) {
 		return ErrAlreadyRegistered
 	}
 	err := assertValidFields(o, options)
@@ -58,21 +75,34 @@ func (s *Store) RegisterObject(o meta.StateObject, options RegisterObjectOptions
 	if err != nil {
 		return err
 	}
-
+	s.schemas[objectName(o)] = schema
+	return nil
 }
 
-func getObjectSchema(o meta.StateObject, options RegisterObjectOptions) (ObjectSchema, error) {
+func getObjectSchema(o meta.StateObject, options RegisterObjectOptions) (*ObjectSchema, error) {
+	schema := &ObjectSchema{}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	primaryKey := fds.ByJSONName(options.PrimaryKey)
-	encoder := getEncoderForKind(primaryKey.Kind())
-	return ObjectSchema{
-		name:                 "",
-		prefix:               nil,
-		primaryKey:           primaryKey,
-		primaryKeyEncoder:    nil,
-		secondaryKeys:        nil,
-		secondaryKeysEncoder: nil,
-	}, nil
+	primaryKeyEncoder, err := EncoderForKind(primaryKey.Kind())
+	if err != nil {
+		return nil, fmt.Errorf("store: %s has invalid primary key field: %w", objectName(o), err)
+	}
+	schema.primaryKey = primaryKey
+	schema.primaryKeyEncoder = primaryKeyEncoder
+
+	schema.secondaryKeys = make(map[string]protoreflect.FieldDescriptor, len(options.SecondaryKeys))
+	schema.secondaryKeysEncoder = make(map[string]FieldEncoderFunc, len(options.SecondaryKeys))
+	for _, sk := range options.SecondaryKeys {
+		secondaryKey := fds.ByJSONName(sk)
+		secondaryKeyEncoder, err := EncoderForKind(secondaryKey.Kind())
+		if err != nil {
+			return nil, fmt.Errorf("store: %s has invalid secondary key field: %w", objectName(o), err)
+		}
+		schema.secondaryKeys[sk] = secondaryKey
+		schema.secondaryKeysEncoder[sk] = secondaryKeyEncoder
+	}
+
+	return schema, nil
 }
 
 func (s *Store) knownObject(o meta.StateObject) bool {
@@ -97,7 +127,7 @@ func assertValidFields(o meta.StateObject, options RegisterObjectOptions) error 
 	// check if every secondary keys exists
 	for _, sk := range options.SecondaryKeys {
 		if fd := fds.ByJSONName(sk); fd == nil {
-			return fmt.Errorf("secondary key %s does not exist in object %s, make sure to use the correct json name of the field", options.PrimaryKey, objectName(o))
+			return fmt.Errorf("secondary key %s does not exist in object %s, make sure to use the correct json name of the field", sk, objectName(o))
 		}
 	}
 	return nil

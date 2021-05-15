@@ -6,6 +6,10 @@ var (
 	ParamsID = meta.NewStringID("params")
 )
 
+func (x *InvariantHandler) GetID() meta.ID {
+	return nil
+}
+
 func (x *Params) GetID() meta.ID {
 	return ParamsID
 }
