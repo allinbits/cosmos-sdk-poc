@@ -58,6 +58,9 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	schema := &Schema{}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	primaryKey := fds.ByJSONName(options.PrimaryKey)
+	if primaryKey == nil {
+		return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrRegister, options.PrimaryKey, meta.Name(o))
+	}
 	primaryKeyEncoder, err := EncoderForKind(primaryKey.Kind())
 	if err != nil {
 		return nil, fmt.Errorf("store: %s has invalid primary key field: %w", meta.Name(o), err)
@@ -69,6 +72,9 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	schema.SecondaryKeyEncoders = make(map[string]FieldEncoderFunc, len(options.SecondaryKeys))
 	for _, sk := range options.SecondaryKeys {
 		secondaryKey := fds.ByJSONName(sk)
+		if secondaryKey == nil {
+			return nil, fmt.Errorf("%w: invalid secondary key field %s in object %s", ErrRegister, sk, meta.Name(o))
+		}
 		secondaryKeyEncoder, err := EncoderForKind(secondaryKey.Kind())
 		if err != nil {
 			return nil, fmt.Errorf("store: %s has invalid secondary key field: %w", meta.Name(o), err)

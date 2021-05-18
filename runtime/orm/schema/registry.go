@@ -6,6 +6,10 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
+func NewRegistry() *Registry {
+	return &Registry{schemas: map[string]*Schema{}}
+}
+
 type Registry struct {
 	schemas map[string]*Schema
 }
