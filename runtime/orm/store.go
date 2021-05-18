@@ -10,6 +10,23 @@ import (
 
 var (
 	ErrAlreadyRegistered = errors.New("store: object already registered")
+	ErrEmptyPrimaryKey   = errors.New("store: empty primary key")
+	ErrNotRegistered     = errors.New("store: unknown object")
+
+	ErrAlreadyExists = errors.New("store: object already exists")
+	ErrMarshal       = errors.New("store: error while encoding object")
+)
+
+const (
+	// ObjectsPrefix is used as KVStore prefix
+	// for saving objects
+	ObjectsPrefix = 0x0
+	// IndexesPrefix is used as KVStore prefix
+	// for saving indexes
+	IndexesPrefix = 0x1
+	// SavedIndexesPrefix is used as KVStore prefix
+	// for listing a primary key indexes
+	SavedIndexesPrefix = 0x3
 )
 
 type KVStore interface {
@@ -76,6 +93,8 @@ func (s *Store) RegisterObject(o meta.StateObject, options RegisterObjectOptions
 		return err
 	}
 	s.schemas[objectName(o)] = schema
+	// mark object as known
+	s.knownObjects[objectName(o)] = struct{}{}
 	return nil
 }
 
