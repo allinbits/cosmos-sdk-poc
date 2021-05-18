@@ -2,6 +2,7 @@ package indexes
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -34,26 +35,28 @@ func (s *Store) IndexObject(o meta.StateObject) error {
 	}
 	primaryKey := sch.EncodePrimaryKey(o)
 	// generate indexes
-	indexerKeys := make(indexList, len(sch.SecondaryKeys))
+	indexerKeys := make(indexList, 0, len(sch.SecondaryKeys))
 	for indexName := range sch.SecondaryKeys {
 		key := &indexerKey{
 			objectPrefix: sch.TypePrefix,
 			indexName:    []byte(indexName),
-			indexValue:   sch.EncodeSecondaryKey(indexName, o),
+			indexValue:   sch.MustEncodeObjectField(indexName, o),
 			primaryKey:   primaryKey,
 		}
 		keyBytes := key.marshal()
 		if s.kv.Has(keyBytes) {
-			return fmt.Errorf("orm: s")
+			return fmt.Errorf("orm: secondary key already exists")
 		}
 		s.kv.Set(keyBytes, []byte{})
 		indexerKeys = append(indexerKeys, keyBytes)
 	}
 	// set the type prefixed primary key
-	s.kv.Set(typePrefixedKey{
+	pkToIndexKey := typePrefixedKey{
 		primaryKey: primaryKey,
 		typePrefix: sch.TypePrefix,
-	}.bytes(), indexerKeys.marshal())
+	}
+	log.Printf("%s %s %s", pkToIndexKey.primaryKey, pkToIndexKey.typePrefix, pkToIndexKey.bytes())
+	s.kv.Set(pkToIndexKey.bytes(), indexerKeys.marshal())
 	return nil
 }
 
@@ -79,7 +82,7 @@ func (s *Store) UnindexObject(o meta.StateObject) error {
 	for _, key := range *indexes {
 		exists := s.kv.Delete(key)
 		if !exists {
-			panic(fmt.Errorf("data corruption, indexes for key %s reported key %s which was not found in indexes list", pk.bytes(), key))
+			panic(fmt.Errorf("data corruption, indexes for key %s reported indexer key %s which was not found in indexes list", pk.bytes(), key))
 		}
 	}
 	return nil

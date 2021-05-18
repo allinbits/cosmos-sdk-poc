@@ -16,10 +16,21 @@ func TestStore(t *testing.T) {
 		&crisis.InvariantHandler{},
 		schema.Options{
 			PrimaryKey:    "stateTransition",
-			SecondaryKeys: []string{"module", "routerKey"},
+			SecondaryKeys: []string{"module", "route"},
 		},
 	))
 	kv := kv.NewBadger()
 	store := indexes.NewStore(kv, reg)
-	store.IndexObject(nil)
+	obj := &crisis.InvariantHandler{
+		StateTransition: "/someTransition",
+		Module:          "bank",
+		Route:           "/invariance/bank",
+	}
+	err := store.IndexObject(obj)
+	require.NoError(t, err)
+	err = store.UnindexObject(obj)
+	require.NoError(t, err)
+	x, err := store.List(obj, indexes.MatchField("module", "bank"))
+	require.NoError(t, err)
+	t.Logf("%s, %v", x.Key(), x.Key())
 }

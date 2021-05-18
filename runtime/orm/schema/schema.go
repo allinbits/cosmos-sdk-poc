@@ -2,10 +2,8 @@ package schema
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/fdymylja/tmos/runtime/meta"
-	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -28,16 +26,36 @@ func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
 	return s.PrimaryKeyEncode(pkValue)
 }
 
-// EncodeSecondaryKey returns the encoded secondary key given a meta.StateObject
+// EncodeObjectField returns the encoded secondary key given a meta.StateObject
 // and the json name of the field to encode.
 // NOTE: panics if the key provided is not part of the schema.
-func (s *Schema) EncodeSecondaryKey(key string, object meta.StateObject) []byte {
+func (s *Schema) EncodeObjectField(key string, object meta.StateObject) ([]byte, error) {
 	fd, exists := s.SecondaryKeys[key]
 	if !exists {
-		panic(fmt.Errorf("schema: object %s is not indexed by secondary key %s", meta.Name(object), key))
+		panic(fmt.Errorf("%w: object %s is not indexed by secondary key %s", ErrSecondaryKey, meta.Name(object), key))
 	}
 	encode := s.SecondaryKeyEncoders[key]
-	return encode(object.ProtoReflect().Get(fd))
+	return encode(object.ProtoReflect().Get(fd)), nil
+}
+
+func (s *Schema) MustEncodeObjectField(key string, object meta.StateObject) []byte {
+	k, err := s.EncodeObjectField(key, object)
+	if err != nil {
+		panic(err)
+	}
+	return k
+}
+
+func (s *Schema) EncodeFieldInterface(fieldName string, i interface{}) ([]byte, error) {
+	fd, exists := s.SecondaryKeys[fieldName]
+	if !exists {
+		return nil, fmt.Errorf("%w: field not found %s in object %s", ErrSecondaryKey, fieldName, s.Name)
+	}
+	encodedBytes, err := safeFieldEncodeInterface(fd, i)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s %s", ErrFieldEncode, fieldName, err)
+	}
+	return encodedBytes, nil
 }
 
 type Options struct {
@@ -61,7 +79,7 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	if primaryKey == nil {
 		return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrRegister, options.PrimaryKey, meta.Name(o))
 	}
-	primaryKeyEncoder, err := EncoderForKind(primaryKey.Kind())
+	primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
 	if err != nil {
 		return nil, fmt.Errorf("store: %s has invalid primary key field: %w", meta.Name(o), err)
 	}
@@ -75,7 +93,7 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 		if secondaryKey == nil {
 			return nil, fmt.Errorf("%w: invalid secondary key field %s in object %s", ErrRegister, sk, meta.Name(o))
 		}
-		secondaryKeyEncoder, err := EncoderForKind(secondaryKey.Kind())
+		secondaryKeyEncoder, err := encoderForKind(secondaryKey.Kind())
 		if err != nil {
 			return nil, fmt.Errorf("store: %s has invalid secondary key field: %w", meta.Name(o), err)
 		}
@@ -84,102 +102,6 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	}
 
 	schema.TypePrefix = []byte(meta.Name(o))
+	schema.Name = meta.Name(o)
 	return schema, nil
-}
-
-// TODO maybe we should not support all of these... floats/doubles?
-// TODO we can preallocate a lot of those slices
-var protowireFieldEncoders = map[protoreflect.Kind]FieldEncoderFunc{
-	protoreflect.BoolKind: func(v protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, protowire.EncodeBool(v.Bool()))
-		return b
-	},
-	protoreflect.EnumKind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, uint64(value.Enum()))
-		return b
-	},
-	protoreflect.Int32Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, uint64(int32(value.Int())))
-		return b
-	},
-	protoreflect.Sint32Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, protowire.EncodeZigZag(int64(int32(value.Int()))))
-		return b
-	},
-	protoreflect.Uint32Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, uint64(uint32(value.Uint())))
-		return b
-	},
-	protoreflect.Int64Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, uint64(value.Int()))
-		return b
-	},
-	protoreflect.Sint64Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, protowire.EncodeZigZag(value.Int()))
-		return b
-	},
-	protoreflect.Uint64Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendVarint(b, value.Uint())
-		return b
-	},
-	protoreflect.Sfixed32Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendFixed32(b, uint32(value.Int()))
-		return b
-	},
-	protoreflect.Fixed32Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendFixed32(b, uint32(value.Uint()))
-		return b
-	},
-	protoreflect.FloatKind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendFixed32(b, math.Float32bits(float32(value.Float())))
-		return b
-	},
-	protoreflect.Sfixed64Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendFixed64(b, uint64(value.Int()))
-		return b
-	},
-	protoreflect.Fixed64Kind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendFixed64(b, value.Uint())
-		return b
-	},
-	protoreflect.DoubleKind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendFixed64(b, math.Float64bits(value.Float()))
-		return b
-	},
-	protoreflect.StringKind: func(value protoreflect.Value) []byte {
-		var b []byte
-		// NOTE: skipping UTF8 checks, anyways marshalling would fail
-		// if the string is invalid.
-		// NOTE2: this prepends the string length which we can do without..
-		b = protowire.AppendString(b, value.String())
-		return b
-	},
-	// NOTE: do we really need to index bytes? when would it be useful?
-	protoreflect.BytesKind: func(value protoreflect.Value) []byte {
-		var b []byte
-		b = protowire.AppendBytes(b, value.Bytes())
-		return b
-	},
-}
-
-func EncoderForKind(kind protoreflect.Kind) (FieldEncoderFunc, error) {
-	encoder, exists := protowireFieldEncoders[kind]
-	if !exists {
-		return nil, fmt.Errorf("store: unsupported secondary index with kind %s", kind)
-	}
-	return encoder, nil
 }

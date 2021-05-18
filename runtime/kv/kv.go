@@ -6,6 +6,7 @@ type KV interface {
 	Has(key []byte) (exists bool)
 	Delete(key []byte) (exists bool)
 	Iterate(start, end []byte) Iterator
+	IteratePrefix(prefix []byte) Iterator
 }
 
 type Iterator interface {
