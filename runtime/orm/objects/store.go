@@ -14,36 +14,24 @@ var marshal = proto.MarshalOptions{
 }
 var unmarshal = proto.UnmarshalOptions{}
 
-func NewStore(kv kv.KV) *Store {
+func NewStore(kv kv.KV, reg *schema.Registry) *Store {
 	return &Store{
 		kv:      kv,
-		schemas: map[string]*schema.Schema{},
+		schemas: reg,
 	}
 }
 
 type Store struct {
 	kv      kv.KV
-	schemas map[string]*schema.Schema
+	schemas *schema.Registry
 }
 
-func (s *Store) AddSchema(sch *schema.Schema) error {
-	if _, exists := s.schemas[sch.Name]; exists {
-		return fmt.Errorf("orm: object %s is already part of the schema", sch.Name)
-	}
-	s.schemas[sch.Name] = sch
-	return nil
-}
-
-func (s *Store) unknown(object meta.StateObject) bool {
-	_, known := s.schemas[meta.Name(object)]
-	if known {
-		return false
-	}
-	return true
+func (s *Store) RegisterObject(o meta.StateObject, options schema.Options) error {
+	return s.schemas.AddObject(o, options)
 }
 
 func (s *Store) Create(object meta.StateObject) error {
-	sch, err := s.getSchema(object)
+	sch, err := s.schemas.Get(object)
 	if err != nil {
 		return err
 	}
@@ -65,7 +53,7 @@ func (s *Store) Create(object meta.StateObject) error {
 }
 
 func (s *Store) Get(id meta.ID, object meta.StateObject) error {
-	sch, err := s.getSchema(object)
+	sch, err := s.schemas.Get(object)
 	if err != nil {
 		return err
 	}
@@ -88,7 +76,7 @@ func (s *Store) Get(id meta.ID, object meta.StateObject) error {
 }
 
 func (s *Store) Update(object meta.StateObject) error {
-	sch, err := s.getSchema(object)
+	sch, err := s.schemas.Get(object)
 	if err != nil {
 		return err
 	}
@@ -110,7 +98,7 @@ func (s *Store) Update(object meta.StateObject) error {
 }
 
 func (s *Store) Delete(object meta.StateObject) error {
-	sch, err := s.getSchema(object)
+	sch, err := s.schemas.Get(object)
 	if err != nil {
 		return err
 	}
@@ -125,14 +113,6 @@ func (s *Store) Delete(object meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) getSchema(object meta.StateObject) (sch *schema.Schema, err error) {
-	sch, exists := s.schemas[meta.Name(object)]
-	if !exists {
-		return nil, fmt.Errorf("store: unknown object %s", meta.Name(object))
-	}
-	return sch, nil
-}
-
 func saveKey(s *schema.Schema, object meta.StateObject) ([]byte, error) {
 	// encode key
 	pk := s.EncodePrimaryKey(object)
@@ -143,8 +123,9 @@ func saveKeyRaw(s *schema.Schema, key []byte) ([]byte, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("orm: empty primary key for object %s", s.Name)
 	}
-	pk := make([]byte, len(s.Prefix)+len(key))
-	pk = append(pk, s.Prefix...)
+	pk := make([]byte, len(s.TypePrefix)+1+len(key))
+	pk = append(pk, s.TypePrefix...)
+	pk = append(pk, '/')
 	pk = append(pk, key...)
 	return pk, nil
 }

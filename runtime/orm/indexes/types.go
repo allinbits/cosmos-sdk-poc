@@ -32,7 +32,7 @@ func (s indexerKey) marshal() []byte {
 }
 
 func (s *indexerKey) unmarshal(buf []byte) error {
-	// we exclude the first
+	// we exclude the first byte
 	buf = buf[1:]
 	// we get the object prefix
 	objPrefix, read1, err := consumeLengthPrefixed(buf)
@@ -98,7 +98,7 @@ func (i indexList) marshal() []byte {
 	if len(i) == 0 {
 		return nil
 	}
-	var buf []byte
+	buf := []byte{PrimaryKeyIndexes}
 	buf = protowire.AppendVarint(buf, (uint64)(len(i)))
 	for _, index := range i {
 		buf = protowire.AppendBytes(buf, index)
@@ -107,6 +107,7 @@ func (i indexList) marshal() []byte {
 }
 
 func (i *indexList) unmarshal(buf []byte) error {
+	buf = buf[1:]
 	varint, code := protowire.ConsumeVarint(buf)
 	if code < 0 {
 		return protowire.ParseError(code)
@@ -130,4 +131,17 @@ func (i *indexList) unmarshal(buf []byte) error {
 	}
 	*i = list
 	return nil
+}
+
+type typePrefixedKey struct {
+	primaryKey []byte
+	typePrefix []byte
+}
+
+func (k typePrefixedKey) bytes() []byte {
+	key := make([]byte, 0, len(k.typePrefix)+1+len(k.primaryKey))
+	key = append(key, k.typePrefix...)
+	key = append(key, '/')
+	key = append(key, k.primaryKey...)
+	return key
 }

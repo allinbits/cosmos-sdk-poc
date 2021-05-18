@@ -30,3 +30,12 @@ func Test_indexerKey(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, x, y)
 }
+
+func Test_typePrefixedKey_bytes(t *testing.T) {
+	x := typePrefixedKey{
+		primaryKey: []byte("primary_key"),
+		typePrefix: []byte("osu.v1alpha1.King"),
+	}
+	b := x.bytes()
+	t.Logf("%s", b)
+}

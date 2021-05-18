@@ -14,7 +14,7 @@ type FieldEncoderFunc func(value protoreflect.Value) []byte
 type Schema struct {
 	Type                 protoreflect.MessageType
 	Name                 string
-	Prefix               []byte // TODO should we force copies of this?
+	TypePrefix           []byte // TODO should we force copies of this?
 	PrimaryKey           protoreflect.FieldDescriptor
 	PrimaryKeyEncode     FieldEncoderFunc
 	SecondaryKeys        map[string]protoreflect.FieldDescriptor
@@ -77,7 +77,7 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 		schema.SecondaryKeyEncoders[sk] = secondaryKeyEncoder
 	}
 
-	schema.Prefix = []byte(meta.Name(o))
+	schema.TypePrefix = []byte(meta.Name(o))
 	return schema, nil
 }
 
