@@ -11,24 +11,17 @@ import (
 const IndexersPrefix = 0x0    // where real indexes are
 const PrimaryKeyIndexes = 0x1 // where we save the mapping between primary key -> index keys pointing to the primary key
 
-func NewStore(kv kv.KV, reg *schema.Registry) Store {
+func NewStore(kv kv.KV) Store {
 	return Store{
-		kv:      kv,
-		schemas: reg,
+		kv: kv,
 	}
 }
 
 type Store struct {
-	kv      kv.KV
-	schemas *schema.Registry
+	kv kv.KV
 }
 
-func (s *Store) Index(o meta.StateObject) error {
-	sch, err := s.schemas.Get(o)
-	if err != nil {
-		return err
-	}
-	// skip
+func (s *Store) Index(sch *schema.Schema, o meta.StateObject) error {
 	if len(sch.SecondaryKeys) == 0 {
 		return nil
 	}
@@ -58,11 +51,7 @@ func (s *Store) Index(o meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) ClearIndexes(o meta.StateObject) error {
-	sch, err := s.schemas.Get(o)
-	if err != nil {
-		return err
-	}
+func (s *Store) ClearIndexes(sch *schema.Schema, o meta.StateObject) error {
 	pk := typePrefixedKey{
 		primaryKey: sch.EncodePrimaryKey(o),
 		typePrefix: sch.TypePrefix,
@@ -72,7 +61,7 @@ func (s *Store) ClearIndexes(o meta.StateObject) error {
 		return fmt.Errorf("orm: primary key not found for object %s", pk.bytes())
 	}
 	indexes := new(indexList)
-	err = indexes.unmarshal(indexListBytes)
+	err := indexes.unmarshal(indexListBytes)
 	if err != nil {
 		return err
 	}

@@ -19,25 +19,28 @@ func TestStore(t *testing.T) {
 			SecondaryKeys: []string{"module", "route"},
 		},
 	))
+	sch, err := reg.Get(&crisis.InvariantHandler{})
+	require.NoError(t, err)
+
 	kv := kv.NewBadger()
-	store := indexes.NewStore(kv, reg)
+	store := indexes.NewStore(kv)
 	// test indexing
 	obj := &crisis.InvariantHandler{
 		StateTransition: "/someTransition",
 		Module:          "bank",
 		Route:           "/invariance/bank",
 	}
-	err := store.Index(obj)
+	err = store.Index(sch, obj)
 	require.NoError(t, err)
 	// test list by matching fields
-	x, err := store.List(obj, indexes.MatchField("module", "bank"))
+	x, err := store.List(sch, indexes.MatchField("module", "bank"))
 	require.NoError(t, err)
 	require.True(t, x.Valid())
 	// test unindexing
-	err = store.ClearIndexes(obj)
+	err = store.ClearIndexes(sch, obj)
 	require.NoError(t, err)
 	// test list is invalid
-	x, err = store.List(obj, indexes.MatchField("module", "bank"))
+	x, err = store.List(sch, indexes.MatchField("module", "bank"))
 	require.Nil(t, x)
 	require.ErrorIs(t, err, indexes.ErrNotFound)
 }

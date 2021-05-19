@@ -14,27 +14,17 @@ var marshal = proto.MarshalOptions{
 }
 var unmarshal = proto.UnmarshalOptions{}
 
-func NewStore(kv kv.KV, reg *schema.Registry) *Store {
+func NewStore(kv kv.KV) *Store {
 	return &Store{
-		kv:      kv,
-		schemas: reg,
+		kv: kv,
 	}
 }
 
 type Store struct {
-	kv      kv.KV
-	schemas *schema.Registry
+	kv kv.KV
 }
 
-func (s *Store) RegisterObject(o meta.StateObject, options schema.Options) error {
-	return s.schemas.AddObject(o, options)
-}
-
-func (s *Store) Create(object meta.StateObject) error {
-	sch, err := s.schemas.Get(object)
-	if err != nil {
-		return err
-	}
+func (s *Store) Create(sch *schema.Schema, object meta.StateObject) error {
 	primaryKey, err := saveKey(sch, object)
 	if err != nil {
 		return err
@@ -52,11 +42,7 @@ func (s *Store) Create(object meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) Get(id meta.ID, object meta.StateObject) error {
-	sch, err := s.schemas.Get(object)
-	if err != nil {
-		return err
-	}
+func (s *Store) Get(sch *schema.Schema, id meta.ID, object meta.StateObject) error {
 	key, err := saveKeyRaw(sch, id.Bytes())
 	if err != nil {
 		return err
@@ -75,11 +61,7 @@ func (s *Store) Get(id meta.ID, object meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) Update(object meta.StateObject) error {
-	sch, err := s.schemas.Get(object)
-	if err != nil {
-		return err
-	}
+func (s *Store) Update(sch *schema.Schema, object meta.StateObject) error {
 	key, err := saveKey(sch, object)
 	if err != nil {
 		return err
@@ -97,11 +79,7 @@ func (s *Store) Update(object meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) Delete(object meta.StateObject) error {
-	sch, err := s.schemas.Get(object)
-	if err != nil {
-		return err
-	}
+func (s *Store) Delete(sch *schema.Schema, object meta.StateObject) error {
 	pk, err := saveKey(sch, object)
 	if err != nil {
 		return err
