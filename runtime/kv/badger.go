@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/dgraph-io/badger/v3"
 )
@@ -22,7 +21,6 @@ func NewBadger() *Badger {
 }
 
 func (b *Badger) Set(k, v []byte) {
-	log.Printf("setkey: %s", k)
 	txn := b.db.NewTransaction(true)
 	err := txn.Set(k, v)
 	if err != nil {
@@ -71,6 +69,10 @@ func (b *Badger) Delete(k []byte) (exists bool) {
 	if err != nil {
 		panic(err)
 	}
+	err = txn.Commit()
+	if err != nil {
+		panic(err)
+	}
 	return true
 }
 
@@ -92,7 +94,6 @@ func (b *Badger) Iterate(start, end []byte) Iterator {
 }
 
 func (b *Badger) IteratePrefix(prefix []byte) Iterator {
-	log.Printf("iterate pfx: %s", prefix)
 	txn := b.db.NewTransaction(true)
 	iter := txn.NewIterator(badger.DefaultIteratorOptions)
 	iter.Seek(prefix)
@@ -117,8 +118,6 @@ func (b BaderPrefixIterator) Next() {
 }
 
 func (b BaderPrefixIterator) Key() []byte {
-	key := b.iter.Item().Key()
-	log.Printf("key: %v", key)
 	return b.iter.Item().Key()[b.pfxLength:]
 }
 

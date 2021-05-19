@@ -1,6 +1,8 @@
 package indexes
 
 import (
+	"fmt"
+
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/meta"
 )
@@ -48,5 +50,8 @@ func (s Store) List(object meta.StateObject, options ...ListOptionFunc) (kv.Iter
 		primaryKey:   nil,
 	}
 	iterator := s.kv.IteratePrefix(prefix.marshal())
+	if !iterator.Valid() {
+		return nil, fmt.Errorf("%w: no records found for object %s and query %s", ErrNotFound, sch.Name, o)
+	}
 	return iterator, nil
 }

@@ -222,13 +222,15 @@ var protowireFieldEncoders = map[protoreflect.Kind]FieldEncoderFunc{
 		// if the string is invalid.
 		// NOTE2: this prepends the string length which we can do without..
 		b = protowire.AppendString(b, value.String())
-		return b
+		// NOTE3: this removes the length prefix which is not needed
+		return b[1:]
 	},
 	// NOTE: do we really need to index bytes? when would it be useful?
 	protoreflect.BytesKind: func(value protoreflect.Value) []byte {
 		var b []byte
 		b = protowire.AppendBytes(b, value.Bytes())
-		return b
+		// NOTE: removes the length prefix which is not needed
+		return b[1:]
 	},
 }
 

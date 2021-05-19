@@ -2,7 +2,6 @@ package indexes
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/meta"
@@ -55,7 +54,6 @@ func (s *Store) IndexObject(o meta.StateObject) error {
 		primaryKey: primaryKey,
 		typePrefix: sch.TypePrefix,
 	}
-	log.Printf("%s %s %s", pkToIndexKey.primaryKey, pkToIndexKey.typePrefix, pkToIndexKey.bytes())
 	s.kv.Set(pkToIndexKey.bytes(), indexerKeys.marshal())
 	return nil
 }

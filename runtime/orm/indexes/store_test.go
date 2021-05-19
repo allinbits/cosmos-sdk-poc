@@ -21,6 +21,7 @@ func TestStore(t *testing.T) {
 	))
 	kv := kv.NewBadger()
 	store := indexes.NewStore(kv, reg)
+	// test indexing
 	obj := &crisis.InvariantHandler{
 		StateTransition: "/someTransition",
 		Module:          "bank",
@@ -28,9 +29,15 @@ func TestStore(t *testing.T) {
 	}
 	err := store.IndexObject(obj)
 	require.NoError(t, err)
-	err = store.UnindexObject(obj)
-	require.NoError(t, err)
+	// test list by matching fields
 	x, err := store.List(obj, indexes.MatchField("module", "bank"))
 	require.NoError(t, err)
-	t.Logf("%s, %v", x.Key(), x.Key())
+	require.True(t, x.Valid())
+	// test unindexing
+	err = store.UnindexObject(obj)
+	require.NoError(t, err)
+	// test list is invalid
+	x, err = store.List(obj, indexes.MatchField("module", "bank"))
+	require.Nil(t, x)
+	require.ErrorIs(t, err, indexes.ErrNotFound)
 }
