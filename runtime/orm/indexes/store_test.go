@@ -27,14 +27,14 @@ func TestStore(t *testing.T) {
 		Module:          "bank",
 		Route:           "/invariance/bank",
 	}
-	err := store.IndexObject(obj)
+	err := store.Index(obj)
 	require.NoError(t, err)
 	// test list by matching fields
 	x, err := store.List(obj, indexes.MatchField("module", "bank"))
 	require.NoError(t, err)
 	require.True(t, x.Valid())
 	// test unindexing
-	err = store.UnindexObject(obj)
+	err = store.ClearIndexes(obj)
 	require.NoError(t, err)
 	// test list is invalid
 	x, err = store.List(obj, indexes.MatchField("module", "bank"))

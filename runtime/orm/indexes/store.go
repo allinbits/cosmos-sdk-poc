@@ -23,7 +23,7 @@ type Store struct {
 	schemas *schema.Registry
 }
 
-func (s *Store) IndexObject(o meta.StateObject) error {
+func (s *Store) Index(o meta.StateObject) error {
 	sch, err := s.schemas.Get(o)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func (s *Store) IndexObject(o meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) UnindexObject(o meta.StateObject) error {
+func (s *Store) ClearIndexes(o meta.StateObject) error {
 	sch, err := s.schemas.Get(o)
 	if err != nil {
 		return err
