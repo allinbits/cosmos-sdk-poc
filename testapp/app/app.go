@@ -46,19 +46,7 @@ func NewApp() abci.Application {
 }
 
 func New() {
-	rtb := runtime.NewBuilder()
-	authentication := authn.NewModule()
-	rtb.AddModule(authentication)
-	rtb.SetDecoder(authentication.GetTxDecoder())
-	rtb.AddModule(bank.NewModule())
-	rtb.AddModule(distribution.NewModule())
-	rtb.AddModule(testmodule.NewModule())
-	rt, err := rtb.Build()
-	if err != nil {
-		panic(err)
-	}
-	tmApp := runtime.NewABCIApplication(rt)
-
+	tmApp := NewApp()
 	tmNode, err := newTendermint(tmApp, configFile)
 	if err != nil {
 		panic(err)
