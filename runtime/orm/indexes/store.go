@@ -21,7 +21,7 @@ type Store struct {
 	kv kv.KV
 }
 
-func (s *Store) Index(sch *schema.Schema, o meta.StateObject) error {
+func (s Store) Index(sch *schema.Schema, o meta.StateObject) error {
 	if len(sch.SecondaryKeys) == 0 {
 		return nil
 	}
@@ -51,7 +51,7 @@ func (s *Store) Index(sch *schema.Schema, o meta.StateObject) error {
 	return nil
 }
 
-func (s *Store) ClearIndexes(sch *schema.Schema, o meta.StateObject) error {
+func (s Store) ClearIndexes(sch *schema.Schema, o meta.StateObject) error {
 	pk := typePrefixedKey{
 		primaryKey: sch.EncodePrimaryKey(o),
 		typePrefix: sch.TypePrefix,

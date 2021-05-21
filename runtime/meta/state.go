@@ -12,6 +12,14 @@ type StringID string
 
 func (s StringID) Bytes() []byte { return []byte(s) }
 
+func NewBytesID(id []byte) BytesID {
+	return id
+}
+
+type BytesID []byte
+
+func (b BytesID) Bytes() []byte { return b }
+
 // Type defines a generalized type that can be fed to the runtime
 type Type interface {
 	proto.Message

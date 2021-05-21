@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	kv "github.com/fdymylja/tmos/runtime/kv"
+	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/indexes"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	crisis "github.com/fdymylja/tmos/x/crisis/v1alpha1"
@@ -33,14 +34,24 @@ func TestStore(t *testing.T) {
 	err = store.Index(sch, obj)
 	require.NoError(t, err)
 	// test list by matching fields
-	x, err := store.List(sch, indexes.MatchField("module", "bank"))
+	x, err := store.List(sch, orm.ListOptionsRaw{MatchFields: []orm.ListMatchField{
+		{
+			Field: "module",
+			Value: "bank",
+		},
+	}})
 	require.NoError(t, err)
 	require.True(t, x.Valid())
 	// test unindexing
 	err = store.ClearIndexes(sch, obj)
 	require.NoError(t, err)
 	// test list is invalid
-	x, err = store.List(sch, indexes.MatchField("module", "bank"))
+	x, err = store.List(sch, orm.ListOptionsRaw{MatchFields: []orm.ListMatchField{
+		{
+			Field: "module",
+			Value: "bank",
+		},
+	}})
 	require.Nil(t, x)
 	require.ErrorIs(t, err, indexes.ErrNotFound)
 }
