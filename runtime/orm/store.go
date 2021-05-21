@@ -157,6 +157,10 @@ func (s Store) List(object meta.StateObject, options ...ListOptionApplier) (Iter
 	}, nil
 }
 
+func (s Store) ListRegisteredStateObjects() []string {
+	return s.schemas.List()
+}
+
 type Iterator struct {
 	store  Store
 	iter   kv.Iterator

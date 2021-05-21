@@ -4,6 +4,7 @@ import (
 	"github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
@@ -15,8 +16,8 @@ type Module struct {
 func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
 		Named(user.Runtime).
-		OwnsStateObject(&v1alpha1.StateObjectsList{}).
-		OwnsStateObject(&v1alpha1.StateTransitionsList{}).
+		OwnsStateObject(&v1alpha1.StateObjectsList{}, orm.RegisterOptions{Singleton: true}).
+		OwnsStateObject(&v1alpha1.StateTransitionsList{}, orm.RegisterOptions{Singleton: true}).
 		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsController(client), false).
 		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false).Build()
 }

@@ -7,6 +7,7 @@ import (
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
+	"github.com/fdymylja/tmos/runtime/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -14,7 +15,6 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
-	"github.com/fdymylja/tmos/runtime/store/badger"
 )
 
 type deliverOptions struct {
@@ -41,7 +41,7 @@ type Runtime struct {
 	rbacEnabled bool
 
 	router *Router
-	store  *badger.Store
+	store  orm.Store
 }
 
 func (r *Runtime) EnableRBAC() {
@@ -256,7 +256,7 @@ func convertStoreError(err error) error {
 		return nil
 	}
 	switch {
-	case errors.Is(err, badger.ErrNotFound):
+	case errors.Is(err, orm.ErrNotFound):
 		return fmt.Errorf("%w: %s", errors.ErrNotFound, err)
 	default:
 		panic("unrecognized error type: " + err.Error())

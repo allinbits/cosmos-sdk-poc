@@ -5,6 +5,7 @@ import (
 
 	kv "github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"google.golang.org/protobuf/proto"
 )
@@ -43,13 +44,16 @@ func (s *Store) Create(sch *schema.Schema, object meta.StateObject) error {
 }
 
 func (s *Store) Get(sch *schema.Schema, id meta.ID, object meta.StateObject) error {
+	if sch.Singleton() {
+		id = meta.NewStringID("unique")
+	}
 	key, err := saveKeyRaw(sch, id.Bytes())
 	if err != nil {
 		return err
 	}
 	objectBytes, exists := s.kv.Get(key)
 	if !exists {
-		return fmt.Errorf("orm: object not found %s", key)
+		return fmt.Errorf("%w: %s", orm.ErrNotFound, key)
 	}
 	err = unmarshal.Unmarshal(objectBytes, object)
 	if err != nil {
@@ -101,7 +105,7 @@ func saveKeyRaw(s *schema.Schema, key []byte) ([]byte, error) {
 	if len(key) == 0 {
 		return nil, fmt.Errorf("orm: empty primary key for object %s", s.Name)
 	}
-	pk := make([]byte, len(s.TypePrefix)+1+len(key))
+	pk := make([]byte, 0, len(s.TypePrefix)+1+len(key))
 	pk = append(pk, s.TypePrefix...)
 	pk = append(pk, '/')
 	pk = append(pk, key...)

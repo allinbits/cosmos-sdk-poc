@@ -38,3 +38,11 @@ func (s *Registry) Get(o meta.StateObject) (*Schema, error) {
 	}
 	return sch, nil
 }
+
+func (s *Registry) List() []string {
+	list := make([]string, 0, len(s.schemas))
+	for s := range s.schemas {
+		list = append(list, s)
+	}
+	return list
+}

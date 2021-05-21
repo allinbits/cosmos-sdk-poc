@@ -10,20 +10,25 @@ import (
 type FieldEncoderFunc func(value protoreflect.Value) []byte
 
 type Schema struct {
-	Type                 protoreflect.MessageType
-	Name                 string
-	TypePrefix           []byte // TODO should we force copies of this?
-	PrimaryKey           protoreflect.FieldDescriptor
-	PrimaryKeyEncode     FieldEncoderFunc
-	SecondaryKeys        map[string]protoreflect.FieldDescriptor
-	SecondaryKeyEncoders map[string]FieldEncoderFunc
+	oType                 protoreflect.MessageType
+	Name                  string
+	TypePrefix            []byte // TODO should we force copies of this?
+	primaryKey            protoreflect.FieldDescriptor
+	primaryKeyEncode      FieldEncoderFunc
+	SecondaryKeys         map[string]protoreflect.FieldDescriptor
+	secondaryKeysEncoders map[string]FieldEncoderFunc
+
+	singleton bool
 }
 
 // EncodePrimaryKey returns the encoded primary given a meta.StateObject
 // NOTE: panics if the field does not belong to the message
 func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
-	pkValue := o.ProtoReflect().Get(s.PrimaryKey)
-	return s.PrimaryKeyEncode(pkValue)
+	if s.singleton == true {
+		return []byte("unique")
+	}
+	pkValue := o.ProtoReflect().Get(s.primaryKey)
+	return s.primaryKeyEncode(pkValue)
 }
 
 // EncodeObjectField returns the encoded secondary key given a meta.StateObject
@@ -34,7 +39,7 @@ func (s *Schema) EncodeObjectField(key string, object meta.StateObject) ([]byte,
 	if !exists {
 		panic(fmt.Errorf("%w: object %s is not indexed by secondary key %s", ErrSecondaryKey, meta.Name(object), key))
 	}
-	encode := s.SecondaryKeyEncoders[key]
+	encode := s.secondaryKeysEncoders[key]
 	return encode(object.ProtoReflect().Get(fd)), nil
 }
 
@@ -58,7 +63,14 @@ func (s *Schema) EncodeFieldInterface(fieldName string, i interface{}) ([]byte, 
 	return encodedBytes, nil
 }
 
+func (s *Schema) Singleton() bool {
+	return s.singleton
+}
+
 type Options struct {
+	// Singleton marks if there can exist only one instance of this object
+	// it's invalid to use primary key alongside a Singleton
+	Singleton bool
 	// PrimaryKey indicates the field to use as a primary key
 	// it must be the json name of the protobuf object
 	PrimaryKey string
@@ -75,19 +87,27 @@ func NewSchema(o meta.StateObject, options Options) (*Schema, error) {
 func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	schema := &Schema{}
 	fds := o.ProtoReflect().Descriptor().Fields()
-	primaryKey := fds.ByJSONName(options.PrimaryKey)
-	if primaryKey == nil {
-		return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrRegister, options.PrimaryKey, meta.Name(o))
+	switch options.Singleton {
+	case true:
+		schema.singleton = true
+		if options.PrimaryKey != "" {
+			return nil, fmt.Errorf("schema: singleton do not have primary keys")
+		}
+	case false:
+		primaryKey := fds.ByJSONName(options.PrimaryKey)
+		if primaryKey == nil {
+			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrRegister, options.PrimaryKey, meta.Name(o))
+		}
+		primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
+		if err != nil {
+			return nil, fmt.Errorf("store: %s has invalid primary key field: %w", meta.Name(o), err)
+		}
+		schema.primaryKey = primaryKey
+		schema.primaryKeyEncode = primaryKeyEncoder
 	}
-	primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
-	if err != nil {
-		return nil, fmt.Errorf("store: %s has invalid primary key field: %w", meta.Name(o), err)
-	}
-	schema.PrimaryKey = primaryKey
-	schema.PrimaryKeyEncode = primaryKeyEncoder
 
 	schema.SecondaryKeys = make(map[string]protoreflect.FieldDescriptor, len(options.SecondaryKeys))
-	schema.SecondaryKeyEncoders = make(map[string]FieldEncoderFunc, len(options.SecondaryKeys))
+	schema.secondaryKeysEncoders = make(map[string]FieldEncoderFunc, len(options.SecondaryKeys))
 	for _, sk := range options.SecondaryKeys {
 		secondaryKey := fds.ByJSONName(sk)
 		if secondaryKey == nil {
@@ -98,7 +118,7 @@ func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 			return nil, fmt.Errorf("store: %s has invalid secondary key field: %w", meta.Name(o), err)
 		}
 		schema.SecondaryKeys[sk] = secondaryKey
-		schema.SecondaryKeyEncoders[sk] = secondaryKeyEncoder
+		schema.secondaryKeysEncoders[sk] = secondaryKeyEncoder
 	}
 
 	schema.TypePrefix = []byte(meta.Name(o))
