@@ -30,7 +30,7 @@ func (c *Client) IncreaseSequence(address string) error {
 
 func (c *Client) GetParams() (*Params, error) {
 	p := new(Params)
-	err := c.c.Get(ParamsID, p)
+	err := c.c.Get(meta.SingletonID, p)
 	if err != nil {
 		return nil, err
 	}

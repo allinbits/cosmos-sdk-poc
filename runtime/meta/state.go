@@ -4,6 +4,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var SingletonID = BytesID("unique")
+
 func NewStringID(id string) StringID {
 	return (StringID)(id)
 }
@@ -34,7 +36,7 @@ type StateTransition interface {
 // StateObject defines an object which is saved in the state
 type StateObject interface {
 	Type
-	GetID() ID
+	StateObject()
 }
 
 // ID defines the unique identification of an StateObject.

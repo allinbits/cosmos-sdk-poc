@@ -1,18 +1,8 @@
 package v1alpha1
 
-import "github.com/fdymylja/tmos/runtime/meta"
+func (x *InvariantHandler) StateObject() {}
 
-var (
-	ParamsID = meta.NewStringID("params")
-)
-
-func (x *InvariantHandler) GetID() meta.ID {
-	return nil
-}
-
-func (x *Params) GetID() meta.ID {
-	return ParamsID
-}
+func (x *Params) StateObject() {}
 
 func (x *MsgRegisterInvariant) StateTransition()        {}
 func (x *MsgVerifyInvariant) StateTransition()          {}

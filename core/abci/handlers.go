@@ -5,6 +5,7 @@ import (
 
 	"github.com/fdymylja/tmos/core/abci/tendermint/abci"
 	"github.com/fdymylja/tmos/core/abci/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
@@ -97,7 +98,7 @@ func validatorUpdatesHandler(client module.Client) statetransition.ExecutionHand
 	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetValidatorUpdates)
 		stage := new(v1alpha1.Stage)
-		err = client.Get(v1alpha1.StageID, stage)
+		err = client.Get(meta.SingletonID, stage)
 		if err != nil {
 			return statetransition.ExecutionResponse{}, err
 		}

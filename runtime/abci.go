@@ -186,7 +186,7 @@ func (a ABCIApplication) EndBlock(block types.RequestEndBlock) types.ResponseEnd
 
 	// we check if there was any val updates changes done by modules
 	valUpdates := new(abcictrl.ValidatorUpdates)
-	err = a.rt.Get(abcictrl.ValidatorUpdatesID, valUpdates)
+	err = a.rt.Get(meta.SingletonID, valUpdates)
 	if err != nil {
 		panic(err)
 	}

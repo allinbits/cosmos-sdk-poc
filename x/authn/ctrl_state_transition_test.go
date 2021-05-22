@@ -41,7 +41,7 @@ func TestCreateAccountController(t *testing.T) {
 	t.Logf("%s", acc)
 	// get last account number
 	num := new(v1alpha12.CurrentAccountNumber)
-	err = rt.Get(num.GetID(), num)
+	err = rt.Get(meta.SingletonID, num)
 	if err != nil {
 		t.Fatal(err)
 	}
