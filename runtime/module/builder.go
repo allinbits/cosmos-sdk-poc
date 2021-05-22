@@ -2,6 +2,7 @@ package module
 
 import (
 	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
@@ -13,9 +14,14 @@ type Descriptor struct {
 	StateTransitionPreExecHandlers       []stateTransitionPreExecutionHandler
 	StateTransitionExecutionHandlers     []stateTransitionExecutionHandler
 	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
-	StateObjects                         []meta.StateObject
+	StateObjects                         []stateObject
 	Needs                                []meta.StateTransition
 	AuthenticationExtension              *AuthenticationExtensionDescriptor
+}
+
+type stateObject struct {
+	StateObject meta.StateObject
+	Options     orm.RegisterOptions
 }
 
 type stateTransitionAdmissionHandlers struct {
@@ -67,8 +73,11 @@ func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ct
 	return b
 }
 
-func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject) *DescriptorBuilder {
-	b.descriptor.StateObjects = append(b.descriptor.StateObjects, object)
+func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject, options orm.RegisterOptions) *DescriptorBuilder {
+	b.descriptor.StateObjects = append(b.descriptor.StateObjects, stateObject{
+		StateObject: object,
+		Options:     options,
+	})
 	return b
 }
 

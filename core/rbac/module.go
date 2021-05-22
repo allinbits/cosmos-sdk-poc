@@ -6,6 +6,7 @@ import (
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/orm"
 )
 
 func NewModule() *Module { return &Module{} }
@@ -29,8 +30,8 @@ func (m *Module) Initialize(client module.Client) module.Descriptor {
 
 	return module.NewDescriptorBuilder().
 		Named("rbac").
-		OwnsStateObject(&v1alpha1.Role{}).
-		OwnsStateObject(&v1alpha1.RoleBinding{}).
+		OwnsStateObject(&v1alpha1.Role{}, orm.RegisterOptions{PrimaryKey: "id"}).
+		OwnsStateObject(&v1alpha1.RoleBinding{}, orm.RegisterOptions{PrimaryKey: "subject"}).
 		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleController(client), false).
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionController(client)).
 		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleController(client), false).

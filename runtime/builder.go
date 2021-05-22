@@ -12,9 +12,12 @@ import (
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/errors"
+	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
-	"github.com/fdymylja/tmos/runtime/store/badger"
+	"github.com/fdymylja/tmos/runtime/orm"
+	"github.com/fdymylja/tmos/runtime/orm/indexes"
+	"github.com/fdymylja/tmos/runtime/orm/objects"
 	"k8s.io/klog/v2"
 )
 
@@ -31,7 +34,6 @@ func NewBuilder() *Builder {
 		rbac:              nil,
 		decoder:           nil,
 		router:            NewRouter(),
-		store:             badger.NewStore(),
 		rt:                &Runtime{},
 	}
 
@@ -60,7 +62,7 @@ type Builder struct {
 	decoder      authentication.TxDecoder
 
 	router *Router
-	store  *badger.Store
+	store  orm.Store
 	rt     *Runtime
 }
 
@@ -82,7 +84,11 @@ func (b *Builder) SetDecoder(txDecoder authentication.TxDecoder) {
 
 // Build installs the module.Modules provided and returns a fully functional runtime
 func (b *Builder) Build() (*Runtime, error) {
-	err := b.installModules()
+	err := b.initStore()
+	if err != nil {
+		return nil, err
+	}
+	err = b.installModules()
 	if err != nil {
 		return nil, fmt.Errorf("unable to install modules: %w", err)
 	}
@@ -153,15 +159,15 @@ func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
 
 func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.Role) error {
 	for _, so := range m.StateObjects {
-		err := b.store.RegisterStateObject(so)
+		err := b.store.RegisterObject(so.StateObject, so.Options)
 		if err != nil {
 			return err
 		}
-		err = extendRoleForStateObject(role, so)
+		err = extendRoleForStateObject(role, so.StateObject)
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state object %s for core %s", meta.Name(so), m.Name)
+		klog.Infof("registered state object %s for core %s", meta.Name(so.StateObject), m.Name)
 	}
 
 	return nil
@@ -332,6 +338,17 @@ func (b *Builder) installDependencies() error {
 			}
 		}
 	}
+	return nil
+}
+
+func (b *Builder) initStore() error {
+	okv := kv.NewBadger()
+	obj := objects.NewStore(okv)
+	idxKv := kv.NewBadger()
+	idx := indexes.NewStore(idxKv)
+	store := orm.NewStore(obj, idx)
+	b.store = store
+
 	return nil
 }
 
