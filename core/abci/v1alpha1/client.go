@@ -16,7 +16,7 @@ func (c *Client) SetBeginBlock(block *BeginBlockState) error {
 
 func (c *Client) GetBeginBlock() (*BeginBlockState, error) {
 	state := new(BeginBlockState)
-	err := c.c.Get(state.GetID(), state)
+	err := c.c.Get(nil, state)
 	if err != nil {
 		return nil, err
 	}
@@ -25,13 +25,13 @@ func (c *Client) GetBeginBlock() (*BeginBlockState, error) {
 
 func (c *Client) GetCurrentBlock() (*CurrentBlock, error) {
 	currentBlock := new(CurrentBlock)
-	err := c.c.Get(CurrentBlockID, currentBlock)
+	err := c.c.Get(nil, currentBlock)
 	return currentBlock, err
 }
 
 func (c *Client) GetChainID() (string, error) {
 	chainInfo := new(InitChainInfo)
-	err := c.c.Get(InitChainInfoID, chainInfo)
+	err := c.c.Get(nil, chainInfo)
 	if err != nil {
 		return "", err
 	}
