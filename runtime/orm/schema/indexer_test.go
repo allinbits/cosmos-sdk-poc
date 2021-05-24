@@ -35,3 +35,40 @@ func TestNewIndexer(t *testing.T) {
 		})
 	}
 }
+
+func TestIndexer_EncodeInterface(t *testing.T) {
+	type test struct {
+		input   interface{}
+		result  []byte
+		wantErr error
+	}
+	cases := map[string]test{
+		"success": {
+			input:   "test",
+			result:  []byte("test"),
+			wantErr: nil,
+		},
+		"nil interface": {
+			input:   nil,
+			result:  nil,
+			wantErr: ErrFieldTypeMismatch,
+		},
+		"type mismatch": {
+			input:   0,
+			result:  nil,
+			wantErr: ErrFieldTypeMismatch,
+		},
+	}
+	indexer, err := NewIndexer(&testpb.SimpleMessage{}, "a")
+	require.NoError(t, err)
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			result, err := indexer.EncodeInterface(tc.input)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+			}
+			require.EqualValues(t, tc.result, result)
+		})
+	}
+}
