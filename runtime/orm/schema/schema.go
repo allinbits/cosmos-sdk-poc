@@ -7,9 +7,15 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+// ValueEncoderFunc is a function that encodes a protoreflect.Value to bytes
 type ValueEncoderFunc func(value protoreflect.Value) []byte
+
+// InterfaceEncoderFunc converts an interface to protoreflect.Value,
+// returns false if the interface does not match the correct expected type.
 type InterfaceEncoderFunc func(i interface{}) (value protoreflect.Value, valid bool)
 
+// Schema represents how a meta.StateObject is saved and indexed into the store
+// and provides all the required functionalities to index the fields of the object
 type Schema struct {
 	messageType          protoreflect.MessageType
 	name                 string
@@ -84,16 +90,16 @@ func parseObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	case true:
 		schema.singleton = true
 		if options.PrimaryKey != "" {
-			return nil, fmt.Errorf("schema: singleton do not have primary keys")
+			return nil, fmt.Errorf("%w: can not register a singleton with a primary key in object %s", ErrBadOptions, meta.Name(o))
 		}
 	case false:
 		primaryKey := fds.ByJSONName(options.PrimaryKey)
 		if primaryKey == nil {
-			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrRegister, options.PrimaryKey, meta.Name(o))
+			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrBadOptions, options.PrimaryKey, meta.Name(o))
 		}
 		primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
 		if err != nil {
-			return nil, fmt.Errorf("store: %s has invalid primary key field: %w", meta.Name(o), err)
+			return nil, fmt.Errorf("%w: %s has invalid primary key field: %s", ErrBadOptions, meta.Name(o), err)
 		}
 		schema.primaryKey = primaryKey
 		schema.primaryKeyEncode = primaryKeyEncoder
@@ -106,7 +112,10 @@ func parseObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 		schema.hasIndexes = false
 		return schema, nil
 	}
-
+	// singletons cannot be indexed
+	if options.Singleton && len(options.SecondaryKeys) != 0 {
+		return nil, fmt.Errorf("%w: singletons can not have secondary indexes in object %s", ErrBadOptions, meta.Name(o))
+	}
 	schema.secondaryKeys = make([]*Indexer, len(options.SecondaryKeys))
 	schema.secondaryKeysByField = make(map[string]*Indexer, len(options.SecondaryKeys))
 	for i, skName := range options.SecondaryKeys {
