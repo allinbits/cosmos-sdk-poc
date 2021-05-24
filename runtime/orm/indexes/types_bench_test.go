@@ -15,7 +15,7 @@ func Benchmark_IndexerKey(b *testing.B) {
 	x := &indexObjectWithSecondaryKey{
 		objectPrefix:      []byte("some-proto-object"),
 		indexPrefix:       []byte("some-index-name"),
-		secondaryKeyValue: []byte("some-index-value"),
+		secondaryKeyValue: []byte("some-secondary-key-value"),
 		primaryKey:        []byte("some-primary-key"),
 	}
 	y := &indexObjectWithSecondaryKey{}
