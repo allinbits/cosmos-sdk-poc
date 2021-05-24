@@ -3,7 +3,6 @@ module github.com/fdymylja/tmos
 go 1.15
 
 require (
-	github.com/btcsuite/btcutil v1.0.2
 	github.com/cosmos/cosmos-sdk v0.42.4
 	github.com/dgraph-io/badger/v3 v3.2011.1
 	github.com/gogo/protobuf v1.3.3
@@ -14,7 +13,6 @@ require (
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
 	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
 	golang.org/x/text v0.3.4 // indirect
-	google.golang.org/api v0.13.0 // indirect
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	k8s.io/klog/v2 v2.4.0
