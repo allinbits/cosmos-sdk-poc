@@ -131,26 +131,6 @@ var safeInterfaceToValue = map[protoreflect.Kind]func(i interface{}) (value prot
 	},
 }
 
-func safeFieldEncodeInterface(fd protoreflect.FieldDescriptor, i interface{}) ([]byte, error) {
-	if i == nil {
-		return nil, fmt.Errorf("%w: for field descriptor %s", ErrEmptyFieldValue, fd.FullName())
-	}
-	// get the interface to protoreflect.Value function
-	toValue, supported := safeInterfaceToValue[fd.Kind()]
-	if !supported {
-		panic(fmt.Errorf("%w: '%s' in object %s", ErrUnsupportedFieldKind, fd.Kind(), fd.Parent().FullName())) // this should be blocked at GetSchema level
-	}
-
-	// convert to value
-	value, valid := toValue(i)
-	if !valid {
-		return nil, fmt.Errorf("%w: protobuf field kind is %s which does not support values of golang type %T", ErrFieldTypeMismatch, fd.Kind(), i)
-	}
-
-	// encode to bytes
-	return protowireFieldEncoders[fd.Kind()](value), nil
-}
-
 // TODO maybe we should not support all of these... floats/doubles?
 // TODO we can preallocate a lot of those slices
 var protowireFieldEncoders = map[protoreflect.Kind]ValueEncoderFunc{
