@@ -22,18 +22,19 @@ type Store struct {
 }
 
 func (s Store) Index(sch *schema.Schema, o meta.StateObject) error {
-	if len(sch.SecondaryKeys) == 0 {
+	if !sch.HasIndexes() {
 		return nil
 	}
 	primaryKey := sch.EncodePrimaryKey(o)
 	// generate indexes
-	indexerKeys := make(indexList, 0, len(sch.SecondaryKeys))
-	for indexName := range sch.SecondaryKeys {
-		key := &indexerKey{
-			objectPrefix: sch.TypePrefix,
-			indexName:    []byte(indexName),
-			indexValue:   sch.MustEncodeObjectField(indexName, o),
-			primaryKey:   primaryKey,
+	sks := sch.Indexes()
+	indexerKeys := make(indexList, 0, len(sks))
+	for _, sk := range sks {
+		key := &indexObjectWithSecondaryKey{
+			objectPrefix:      sch.TypePrefix(),
+			indexPrefix:       sk.Prefix(),
+			secondaryKeyValue: sk.Encode(o),
+			primaryKey:        primaryKey,
 		}
 		keyBytes := key.marshal()
 		if s.kv.Has(keyBytes) {
@@ -45,19 +46,19 @@ func (s Store) Index(sch *schema.Schema, o meta.StateObject) error {
 	// set the type prefixed primary key
 	pkToIndexKey := typePrefixedKey{
 		primaryKey: primaryKey,
-		typePrefix: sch.TypePrefix,
+		typePrefix: sch.TypePrefix(),
 	}
 	s.kv.Set(pkToIndexKey.bytes(), indexerKeys.marshal())
 	return nil
 }
 
 func (s Store) ClearIndexes(sch *schema.Schema, o meta.StateObject) error {
-	if len(sch.SecondaryKeys) == 0 {
+	if !sch.HasIndexes() {
 		return nil
 	}
 	pk := typePrefixedKey{
 		primaryKey: sch.EncodePrimaryKey(o),
-		typePrefix: sch.TypePrefix,
+		typePrefix: sch.TypePrefix(),
 	}
 	indexListBytes, exists := s.kv.Get(pk.bytes())
 	if !exists {

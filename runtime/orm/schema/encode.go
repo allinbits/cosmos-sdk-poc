@@ -8,6 +8,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+func interfaceToValueEncoderForKind(kind protoreflect.Kind) (InterfaceEncoderFunc, error) {
+	encoder, exists := safeInterfaceToValue[kind]
+	if !exists {
+		return nil, fmt.Errorf("protobuf kind %s can not be encoded to bytes", kind)
+	}
+	return encoder, nil
+}
+
 var safeInterfaceToValue = map[protoreflect.Kind]func(i interface{}) (value protoreflect.Value, valid bool){
 	protoreflect.BoolKind: func(i interface{}) (value protoreflect.Value, valid bool) {
 		v, ok := i.(bool)
@@ -145,7 +153,7 @@ func safeFieldEncodeInterface(fd protoreflect.FieldDescriptor, i interface{}) ([
 
 // TODO maybe we should not support all of these... floats/doubles?
 // TODO we can preallocate a lot of those slices
-var protowireFieldEncoders = map[protoreflect.Kind]FieldEncoderFunc{
+var protowireFieldEncoders = map[protoreflect.Kind]ValueEncoderFunc{
 	protoreflect.BoolKind: func(v protoreflect.Value) []byte {
 		var b []byte
 		b = protowire.AppendVarint(b, protowire.EncodeBool(v.Bool()))
@@ -234,10 +242,10 @@ var protowireFieldEncoders = map[protoreflect.Kind]FieldEncoderFunc{
 	},
 }
 
-func encoderForKind(kind protoreflect.Kind) (FieldEncoderFunc, error) {
+func encoderForKind(kind protoreflect.Kind) (ValueEncoderFunc, error) {
 	encoder, exists := protowireFieldEncoders[kind]
 	if !exists {
-		return nil, fmt.Errorf("store: unsupported secondary index with kind %s", kind)
+		return nil, fmt.Errorf("protobuf kind %s can not be encoded to bytes", kind)
 	}
 	return encoder, nil
 }

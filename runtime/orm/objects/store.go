@@ -103,10 +103,10 @@ func saveKey(s *schema.Schema, object meta.StateObject) ([]byte, error) {
 
 func saveKeyRaw(s *schema.Schema, key []byte) ([]byte, error) {
 	if len(key) == 0 {
-		return nil, fmt.Errorf("orm: empty primary key for object %s", s.Name)
+		return nil, fmt.Errorf("orm: empty primary key for object %s", s.Name())
 	}
-	pk := make([]byte, 0, len(s.TypePrefix)+1+len(key))
-	pk = append(pk, s.TypePrefix...)
+	pk := make([]byte, 0, len(s.TypePrefix())+1+len(key))
+	pk = append(pk, s.TypePrefix()...)
 	pk = append(pk, '/')
 	pk = append(pk, key...)
 	return pk, nil
