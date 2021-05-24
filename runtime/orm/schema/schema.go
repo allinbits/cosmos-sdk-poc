@@ -62,10 +62,6 @@ func (s *Schema) Indexes() []*Indexer {
 	return s.secondaryKeys
 }
 
-func (s *Schema) Singleton() bool {
-	return s.singleton
-}
-
 type Options struct {
 	// Singleton marks if there can exist only one instance of this object
 	// it's invalid to use primary key alongside a Singleton
