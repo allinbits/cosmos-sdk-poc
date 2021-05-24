@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func NewSecondaryKey(o meta.StateObject, jsonFieldName string) (*SecondaryKey, error) {
+func NewIndexer(o meta.StateObject, jsonFieldName string) (*Indexer, error) {
 	fd := o.ProtoReflect().Descriptor().Fields().ByJSONName(jsonFieldName)
 	if fd == nil {
 		return nil, fmt.Errorf("%w: json field %s is not present in object %s", ErrBadOptions, jsonFieldName, meta.Name(o))
@@ -22,7 +22,7 @@ func NewSecondaryKey(o meta.StateObject, jsonFieldName string) (*SecondaryKey, e
 		return nil, fmt.Errorf("%w field %s of object %s: %s", ErrBadOptions, jsonFieldName, meta.Name(o), err)
 	}
 
-	return &SecondaryKey{
+	return &Indexer{
 		prefix:           []byte(jsonFieldName),
 		name:             jsonFieldName,
 		encodeValue:      valueEncoder,
@@ -31,7 +31,7 @@ func NewSecondaryKey(o meta.StateObject, jsonFieldName string) (*SecondaryKey, e
 	}, nil
 }
 
-type SecondaryKey struct {
+type Indexer struct {
 	prefix           []byte
 	name             string
 	encodeValue      ValueEncoderFunc
@@ -39,20 +39,20 @@ type SecondaryKey struct {
 	fd               protoreflect.FieldDescriptor
 }
 
-func (s *SecondaryKey) Prefix() []byte {
+func (s *Indexer) Prefix() []byte {
 	return s.prefix
 }
 
-func (s *SecondaryKey) Name() string {
+func (s *Indexer) Name() string {
 	return s.name
 }
 
-func (s *SecondaryKey) Encode(o meta.StateObject) []byte {
+func (s *Indexer) Encode(o meta.StateObject) []byte {
 	v := o.ProtoReflect().Get(s.fd)
 	return s.encodeValue(v)
 }
 
-func (s *SecondaryKey) EncodeInterface(v interface{}) ([]byte, error) {
+func (s *Indexer) EncodeInterface(v interface{}) ([]byte, error) {
 	if v == nil {
 		return nil, fmt.Errorf("%w: nil interface provided", ErrFieldTypeMismatch)
 	}

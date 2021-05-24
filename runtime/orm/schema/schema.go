@@ -16,8 +16,8 @@ type Schema struct {
 	typePrefix           []byte // TODO should we force copies of this?
 	primaryKey           protoreflect.FieldDescriptor
 	primaryKeyEncode     ValueEncoderFunc
-	secondaryKeys        []*SecondaryKey
-	secondaryKeysByField map[string]*SecondaryKey
+	secondaryKeys        []*Indexer
+	secondaryKeysByField map[string]*Indexer
 	singleton            bool
 	hasIndexes           bool
 }
@@ -44,7 +44,7 @@ func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
 	return s.primaryKeyEncode(pkValue)
 }
 
-func (s *Schema) Indexer(fieldName string) (*SecondaryKey, error) {
+func (s *Schema) Indexer(fieldName string) (*Indexer, error) {
 	sk, exists := s.secondaryKeysByField[fieldName]
 	if !exists {
 		return nil, fmt.Errorf("%w: %s in object %s", ErrSecondaryKey, fieldName, s.name)
@@ -52,7 +52,7 @@ func (s *Schema) Indexer(fieldName string) (*SecondaryKey, error) {
 	return sk, nil
 }
 
-func (s *Schema) Indexes() []*SecondaryKey {
+func (s *Schema) Indexes() []*Indexer {
 	return s.secondaryKeys
 }
 
@@ -107,10 +107,10 @@ func parseObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 		return schema, nil
 	}
 
-	schema.secondaryKeys = make([]*SecondaryKey, len(options.SecondaryKeys))
-	schema.secondaryKeysByField = make(map[string]*SecondaryKey, len(options.SecondaryKeys))
+	schema.secondaryKeys = make([]*Indexer, len(options.SecondaryKeys))
+	schema.secondaryKeysByField = make(map[string]*Indexer, len(options.SecondaryKeys))
 	for i, skName := range options.SecondaryKeys {
-		sk, err := NewSecondaryKey(o, skName)
+		sk, err := NewIndexer(o, skName)
 		if err != nil {
 			return nil, err
 		}
