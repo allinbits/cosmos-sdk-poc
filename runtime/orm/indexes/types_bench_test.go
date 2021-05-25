@@ -12,13 +12,13 @@ func Benchmark_typedPrefixedKey_bytes(b *testing.B) {
 }
 
 func Benchmark_IndexerKey(b *testing.B) {
-	x := &indexerKey{
-		objectPrefix: []byte("some-proto-object"),
-		indexName:    []byte("some-index-name"),
-		indexValue:   []byte("some-index-value"),
-		primaryKey:   []byte("some-primary-key"),
+	x := &indexObjectWithSecondaryKey{
+		objectPrefix:      []byte("some-proto-object"),
+		indexPrefix:       []byte("some-index-name"),
+		secondaryKeyValue: []byte("some-secondary-key-value"),
+		primaryKey:        []byte("some-primary-key"),
 	}
-	y := &indexerKey{}
+	y := &indexObjectWithSecondaryKey{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		bts := x.marshal()

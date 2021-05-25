@@ -8,6 +8,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+func interfaceToValueEncoderForKind(kind protoreflect.Kind) (InterfaceEncoderFunc, error) {
+	encoder, exists := safeInterfaceToValue[kind]
+	if !exists {
+		return nil, fmt.Errorf("protobuf kind %s can not be encoded to bytes", kind)
+	}
+	return encoder, nil
+}
+
 var safeInterfaceToValue = map[protoreflect.Kind]func(i interface{}) (value protoreflect.Value, valid bool){
 	protoreflect.BoolKind: func(i interface{}) (value protoreflect.Value, valid bool) {
 		v, ok := i.(bool)
@@ -123,29 +131,9 @@ var safeInterfaceToValue = map[protoreflect.Kind]func(i interface{}) (value prot
 	},
 }
 
-func safeFieldEncodeInterface(fd protoreflect.FieldDescriptor, i interface{}) ([]byte, error) {
-	if i == nil {
-		return nil, fmt.Errorf("%w: for field descriptor %s", ErrEmptyFieldValue, fd.FullName())
-	}
-	// get the interface to protoreflect.Value function
-	toValue, supported := safeInterfaceToValue[fd.Kind()]
-	if !supported {
-		panic(fmt.Errorf("%w: '%s' in object %s", ErrUnsupportedFieldKind, fd.Kind(), fd.Parent().FullName())) // this should be blocked at GetSchema level
-	}
-
-	// convert to value
-	value, valid := toValue(i)
-	if !valid {
-		return nil, fmt.Errorf("%w: protobuf field kind is %s which does not support values of golang type %T", ErrFieldTypeMismatch, fd.Kind(), i)
-	}
-
-	// encode to bytes
-	return protowireFieldEncoders[fd.Kind()](value), nil
-}
-
 // TODO maybe we should not support all of these... floats/doubles?
 // TODO we can preallocate a lot of those slices
-var protowireFieldEncoders = map[protoreflect.Kind]FieldEncoderFunc{
+var protowireFieldEncoders = map[protoreflect.Kind]ValueEncoderFunc{
 	protoreflect.BoolKind: func(v protoreflect.Value) []byte {
 		var b []byte
 		b = protowire.AppendVarint(b, protowire.EncodeBool(v.Bool()))
@@ -234,10 +222,10 @@ var protowireFieldEncoders = map[protoreflect.Kind]FieldEncoderFunc{
 	},
 }
 
-func encoderForKind(kind protoreflect.Kind) (FieldEncoderFunc, error) {
+func encoderForKind(kind protoreflect.Kind) (ValueEncoderFunc, error) {
 	encoder, exists := protowireFieldEncoders[kind]
 	if !exists {
-		return nil, fmt.Errorf("store: unsupported secondary index with kind %s", kind)
+		return nil, fmt.Errorf("protobuf kind %s can not be encoded to bytes", kind)
 	}
 	return encoder, nil
 }

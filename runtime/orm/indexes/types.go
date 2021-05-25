@@ -6,32 +6,32 @@ import (
 	"google.golang.org/protobuf/encoding/protowire"
 )
 
-type indexerKey struct {
-	objectPrefix []byte
-	indexName    []byte
-	indexValue   []byte
-	primaryKey   []byte
+type indexObjectWithSecondaryKey struct {
+	objectPrefix      []byte
+	indexPrefix       []byte
+	secondaryKeyValue []byte
+	primaryKey        []byte
 }
 
-// marshal marshals indexerKey such as it provides prefix protection
+// marshal marshals indexObjectWithSecondaryKey such as it provides prefix protection
 // it prefixes everything (except primary key) with its length
 // in the form of binary.LittleEndian.
-func (s indexerKey) marshal() []byte {
+func (s indexObjectWithSecondaryKey) marshal() []byte {
 	// get lengths
 	objectPrefixL := len(s.objectPrefix)
-	indexNameL := len(s.indexName)
-	indexValueL := len(s.indexValue)
+	indexNameL := len(s.indexPrefix)
+	indexValueL := len(s.secondaryKeyValue)
 	// create pre-allocated buffer
 	buf := make([]byte, 1, 1+8+objectPrefixL+8+indexNameL+8+indexValueL+len(s.primaryKey))
 	buf[0] = IndexersPrefix
-	buf = appendLengthPrefixed(buf, s.objectPrefix) // append object prefix with length
-	buf = appendLengthPrefixed(buf, s.indexName)    // append index name with length
-	buf = appendLengthPrefixed(buf, s.indexValue)   // append index value with length
+	buf = appendLengthPrefixed(buf, s.objectPrefix)      // append object prefix with length
+	buf = appendLengthPrefixed(buf, s.indexPrefix)       // append index name with length
+	buf = appendLengthPrefixed(buf, s.secondaryKeyValue) // append index value with length
 	buf = append(buf, s.primaryKey...)
 	return buf
 }
 
-func (s *indexerKey) unmarshal(buf []byte) error {
+func (s *indexObjectWithSecondaryKey) unmarshal(buf []byte) error {
 	// we exclude the first byte
 	buf = buf[1:]
 	// we get the object prefix
@@ -45,13 +45,13 @@ func (s *indexerKey) unmarshal(buf []byte) error {
 	if err != nil {
 		return err
 	}
-	s.indexName = indexName
+	s.indexPrefix = indexName
 	// we get the index value
 	indexValue, read3, err := consumeLengthPrefixed(buf[read1+read2:])
 	if err != nil {
 		return err
 	}
-	s.indexValue = indexValue
+	s.secondaryKeyValue = indexValue
 	s.primaryKey = buf[read1+read2+read3:]
 	return nil
 }

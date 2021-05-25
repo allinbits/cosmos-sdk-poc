@@ -15,11 +15,11 @@ type Registry struct {
 }
 
 func (s *Registry) Add(sch *Schema) error {
-	_, exists := s.schemas[sch.Name]
+	_, exists := s.schemas[sch.Name()]
 	if exists {
-		return fmt.Errorf("%w: %s", ErrAlreadyExists, sch.Name)
+		return fmt.Errorf("%w: %s", ErrAlreadyExists, sch.Name())
 	}
-	s.schemas[sch.Name] = sch
+	s.schemas[sch.Name()] = sch
 	return nil
 }
 

@@ -7,18 +7,37 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-type FieldEncoderFunc func(value protoreflect.Value) []byte
+// ValueEncoderFunc is a function that encodes a protoreflect.Value to bytes
+type ValueEncoderFunc func(value protoreflect.Value) []byte
 
+// InterfaceEncoderFunc converts an interface to protoreflect.Value,
+// returns false if the interface does not match the correct expected type.
+type InterfaceEncoderFunc func(i interface{}) (value protoreflect.Value, valid bool)
+
+// Schema represents how a meta.StateObject is saved and indexed into the store
+// and provides all the required functionalities to index the fields of the object
 type Schema struct {
-	oType                 protoreflect.MessageType
-	Name                  string
-	TypePrefix            []byte // TODO should we force copies of this?
-	primaryKey            protoreflect.FieldDescriptor
-	primaryKeyEncode      FieldEncoderFunc
-	SecondaryKeys         map[string]protoreflect.FieldDescriptor
-	secondaryKeysEncoders map[string]FieldEncoderFunc
+	messageType          protoreflect.MessageType
+	name                 string
+	typePrefix           []byte // TODO should we force copies of this?
+	primaryKey           protoreflect.FieldDescriptor
+	primaryKeyEncode     ValueEncoderFunc
+	secondaryKeys        []*Indexer
+	secondaryKeysByField map[string]*Indexer
+	singleton            bool
+	hasIndexes           bool
+}
 
-	singleton bool
+func (s *Schema) HasIndexes() bool {
+	return s.hasIndexes
+}
+
+func (s *Schema) TypePrefix() []byte {
+	return s.typePrefix
+}
+
+func (s *Schema) Name() string {
+	return s.name
 }
 
 // EncodePrimaryKey returns the encoded primary given a meta.StateObject
@@ -31,40 +50,16 @@ func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
 	return s.primaryKeyEncode(pkValue)
 }
 
-// EncodeObjectField returns the encoded secondary key given a meta.StateObject
-// and the json name of the field to encode.
-// NOTE: panics if the key provided is not part of the schema.
-func (s *Schema) EncodeObjectField(key string, object meta.StateObject) ([]byte, error) {
-	fd, exists := s.SecondaryKeys[key]
+func (s *Schema) Indexer(fieldName string) (*Indexer, error) {
+	sk, exists := s.secondaryKeysByField[fieldName]
 	if !exists {
-		panic(fmt.Errorf("%w: object %s is not indexed by secondary key %s", ErrSecondaryKey, meta.Name(object), key))
+		return nil, fmt.Errorf("%w: %s in object %s", ErrSecondaryKey, fieldName, s.name)
 	}
-	encode := s.secondaryKeysEncoders[key]
-	return encode(object.ProtoReflect().Get(fd)), nil
+	return sk, nil
 }
 
-func (s *Schema) MustEncodeObjectField(key string, object meta.StateObject) []byte {
-	k, err := s.EncodeObjectField(key, object)
-	if err != nil {
-		panic(err)
-	}
-	return k
-}
-
-func (s *Schema) EncodeFieldInterface(fieldName string, i interface{}) ([]byte, error) {
-	fd, exists := s.SecondaryKeys[fieldName]
-	if !exists {
-		return nil, fmt.Errorf("%w: field not found %s in object %s", ErrSecondaryKey, fieldName, s.Name)
-	}
-	encodedBytes, err := safeFieldEncodeInterface(fd, i)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s %s", ErrFieldEncode, fieldName, err)
-	}
-	return encodedBytes, nil
-}
-
-func (s *Schema) Singleton() bool {
-	return s.singleton
+func (s *Schema) Indexes() []*Indexer {
+	return s.secondaryKeys
 }
 
 type Options struct {
@@ -81,47 +76,53 @@ type Options struct {
 }
 
 func NewSchema(o meta.StateObject, options Options) (*Schema, error) {
-	return getObjectSchema(o, options)
+	return parseObjectSchema(o, options)
 }
 
-func getObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
+func parseObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
 	schema := &Schema{}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	switch options.Singleton {
 	case true:
 		schema.singleton = true
 		if options.PrimaryKey != "" {
-			return nil, fmt.Errorf("schema: singleton do not have primary keys")
+			return nil, fmt.Errorf("%w: can not register a singleton with a primary key in object %s", ErrBadOptions, meta.Name(o))
 		}
 	case false:
 		primaryKey := fds.ByJSONName(options.PrimaryKey)
 		if primaryKey == nil {
-			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrRegister, options.PrimaryKey, meta.Name(o))
+			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrBadOptions, options.PrimaryKey, meta.Name(o))
 		}
 		primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
 		if err != nil {
-			return nil, fmt.Errorf("store: %s has invalid primary key field: %w", meta.Name(o), err)
+			return nil, fmt.Errorf("%w: %s has invalid primary key field: %s", ErrBadOptions, meta.Name(o), err)
 		}
 		schema.primaryKey = primaryKey
 		schema.primaryKeyEncode = primaryKeyEncoder
 	}
-
-	schema.SecondaryKeys = make(map[string]protoreflect.FieldDescriptor, len(options.SecondaryKeys))
-	schema.secondaryKeysEncoders = make(map[string]FieldEncoderFunc, len(options.SecondaryKeys))
-	for _, sk := range options.SecondaryKeys {
-		secondaryKey := fds.ByJSONName(sk)
-		if secondaryKey == nil {
-			return nil, fmt.Errorf("%w: invalid secondary key field %s in object %s", ErrRegister, sk, meta.Name(o))
-		}
-		secondaryKeyEncoder, err := encoderForKind(secondaryKey.Kind())
-		if err != nil {
-			return nil, fmt.Errorf("store: %s has invalid secondary key field: %w", meta.Name(o), err)
-		}
-		schema.SecondaryKeys[sk] = secondaryKey
-		schema.secondaryKeysEncoders[sk] = secondaryKeyEncoder
+	// add prefix and name to schema
+	schema.typePrefix = []byte(meta.Name(o))
+	schema.name = meta.Name(o)
+	// if there are no secondary keys then just skip this part
+	if len(options.SecondaryKeys) == 0 {
+		schema.hasIndexes = false
+		return schema, nil
 	}
+	// singletons cannot be indexed
+	if options.Singleton && len(options.SecondaryKeys) != 0 {
+		return nil, fmt.Errorf("%w: singletons can not have secondary indexes in object %s", ErrBadOptions, meta.Name(o))
+	}
+	schema.secondaryKeys = make([]*Indexer, len(options.SecondaryKeys))
+	schema.secondaryKeysByField = make(map[string]*Indexer, len(options.SecondaryKeys))
+	for i, skName := range options.SecondaryKeys {
+		sk, err := NewIndexer(o, skName)
+		if err != nil {
+			return nil, err
+		}
 
-	schema.TypePrefix = []byte(meta.Name(o))
-	schema.Name = meta.Name(o)
+		schema.secondaryKeys[i] = sk
+		schema.secondaryKeysByField[skName] = sk
+	}
+	schema.hasIndexes = true
 	return schema, nil
 }
