@@ -2,6 +2,7 @@ package modulecodegen
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fdymylja/tmos/core/modulegen"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -48,7 +49,8 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 	objectsFile := gen.NewGeneratedFile(filename, file.GoImportPath)
 	objectsFile.P("package ", file.GoPackageName)
 
-	// gen msgs
+	var stateTransitions []*protogen.Message
+	var stateObjects []*protogen.Message
 	for _, msg := range file.Messages {
 		md := msg.Desc
 		// check if message option is present
@@ -58,6 +60,7 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 		if isStateObject {
 			genStateObject(objectsFile, msg)
 			processed = true
+			stateObjects = append(stateObjects, msg)
 		}
 		isStateTransition := proto.GetExtension(messageOptions, modulegen.E_StateTransition).(bool)
 		if isStateTransition {
@@ -65,10 +68,40 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 				gen.Error(fmt.Errorf("%s is defined as state object and state transition too which is not allowed", msg.Desc.Name()))
 			}
 			genStateTransition(objectsFile, msg)
+			stateTransitions = append(stateTransitions, msg)
 		}
 	}
-	// gen client
+	// gen clientset
+	genClientSet(objectsFile, stateObjects, stateTransitions)
+}
 
+func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transitions []*protogen.Message) {
+
+	// gen constructor
+	g.P("func NewClientSet(client ", moduleImportPackage.Ident("Client"), ") ClientSet {")
+	g.P("return clientSet{client: client}")
+	g.P("}")
+	// gen clientset interface
+	g.P("type ClientSet interface {")
+	// add state objects client interface
+	for _, obj := range objects {
+		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
+		case false:
+			g.P(obj.GoIdent, "s()", " ", obj.GoIdent, "Client")
+		case true:
+			g.P(obj.GoIdent, "()", " ", obj.GoIdent, "Client")
+		}
+	}
+	// gen state transitions interface
+	for _, t := range transitions {
+		g.P("Exec", t.GoIdent.GoName, "(msg *", t.GoIdent.GoName, ") error")
+	}
+	g.P("}")
+	g.P()
+	// gen client set concrete type
+	g.P("type clientSet struct {")
+	g.P("client ", moduleImportPackage.Ident("Client"))
+	g.P("}")
 }
 
 func meetsRequirements(file *protogen.File) bool {
@@ -90,21 +123,13 @@ func meetsRequirements(file *protogen.File) bool {
 
 func genStateTransition(g *protogen.GeneratedFile, message *protogen.Message) {
 	// add state transition interface
-
 	g.Import(metaImportPackage)
 	g.P("func (x *", message.GoIdent, ") StateTransition() {}")
+	g.P()
 	g.P("func (x *", message.GoIdent, ") New() ", metaImportPackage.Ident("StateTransition"), " {")
 	g.P("return new(", message.GoIdent, ")")
 	g.P("}")
-
-	// we get the field descriptors
-	/*
-		for i := 0; i < message.Desc.Fields().Len(); i++ {
-			fd := message.Desc.Fields().Get(i)
-			fdOptions := fd.Options().(*descriptorpb.FieldOptions)
-
-		}
-	*/
+	g.P()
 }
 
 func genStateObject(g *protogen.GeneratedFile, message *protogen.Message) {
@@ -135,7 +160,7 @@ func genClient(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
 	g.P("Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
 	g.P("}")
-
+	g.P()
 	// gen concrete client
 	g.Import(moduleImportPackage)
 	unexportedClient := toLowerCamelCase(message.GoIdent) + "Client"
@@ -164,12 +189,22 @@ func genClient(g *protogen.GeneratedFile, message *protogen.Message) {
 		g.P("return _spfGenO, nil")
 		g.P("}")
 	}
-	/*
-		g.P("Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
-		g.P("Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
-		g.P("Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
-		g.P("}")
-	*/
+	// gen create
+	g.P()
+	g.P("func (x *", unexportedClient, ") ", "Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error {")
+	g.P("return x.client.Create(", toLowerCamelCase(message.GoIdent), ")")
+	g.P("}")
+	g.P()
+	// gen delete
+	g.P("func (x *", unexportedClient, ") ", "Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error {")
+	g.P("return x.client.Delete(", toLowerCamelCase(message.GoIdent), ")")
+	g.P("}")
+	g.P()
+	// gen update
+	g.P("func (x *", unexportedClient, ") ", "Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error {")
+	g.P("return x.client.Update(", toLowerCamelCase(message.GoIdent), ")")
+	g.P("}")
+	g.P()
 }
 
 func parseSaveInfo(m *protogen.Message) (bool, string, string, error) {
