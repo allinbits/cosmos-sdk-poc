@@ -146,12 +146,12 @@ func genClient(g *protogen.GeneratedFile, message *protogen.Message) {
 	switch singleTon {
 	case true:
 		g.P("func (x *", unexportedClient, ") ", "Get() (*", message.GoIdent, ", error) {")
-		g.P("o := new(", message.GoIdent, ")")
-		g.P("err := x.client.Get(", metaImportPackage.Ident("SingletonID"), ", o)")
-		g.P("if err != nil {")
-		g.P("return nil, err")
+		g.P("_spfGenO := new(", message.GoIdent, ")")
+		g.P("_spfGenErr := x.client.Get(", metaImportPackage.Ident("SingletonID"), ", _spfGenO)")
+		g.P("if _spfGenErr != nil {")
+		g.P("return nil, _spfGenErr")
 		g.P("}")
-		g.P("return o, nil")
+		g.P("return _spfGenO, nil")
 		g.P("}")
 	case false:
 		g.P("func (x *", unexportedClient, ") ", "Get(", primaryKey, " ", primaryKeyGoType, ") (*", message.GoIdent, ", error) {")

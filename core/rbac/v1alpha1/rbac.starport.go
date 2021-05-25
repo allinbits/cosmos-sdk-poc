@@ -22,12 +22,12 @@ type paramsClient struct {
 }
 
 func (x *paramsClient) Get() (*Params, error) {
-	o := new(Params)
-	err := x.client.Get(meta.SingletonID, o)
-	if err != nil {
-		return nil, err
+	_spfGenO := new(Params)
+	_spfGenErr := x.client.Get(meta.SingletonID, _spfGenO)
+	if _spfGenErr != nil {
+		return nil, _spfGenErr
 	}
-	return o, nil
+	return _spfGenO, nil
 }
 func (x *Role) StateObject() {}
 
