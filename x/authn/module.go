@@ -19,7 +19,7 @@ func NewModule() *Module {
 }
 
 func (m *Module) Initialize(c module.Client) module.Descriptor {
-	m.txDecoder = newAuthenticator(c)
+	m.txDecoder = newTxDecoder()
 
 	return module.NewDescriptorBuilder().
 		Named("authn").

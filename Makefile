@@ -1,8 +1,10 @@
 .PHONY: proto testapp
 
+DIRECTORIES_TO_BUILD := "./x ./core ./testdata/testpb"
+
 proto:
 	docker build -t dev:proto-build -f contrib/devc/proto.dockerfile .
-	docker run -v "$(CURDIR):/genproto" -w /genproto dev:proto-build ./scripts/genproto.sh
+	docker run -v "$(CURDIR):/genproto" -w /genproto dev:proto-build ./scripts/genproto.sh "$(DIRECTORIES_TO_BUILD)"
 
 codegen:
 	docker build -t starportcodegen:dev -f contrib/devc/codegen.dockerfile .

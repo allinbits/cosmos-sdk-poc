@@ -7,6 +7,38 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+// Definition defines an object *Schema
+type Definition struct {
+	// Meta contains the information regarding the type API
+	Meta meta.Meta
+	// Singleton marks if there can exist only one instance of this object
+	// it's invalid to use primary key alongside a Singleton
+	Singleton bool
+	// PrimaryKey indicates the field to use as a primary key
+	// it must be the json name of the protobuf object
+	// NOTE: PrimaryKey must not be set if Singleton is true
+	PrimaryKey string
+	// SecondaryKeys indicates the protobuf json names of fields
+	// of the object to use as secondary keys, the ones that can be
+	// passed to the List() endpoints
+	// NOTE: SecondaryKeys must not be set if Singleton is true
+	SecondaryKeys []string
+}
+
+// Verify verifies a Definition
+func (d Definition) Verify() error {
+	if d.Singleton && d.PrimaryKey != "" {
+		return fmt.Errorf("a StateObject can not be singleton and have a primary key at the same time")
+	}
+	if d.Singleton && len(d.SecondaryKeys) != 0 {
+		return fmt.Errorf("a StateObject can not be singleton and have secondary keys at the same time")
+	}
+	if !d.Singleton && d.PrimaryKey == "" {
+		return fmt.Errorf("a StateObject must be a singleton or have a primary key")
+	}
+	return nil
+}
+
 // ValueEncoderFunc is a function that encodes a protoreflect.Value to bytes
 type ValueEncoderFunc func(value protoreflect.Value) []byte
 
@@ -62,24 +94,11 @@ func (s *Schema) Indexes() []*Indexer {
 	return s.secondaryKeys
 }
 
-type Options struct {
-	// Singleton marks if there can exist only one instance of this object
-	// it's invalid to use primary key alongside a Singleton
-	Singleton bool
-	// PrimaryKey indicates the field to use as a primary key
-	// it must be the json name of the protobuf object
-	PrimaryKey string
-	// SecondaryKeys indicates the protobuf json names of fields
-	// of the object to use as secondary keys, the ones that can be
-	// passed to Store.List
-	SecondaryKeys []string
-}
-
-func NewSchema(o meta.StateObject, options Options) (*Schema, error) {
+func NewSchema(o meta.StateObject, options Definition) (*Schema, error) {
 	return parseObjectSchema(o, options)
 }
 
-func parseObjectSchema(o meta.StateObject, options Options) (*Schema, error) {
+func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) {
 	schema := &Schema{}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	switch options.Singleton {

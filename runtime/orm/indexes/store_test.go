@@ -15,7 +15,7 @@ func TestStore(t *testing.T) {
 	reg := schema.NewRegistry()
 	require.NoError(t, reg.AddObject(
 		&crisis.InvariantHandler{},
-		schema.Options{
+		schema.Definition{
 			PrimaryKey:    "stateTransition",
 			SecondaryKeys: []string{"module", "route"},
 		},

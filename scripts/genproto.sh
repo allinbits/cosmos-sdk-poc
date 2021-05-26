@@ -2,23 +2,18 @@
 
 set -e
 
-proto_files=$(find ./core -regex ".*\.\(proto\)")
+build() {
+    echo finding protobuf files in "$1"
+    proto_files=$(find "$1" -name "*.proto")
+    for file in $proto_files; do
+      echo "building proto file $file"
+      protoc -I=. -I=./third_party/proto -I=./core/abci --plugin /usr/bin/protoc-gen-starport --starport_out=. --go_out=. "$file"
+    done
+}
 
-for file in $proto_files; do
-  echo "building proto file $file"
-  protoc -I=. -I=./third_party/proto -I=./core/abci --go_out=. --go-grpc_out=. "$file"
-done
-
-proto_files=$(find ./x -regex ".*\.\(proto\)")
-for file in $proto_files; do
-  echo "building proto file $file"
-  protoc -I=. -I=./third_party/proto -I=./core/abci --go_out=. --go-grpc_out=. "$file"
-done
-
-proto_files=$(find ./testdata/testpb -regex ".*\.\(proto\)")
-for file in $proto_files; do
-  echo "building proto file $file"
-  protoc -I=. -I=./third_party/proto -I=./core/abci --go_out=. --go-grpc_out=. "$file"
+for dir in "$@"
+do
+  build "$dir"
 done
 
 cp -r github.com/fdymylja/tmos/* ./

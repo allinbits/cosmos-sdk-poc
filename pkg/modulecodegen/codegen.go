@@ -23,7 +23,7 @@ func PluginRunner(plugin *protogen.Plugin) error {
 	}
 	// then we parse single groups
 	for _, group := range groups {
-		err := genFile(plugin, group)
+		err := genFiles(plugin, group)
 		if err != nil {
 			return err
 		}
@@ -31,14 +31,14 @@ func PluginRunner(plugin *protogen.Plugin) error {
 	return nil
 }
 
-func genFile(gen *protogen.Plugin, group []*protogen.File) error {
+func genFiles(gen *protogen.Plugin, group []*protogen.File) error {
 	for _, file := range group {
-		genObjects(file, gen)
+		genFile(file, gen)
 	}
 	return nil
 }
 
-func genObjects(file *protogen.File, gen *protogen.Plugin) {
+func genFile(file *protogen.File, gen *protogen.Plugin) {
 
 	if !meetsRequirements(file) {
 		return
@@ -68,6 +68,13 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 			}
 			genStateTransition(objectsFile, msg)
 			stateTransitions = append(stateTransitions, msg)
+		}
+	}
+	// gen schema
+	for _, obj := range stateObjects {
+		err := genSchema(objectsFile, obj)
+		if err != nil {
+			gen.Error(err)
 		}
 	}
 	// gen clientset

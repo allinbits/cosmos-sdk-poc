@@ -6,9 +6,9 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-// RegisterOptions aliases schema.Options for the sake of using a single API
+// RegisterOptions aliases schema.Definition for the sake of using a single API
 // for dealing with objects.
-type RegisterOptions = schema.Options
+type RegisterOptions = schema.Definition
 
 type ObjectsStore interface {
 	// Create creates the object given its schema.Schema

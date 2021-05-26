@@ -62,16 +62,16 @@ func (a accountExists) Validate(tx authentication.Tx) error {
 }
 
 func newTimeoutBlockExtension(c module.Client) timeoutBlockExtension {
-	return timeoutBlockExtension{abci: abciv1alpha1.NewClient(c)}
+	return timeoutBlockExtension{abci: abciv1alpha1.NewClientSet(c)}
 }
 
 type timeoutBlockExtension struct {
-	abci *abciv1alpha1.Client
+	abci abciv1alpha1.ClientSet
 }
 
 func (t timeoutBlockExtension) Validate(reqTx authentication.Tx) error {
 	tx := reqTx.Raw().(*v1alpha12.Tx)
-	currentBlock, err := t.abci.GetCurrentBlock()
+	currentBlock, err := t.abci.CurrentBlocks().Get()
 	if err != nil {
 		return err
 	}
@@ -214,13 +214,13 @@ func (i increaseSequence) Exec(req authentication.PostAuthenticationRequest) (au
 
 func newSigVerifier(c module.Client) sigVerifier {
 	return sigVerifier{
-		abci: abciv1alpha1.NewClient(c),
+		abci: abciv1alpha1.NewClientSet(c),
 		auth: v1alpha12.NewClient(c),
 	}
 }
 
 type sigVerifier struct {
-	abci *abciv1alpha1.Client
+	abci abciv1alpha1.ClientSet
 	auth *v1alpha12.Client
 }
 
@@ -228,8 +228,8 @@ func (a sigVerifier) Validate(aTx authentication.Tx) error {
 	wrapper := aTx.(*tx2.Wrapper)
 	raw := wrapper.TxRaw()
 	sigs := wrapper.Signers()
-	// get chainID
-	chainID, err := a.abci.GetChainID()
+	// get chainInfo
+	chainInfo, err := a.abci.InitChainInfos().Get()
 	if err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func (a sigVerifier) Validate(aTx authentication.Tx) error {
 		if acc.Sequence != signer.Sequence {
 			return fmt.Errorf("invalid sequence %d expected %d", signer.Sequence, acc.Sequence)
 		}
-		expectedBytes, err := DirectSignBytes(raw.BodyBytes, raw.AuthInfoBytes, chainID, acc.AccountNumber)
+		expectedBytes, err := DirectSignBytes(raw.BodyBytes, raw.AuthInfoBytes, chainInfo.ChainId, acc.AccountNumber)
 		if err != nil {
 			return err
 		}

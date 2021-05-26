@@ -9,33 +9,33 @@ import (
 
 func Test_parseObjectSchema(t *testing.T) {
 	type test struct {
-		options Options
+		options Definition
 		wantErr error
 	}
 
 	cases := map[string]test{
 		"success": {
-			options: Options{
+			options: Definition{
 				PrimaryKey:    "a",
 				SecondaryKeys: []string{"b", "c"},
 			},
 			wantErr: nil,
 		},
 		"singleton with primary key": {
-			options: Options{
+			options: Definition{
 				Singleton:  true,
 				PrimaryKey: "a",
 			},
 			wantErr: ErrBadOptions,
 		},
 		"primary key not found": {
-			options: Options{
+			options: Definition{
 				PrimaryKey: "not-found",
 			},
 			wantErr: ErrBadOptions,
 		},
 		"singleton with secondary key": {
-			options: Options{
+			options: Definition{
 				Singleton:     true,
 				PrimaryKey:    "",
 				SecondaryKeys: []string{"a"},
