@@ -5,19 +5,24 @@ import "google/protobuf/any.proto";
 
 option go_package = "github.com/fdymylja/tmos/x/authn/v1alpha1";
 
+import "core/modulegen/modulegen.proto";
+
 // - STATE TRANSITIONS -
 // MsgCreateAccount is used to create a new account
 message MsgCreateAccount {
+  option (tmos.core.modulegen.state_transition) = true;
   Account account = 2;
 }
 
 // MsgUpdateAccount is used to update an existing account
 message MsgUpdateAccount {
+  option (tmos.core.modulegen.state_transition) = true;
   Account account = 2;
 }
 
 // MsgDeleteAccount is used to remove an account
 message MsgDeleteAccount {
+  option (tmos.core.modulegen.state_transition) = true;
   Account account = 2;
 }
 
@@ -25,6 +30,11 @@ message MsgDeleteAccount {
 
 // Account defines an account
 message Account {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.primary_key) = "address";
+  option (tmos.core.modulegen.secondary_key) = "accountNumber";
+  option (tmos.core.modulegen.secondary_key) = "sequence";
+
   string              address = 1;
   google.protobuf.Any pub_key = 2;
   uint64 account_number = 3;
@@ -33,12 +43,17 @@ message Account {
 
 // CurrentAccountNumber is the state object containing the current account number
 message CurrentAccountNumber {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
   // number is the current account number
   uint64 number = 2;
 }
 
 // Params defines the parameters for the auth module.
 message Params {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   uint64 max_memo_characters     = 1;
   uint64 tx_sig_limit            = 2;
   uint64 tx_size_cost_per_byte   = 3;

@@ -4,21 +4,29 @@ syntax="proto3";
 package tmos.x.bank.v1alpha1;
 
 import "core/coin/v1alpha1/coin.proto";
+import "core/modulegen/modulegen.proto";
 
 option go_package = "github.com/fdymylja/tmos/x/bank/v1alpha1";
 
 message MsgSendCoins {
+  option (tmos.core.modulegen.state_transition) = true;
+
   string from_address = 1;
   string to_address = 2;
   repeated core.coin.v1alpha1.Coin amount = 3;
 }
 
 message MsgSetBalance {
+  option (tmos.core.modulegen.state_transition) = true;
+
   string address = 1;
   repeated core.coin.v1alpha1.Coin amount = 2;
 }
 
 message Balance {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.primary_key) = "address";
+
   // address identifies the user who owns balance TODO: i'd rename this user...
   string address = 1;
   // balance represents the balance of the user

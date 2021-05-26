@@ -31,13 +31,13 @@ func (c CreateRoleController) Exec(req statetransition.ExecutionRequest) (statet
 func NewCreateRoleAdmissionController(client module.Client) CreateRoleAdmissionController {
 	return CreateRoleAdmissionController{
 		client:   client,
-		rtClient: runtimev1alpha1.NewClient(client),
+		rtClient: runtimev1alpha1.NewClientSet(client),
 	}
 }
 
 type CreateRoleAdmissionController struct {
 	client   module.Client
-	rtClient *runtimev1alpha1.Client
+	rtClient runtimev1alpha1.ClientSet
 }
 
 func (c CreateRoleAdmissionController) Validate(req statetransition.AdmissionRequest) error {
@@ -77,7 +77,7 @@ func (c CreateRoleAdmissionController) roleNotExist(id string) error {
 }
 
 func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) error {
-	stateObjects, err := c.rtClient.GetStateObjectsList()
+	stateObjects, err := c.rtClient.StateObjectsLists().Get()
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) e
 }
 
 func (c CreateRoleAdmissionController) verifyStateTransitions(role *v1alpha1.Role) error {
-	stateTransitions, err := c.rtClient.GetStateTransitionsList()
+	stateTransitions, err := c.rtClient.StateTransitionsLists().Get()
 	if err != nil {
 		return err
 	}

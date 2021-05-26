@@ -6,10 +6,6 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-// RegisterOptions aliases schema.Definition for the sake of using a single API
-// for dealing with objects.
-type RegisterOptions = schema.Definition
-
 type ObjectsStore interface {
 	// Create creates the object given its schema.Schema
 	Create(schema *schema.Schema, o meta.StateObject) error
@@ -47,7 +43,7 @@ type Store struct {
 	schemas *schema.Registry
 }
 
-func (s Store) RegisterObject(object meta.StateObject, options RegisterOptions) error {
+func (s Store) RegisterObject(object meta.StateObject, options schema.Definition) error {
 	err := s.schemas.AddObject(object, options)
 	if err != nil {
 		return err

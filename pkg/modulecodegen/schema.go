@@ -43,7 +43,7 @@ func genSchema(g *protogen.GeneratedFile, object *protogen.Message) error {
 		g.P("Singleton: true,")
 	}
 	if len(secondaryKeys) != 0 {
-		g.P("SecondaryKey: []string{", strings.Join(secondaryKeys, ","), "}")
+		g.P("SecondaryKeys: []string{\"", strings.Join(secondaryKeys, "\",\""), "\"},")
 	}
 	g.P("}")
 	g.P()
