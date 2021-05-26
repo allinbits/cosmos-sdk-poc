@@ -1,0 +1,15 @@
+syntax="proto3";
+
+package tmos.core.modulegen;
+
+option go_package="github.com/fdymylja/tmos/core/modulegen";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MessageOptions {
+  bool state_transition = 111000;
+  bool state_object = 111001;
+  string primary_key = 111002;
+  repeated string secondary_key = 111003;
+  bool singleton = 111004;
+}

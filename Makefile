@@ -4,6 +4,10 @@ proto:
 	docker build -t dev:proto-build -f contrib/devc/proto.dockerfile .
 	docker run -v "$(CURDIR):/genproto" -w /genproto dev:proto-build ./scripts/genproto.sh
 
+codegen:
+	docker build -t starportcodegen:dev -f contrib/devc/codegen.dockerfile .
+	docker run -v "$(CURDIR):/gencode" -w /gencode starportcodegen:dev ./scripts/gencode.sh
+
 test:
 	go test ./...
 

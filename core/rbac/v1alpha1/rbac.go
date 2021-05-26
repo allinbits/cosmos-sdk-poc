@@ -13,8 +13,6 @@ import (
 // access to Exec on external handlers.
 const ExternalAccountRoleID = "external_account"
 
-func (x *Role) StateObject() {}
-
 func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	switch verb {
 	case runtimev1alpha1.Verb_Get:
@@ -72,8 +70,3 @@ func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.Type) error {
 	}
 	return nil
 }
-
-func (x *RoleBinding) StateObject() {}
-
-func (x *MsgBindRole) StateTransition()   {}
-func (x *MsgCreateRole) StateTransition() {}
