@@ -12,10 +12,9 @@ import (
 )
 
 const metaImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/meta")
-const moduleImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/module")
+const clientImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/client")
 
-const ClientFileSuffix = ".clientset.starport.go"
-const ObjectsFileSuffix = ".starport.go"
+const GenCodeFileSuffix = ".starport.go"
 
 func PluginRunner(plugin *protogen.Plugin) error {
 	groups := make(map[protogen.GoImportPath][]*protogen.File)
@@ -45,7 +44,7 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 		return
 	}
 
-	filename := fmt.Sprintf("%s%s", file.GeneratedFilenamePrefix, ObjectsFileSuffix)
+	filename := fmt.Sprintf("%s%s", file.GeneratedFilenamePrefix, GenCodeFileSuffix)
 	objectsFile := gen.NewGeneratedFile(filename, file.GoImportPath)
 	objectsFile.P("package ", file.GoPackageName)
 
@@ -76,15 +75,11 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 }
 
 func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transitions []*protogen.Message) {
-
-	// gen constructor
-	g.P("func NewClientSet(client ", moduleImportPackage.Ident("Client"), ") ClientSet {")
-	g.P("return clientSet{client: client}")
-	g.P("}")
 	// gen clientset interface
 	g.P("type ClientSet interface {")
 	// add state objects client interface
 	for _, obj := range objects {
+		// if it ends with s we don't add the 's' to indicate the plural of types
 		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
 		case false:
 			g.P(obj.GoIdent, "s()", " ", obj.GoIdent, "Client")
@@ -98,10 +93,60 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	}
 	g.P("}")
 	g.P()
+
 	// gen client set concrete type
-	g.P("type clientSet struct {")
-	g.P("client ", moduleImportPackage.Ident("Client"))
+
+	// gen constructor
+	g.P("func NewClientSet(client ", clientImportPackage.Ident("RuntimeClient"), ") ClientSet {")
+	g.P("return clientSet{")
+	g.P("client: client", ",") // the normal module client
+	// add other clients
+	for _, obj := range objects {
+		unexportedClient := toLowerCamelCase(obj.GoIdent) + "Client"
+		g.P(unexportedClient, ": ", "&", unexportedClient, "{client: client}", ",")
+	}
 	g.P("}")
+
+	g.P("}")
+	g.P()
+	// gen client type
+	g.P("type clientSet struct {")
+	g.P("client ", clientImportPackage.Ident("RuntimeClient"))
+	// include state objects clients
+	for _, obj := range objects {
+		unexportedClient := toLowerCamelCase(obj.GoIdent) + "Client"
+		exportedClient := obj.GoIdent.GoName + "Client"
+		g.P("// ", unexportedClient, " is the client used to interact with ", obj.GoIdent)
+		g.P(unexportedClient, " ", exportedClient)
+	}
+	g.P("}")
+	g.P()
+	// gen client concrete methods
+	for _, obj := range objects {
+		unexportedClient := toLowerCamelCase(obj.GoIdent) + "Client"
+		// if it ends with s we don't add the 's' to indicate the plural of types
+		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
+		case false:
+			g.P("func (x clientSet) ", obj.GoIdent, "s()", " ", obj.GoIdent, "Client", " {")
+			g.P("return x.", unexportedClient)
+			g.P("}")
+			g.P()
+		case true:
+			g.P("func (x clientSet) ", obj.GoIdent, "()", " ", obj.GoIdent, "Client", " {")
+			g.P("return x.", unexportedClient)
+			g.P("}")
+			g.P()
+		}
+	}
+
+	// gen state transitions interface
+	for _, t := range transitions {
+		g.P("func (x clientSet) Exec", t.GoIdent.GoName, "(msg *", t.GoIdent.GoName, ") error {")
+		g.P("return x.client.Deliver(msg)")
+		g.P("}")
+		g.P()
+	}
+	g.P()
 }
 
 func meetsRequirements(file *protogen.File) bool {
@@ -141,48 +186,50 @@ func genStateObject(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("}")
 	g.P()
 
-	genClient(g, message)
+	genStateObjectClient(g, message)
 }
 
-func genClient(g *protogen.GeneratedFile, message *protogen.Message) {
+func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) {
 	singleTon, primaryKey, primaryKeyGoType, err := parseSaveInfo(message)
 	if err != nil {
 		panic(err) // TODO not with panic
 	}
-	g.P("type ", message.GoIdent, "Client interface {")
+	exportedClient := message.GoIdent.GoName + "Client"
+	g.P("type ", exportedClient, " interface {")
 	switch singleTon {
 	case true:
-		g.P("Get() (*", message.GoIdent, ", error)")
+		g.P("Get(opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error)")
 	case false:
-		g.P("Get(", primaryKey, " ", primaryKeyGoType, ") (*", message.GoIdent, ", error)")
+		g.P("Get(", primaryKey, " ", primaryKeyGoType, ", opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error)")
 	}
-	g.P("Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
-	g.P("Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
-	g.P("Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error")
+	g.P("Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("CreateOption"), ") error")
+	g.P("Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("DeleteOption"), ") error")
+	g.P("Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("UpdateOption"), ") error")
 	g.P("}")
 	g.P()
+
+	unexportedClient := toLowerCamelCase(message.GoIdent) + "Client" // is the concrete client name
 	// gen concrete client
-	g.Import(moduleImportPackage)
-	unexportedClient := toLowerCamelCase(message.GoIdent) + "Client"
+	g.Import(clientImportPackage)
 	g.P("type ", unexportedClient, " struct {")
-	g.P("client ", moduleImportPackage.Ident("Client"))
+	g.P("client ", clientImportPackage.Ident("RuntimeClient"))
 	g.P("}")
 	g.P()
 	switch singleTon {
 	case true:
-		g.P("func (x *", unexportedClient, ") ", "Get() (*", message.GoIdent, ", error) {")
+		g.P("func (x *", unexportedClient, ") ", "Get(opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error) {")
 		g.P("_spfGenO := new(", message.GoIdent, ")")
-		g.P("_spfGenErr := x.client.Get(", metaImportPackage.Ident("SingletonID"), ", _spfGenO)")
+		g.P("_spfGenErr := x.client.Get(", metaImportPackage.Ident("SingletonID"), ", _spfGenO, opts...)")
 		g.P("if _spfGenErr != nil {")
 		g.P("return nil, _spfGenErr")
 		g.P("}")
 		g.P("return _spfGenO, nil")
 		g.P("}")
 	case false:
-		g.P("func (x *", unexportedClient, ") ", "Get(", primaryKey, " ", primaryKeyGoType, ") (*", message.GoIdent, ", error) {")
+		g.P("func (x *", unexportedClient, ") ", "Get(", primaryKey, " ", primaryKeyGoType, ", opts... ", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error) {")
 		g.P("_spfGenO := new(", message.GoIdent, ")")
 		g.P("_spfGenID := ", metaImportPackage.Ident(metaIDConstructor[primaryKeyGoType]), "(", primaryKey, ")")
-		g.P("_spfGenErr := x.client.Get(_spfGenID, _spfGenO)")
+		g.P("_spfGenErr := x.client.Get(_spfGenID, _spfGenO, opts...)")
 		g.P("if _spfGenErr != nil {")
 		g.P("return nil, _spfGenErr")
 		g.P("}")
@@ -191,18 +238,18 @@ func genClient(g *protogen.GeneratedFile, message *protogen.Message) {
 	}
 	// gen create
 	g.P()
-	g.P("func (x *", unexportedClient, ") ", "Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error {")
-	g.P("return x.client.Create(", toLowerCamelCase(message.GoIdent), ")")
+	g.P("func (x *", unexportedClient, ") ", "Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("CreateOption"), ") error {")
+	g.P("return x.client.Create(", toLowerCamelCase(message.GoIdent), ", opts...)")
 	g.P("}")
 	g.P()
 	// gen delete
-	g.P("func (x *", unexportedClient, ") ", "Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error {")
-	g.P("return x.client.Delete(", toLowerCamelCase(message.GoIdent), ")")
+	g.P("func (x *", unexportedClient, ") ", "Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("DeleteOption"), ") error {")
+	g.P("return x.client.Delete(", toLowerCamelCase(message.GoIdent), ", opts...)")
 	g.P("}")
 	g.P()
 	// gen update
-	g.P("func (x *", unexportedClient, ") ", "Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ") error {")
-	g.P("return x.client.Update(", toLowerCamelCase(message.GoIdent), ")")
+	g.P("func (x *", unexportedClient, ") ", "Update(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ... ", clientImportPackage.Ident("UpdateOption"), ") error {")
+	g.P("return x.client.Update(", toLowerCamelCase(message.GoIdent), ", opts...)")
 	g.P("}")
 	g.P()
 }

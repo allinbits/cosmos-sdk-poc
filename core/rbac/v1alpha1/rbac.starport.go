@@ -1,8 +1,8 @@
 package v1alpha1
 
 import (
+	client "github.com/fdymylja/tmos/runtime/client"
 	meta "github.com/fdymylja/tmos/runtime/meta"
-	module "github.com/fdymylja/tmos/runtime/module"
 )
 
 func (x *Params) StateObject() {}
@@ -12,35 +12,35 @@ func (x *Params) New() meta.StateObject {
 }
 
 type ParamsClient interface {
-	Get() (*Params, error)
-	Create(params *Params) error
-	Delete(params *Params) error
-	Update(params *Params) error
+	Get(opts ...client.GetOption) (*Params, error)
+	Create(params *Params, opts ...client.CreateOption) error
+	Delete(params *Params, opts ...client.DeleteOption) error
+	Update(params *Params, opts ...client.UpdateOption) error
 }
 
 type paramsClient struct {
-	client module.Client
+	client client.RuntimeClient
 }
 
-func (x *paramsClient) Get() (*Params, error) {
+func (x *paramsClient) Get(opts ...client.GetOption) (*Params, error) {
 	_spfGenO := new(Params)
-	_spfGenErr := x.client.Get(meta.SingletonID, _spfGenO)
+	_spfGenErr := x.client.Get(meta.SingletonID, _spfGenO, opts...)
 	if _spfGenErr != nil {
 		return nil, _spfGenErr
 	}
 	return _spfGenO, nil
 }
 
-func (x *paramsClient) Create(params *Params) error {
-	return x.client.Create(params)
+func (x *paramsClient) Create(params *Params, opts ...client.CreateOption) error {
+	return x.client.Create(params, opts...)
 }
 
-func (x *paramsClient) Delete(params *Params) error {
-	return x.client.Delete(params)
+func (x *paramsClient) Delete(params *Params, opts ...client.DeleteOption) error {
+	return x.client.Delete(params, opts...)
 }
 
-func (x *paramsClient) Update(params *Params) error {
-	return x.client.Update(params)
+func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error {
+	return x.client.Update(params, opts...)
 }
 
 func (x *Role) StateObject() {}
@@ -50,36 +50,36 @@ func (x *Role) New() meta.StateObject {
 }
 
 type RoleClient interface {
-	Get(id string) (*Role, error)
-	Create(role *Role) error
-	Delete(role *Role) error
-	Update(role *Role) error
+	Get(id string, opts ...client.GetOption) (*Role, error)
+	Create(role *Role, opts ...client.CreateOption) error
+	Delete(role *Role, opts ...client.DeleteOption) error
+	Update(role *Role, opts ...client.UpdateOption) error
 }
 
 type roleClient struct {
-	client module.Client
+	client client.RuntimeClient
 }
 
-func (x *roleClient) Get(id string) (*Role, error) {
+func (x *roleClient) Get(id string, opts ...client.GetOption) (*Role, error) {
 	_spfGenO := new(Role)
 	_spfGenID := meta.NewStringID(id)
-	_spfGenErr := x.client.Get(_spfGenID, _spfGenO)
+	_spfGenErr := x.client.Get(_spfGenID, _spfGenO, opts...)
 	if _spfGenErr != nil {
 		return nil, _spfGenErr
 	}
 	return _spfGenO, nil
 }
 
-func (x *roleClient) Create(role *Role) error {
-	return x.client.Create(role)
+func (x *roleClient) Create(role *Role, opts ...client.CreateOption) error {
+	return x.client.Create(role, opts...)
 }
 
-func (x *roleClient) Delete(role *Role) error {
-	return x.client.Delete(role)
+func (x *roleClient) Delete(role *Role, opts ...client.DeleteOption) error {
+	return x.client.Delete(role, opts...)
 }
 
-func (x *roleClient) Update(role *Role) error {
-	return x.client.Update(role)
+func (x *roleClient) Update(role *Role, opts ...client.UpdateOption) error {
+	return x.client.Update(role, opts...)
 }
 
 func (x *RoleBinding) StateObject() {}
@@ -89,36 +89,36 @@ func (x *RoleBinding) New() meta.StateObject {
 }
 
 type RoleBindingClient interface {
-	Get(subject string) (*RoleBinding, error)
-	Create(roleBinding *RoleBinding) error
-	Delete(roleBinding *RoleBinding) error
-	Update(roleBinding *RoleBinding) error
+	Get(subject string, opts ...client.GetOption) (*RoleBinding, error)
+	Create(roleBinding *RoleBinding, opts ...client.CreateOption) error
+	Delete(roleBinding *RoleBinding, opts ...client.DeleteOption) error
+	Update(roleBinding *RoleBinding, opts ...client.UpdateOption) error
 }
 
 type roleBindingClient struct {
-	client module.Client
+	client client.RuntimeClient
 }
 
-func (x *roleBindingClient) Get(subject string) (*RoleBinding, error) {
+func (x *roleBindingClient) Get(subject string, opts ...client.GetOption) (*RoleBinding, error) {
 	_spfGenO := new(RoleBinding)
 	_spfGenID := meta.NewStringID(subject)
-	_spfGenErr := x.client.Get(_spfGenID, _spfGenO)
+	_spfGenErr := x.client.Get(_spfGenID, _spfGenO, opts...)
 	if _spfGenErr != nil {
 		return nil, _spfGenErr
 	}
 	return _spfGenO, nil
 }
 
-func (x *roleBindingClient) Create(roleBinding *RoleBinding) error {
-	return x.client.Create(roleBinding)
+func (x *roleBindingClient) Create(roleBinding *RoleBinding, opts ...client.CreateOption) error {
+	return x.client.Create(roleBinding, opts...)
 }
 
-func (x *roleBindingClient) Delete(roleBinding *RoleBinding) error {
-	return x.client.Delete(roleBinding)
+func (x *roleBindingClient) Delete(roleBinding *RoleBinding, opts ...client.DeleteOption) error {
+	return x.client.Delete(roleBinding, opts...)
 }
 
-func (x *roleBindingClient) Update(roleBinding *RoleBinding) error {
-	return x.client.Update(roleBinding)
+func (x *roleBindingClient) Update(roleBinding *RoleBinding, opts ...client.UpdateOption) error {
+	return x.client.Update(roleBinding, opts...)
 }
 
 func (x *MsgCreateRole) StateTransition() {}
@@ -133,10 +133,6 @@ func (x *MsgBindRole) New() meta.StateTransition {
 	return new(MsgBindRole)
 }
 
-func NewClientSet(client module.Client) ClientSet {
-	return clientSet{client: client}
-}
-
 type ClientSet interface {
 	Params() ParamsClient
 	Roles() RoleClient
@@ -145,6 +141,41 @@ type ClientSet interface {
 	ExecMsgBindRole(msg *MsgBindRole) error
 }
 
+func NewClientSet(client client.RuntimeClient) ClientSet {
+	return clientSet{
+		client:            client,
+		paramsClient:      &paramsClient{client: client},
+		roleClient:        &roleClient{client: client},
+		roleBindingClient: &roleBindingClient{client: client},
+	}
+}
+
 type clientSet struct {
-	client module.Client
+	client client.RuntimeClient
+	// paramsClient is the client used to interact with Params
+	paramsClient ParamsClient
+	// roleClient is the client used to interact with Role
+	roleClient RoleClient
+	// roleBindingClient is the client used to interact with RoleBinding
+	roleBindingClient RoleBindingClient
+}
+
+func (x clientSet) Params() ParamsClient {
+	return x.paramsClient
+}
+
+func (x clientSet) Roles() RoleClient {
+	return x.roleClient
+}
+
+func (x clientSet) RoleBindings() RoleBindingClient {
+	return x.roleBindingClient
+}
+
+func (x clientSet) ExecMsgCreateRole(msg *MsgCreateRole) error {
+	return x.client.Deliver(msg)
+}
+
+func (x clientSet) ExecMsgBindRole(msg *MsgBindRole) error {
+	return x.client.Deliver(msg)
 }
