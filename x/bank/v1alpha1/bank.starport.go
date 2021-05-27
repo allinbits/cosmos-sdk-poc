@@ -72,7 +72,7 @@ type ClientSet interface {
 }
 
 func NewClientSet(client client.RuntimeClient) ClientSet {
-	return clientSet{
+	return &clientSet{
 		client:        client,
 		balanceClient: &balanceClient{client: client},
 	}
@@ -84,14 +84,14 @@ type clientSet struct {
 	balanceClient BalanceClient
 }
 
-func (x clientSet) Balances() BalanceClient {
+func (x *clientSet) Balances() BalanceClient {
 	return x.balanceClient
 }
 
-func (x clientSet) ExecMsgSendCoins(msg *MsgSendCoins) error {
+func (x *clientSet) ExecMsgSendCoins(msg *MsgSendCoins) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgSetBalance(msg *MsgSetBalance) error {
+func (x *clientSet) ExecMsgSetBalance(msg *MsgSetBalance) error {
 	return x.client.Deliver(msg)
 }

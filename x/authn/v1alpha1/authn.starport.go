@@ -174,7 +174,7 @@ type ClientSet interface {
 }
 
 func NewClientSet(client client.RuntimeClient) ClientSet {
-	return clientSet{
+	return &clientSet{
 		client:                     client,
 		accountClient:              &accountClient{client: client},
 		currentAccountNumberClient: &currentAccountNumberClient{client: client},
@@ -192,26 +192,26 @@ type clientSet struct {
 	paramsClient ParamsClient
 }
 
-func (x clientSet) Accounts() AccountClient {
+func (x *clientSet) Accounts() AccountClient {
 	return x.accountClient
 }
 
-func (x clientSet) CurrentAccountNumbers() CurrentAccountNumberClient {
+func (x *clientSet) CurrentAccountNumbers() CurrentAccountNumberClient {
 	return x.currentAccountNumberClient
 }
 
-func (x clientSet) Params() ParamsClient {
+func (x *clientSet) Params() ParamsClient {
 	return x.paramsClient
 }
 
-func (x clientSet) ExecMsgCreateAccount(msg *MsgCreateAccount) error {
+func (x *clientSet) ExecMsgCreateAccount(msg *MsgCreateAccount) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgUpdateAccount(msg *MsgUpdateAccount) error {
+func (x *clientSet) ExecMsgUpdateAccount(msg *MsgUpdateAccount) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgDeleteAccount(msg *MsgDeleteAccount) error {
+func (x *clientSet) ExecMsgDeleteAccount(msg *MsgDeleteAccount) error {
 	return x.client.Deliver(msg)
 }

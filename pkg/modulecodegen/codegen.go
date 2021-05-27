@@ -105,7 +105,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 
 	// gen constructor
 	g.P("func NewClientSet(client ", clientImportPackage.Ident("RuntimeClient"), ") ClientSet {")
-	g.P("return clientSet{")
+	g.P("return &clientSet{")
 	g.P("client: client", ",") // the normal module client
 	// add other clients
 	for _, obj := range objects {
@@ -134,12 +134,12 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 		// if it ends with s we don't add the 's' to indicate the plural of types
 		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
 		case false:
-			g.P("func (x clientSet) ", obj.GoIdent, "s()", " ", obj.GoIdent, "Client", " {")
+			g.P("func (x *clientSet) ", obj.GoIdent, "s()", " ", obj.GoIdent, "Client", " {")
 			g.P("return x.", unexportedClient)
 			g.P("}")
 			g.P()
 		case true:
-			g.P("func (x clientSet) ", obj.GoIdent, "()", " ", obj.GoIdent, "Client", " {")
+			g.P("func (x *clientSet) ", obj.GoIdent, "()", " ", obj.GoIdent, "Client", " {")
 			g.P("return x.", unexportedClient)
 			g.P("}")
 			g.P()
@@ -148,7 +148,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 
 	// gen state transitions interface
 	for _, t := range transitions {
-		g.P("func (x clientSet) Exec", t.GoIdent.GoName, "(msg *", t.GoIdent.GoName, ") error {")
+		g.P("func (x *clientSet) Exec", t.GoIdent.GoName, "(msg *", t.GoIdent.GoName, ") error {")
 		g.P("return x.client.Deliver(msg)")
 		g.P("}")
 		g.P()

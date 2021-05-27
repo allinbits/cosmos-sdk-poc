@@ -428,7 +428,7 @@ type ClientSet interface {
 }
 
 func NewClientSet(client client.RuntimeClient) ClientSet {
-	return clientSet{
+	return &clientSet{
 		client:                 client,
 		currentBlockClient:     &currentBlockClient{client: client},
 		stageClient:            &stageClient{client: client},
@@ -461,58 +461,58 @@ type clientSet struct {
 	endBlockStateClient EndBlockStateClient
 }
 
-func (x clientSet) CurrentBlocks() CurrentBlockClient {
+func (x *clientSet) CurrentBlocks() CurrentBlockClient {
 	return x.currentBlockClient
 }
 
-func (x clientSet) Stages() StageClient {
+func (x *clientSet) Stages() StageClient {
 	return x.stageClient
 }
 
-func (x clientSet) InitChainInfos() InitChainInfoClient {
+func (x *clientSet) InitChainInfos() InitChainInfoClient {
 	return x.initChainInfoClient
 }
 
-func (x clientSet) BeginBlockStates() BeginBlockStateClient {
+func (x *clientSet) BeginBlockStates() BeginBlockStateClient {
 	return x.beginBlockStateClient
 }
 
-func (x clientSet) CheckTxStates() CheckTxStateClient {
+func (x *clientSet) CheckTxStates() CheckTxStateClient {
 	return x.checkTxStateClient
 }
 
-func (x clientSet) DeliverTxStates() DeliverTxStateClient {
+func (x *clientSet) DeliverTxStates() DeliverTxStateClient {
 	return x.deliverTxStateClient
 }
 
-func (x clientSet) ValidatorUpdates() ValidatorUpdatesClient {
+func (x *clientSet) ValidatorUpdates() ValidatorUpdatesClient {
 	return x.validatorUpdatesClient
 }
 
-func (x clientSet) EndBlockStates() EndBlockStateClient {
+func (x *clientSet) EndBlockStates() EndBlockStateClient {
 	return x.endBlockStateClient
 }
 
-func (x clientSet) ExecMsgSetBeginBlockState(msg *MsgSetBeginBlockState) error {
+func (x *clientSet) ExecMsgSetBeginBlockState(msg *MsgSetBeginBlockState) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgSetCheckTxState(msg *MsgSetCheckTxState) error {
+func (x *clientSet) ExecMsgSetCheckTxState(msg *MsgSetCheckTxState) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgSetDeliverTxState(msg *MsgSetDeliverTxState) error {
+func (x *clientSet) ExecMsgSetDeliverTxState(msg *MsgSetDeliverTxState) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgSetEndBlockState(msg *MsgSetEndBlockState) error {
+func (x *clientSet) ExecMsgSetEndBlockState(msg *MsgSetEndBlockState) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgSetInitChain(msg *MsgSetInitChain) error {
+func (x *clientSet) ExecMsgSetInitChain(msg *MsgSetInitChain) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgSetValidatorUpdates(msg *MsgSetValidatorUpdates) error {
+func (x *clientSet) ExecMsgSetValidatorUpdates(msg *MsgSetValidatorUpdates) error {
 	return x.client.Deliver(msg)
 }

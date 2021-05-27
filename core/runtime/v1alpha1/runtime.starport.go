@@ -118,7 +118,7 @@ type ClientSet interface {
 }
 
 func NewClientSet(client client.RuntimeClient) ClientSet {
-	return clientSet{
+	return &clientSet{
 		client:                     client,
 		stateObjectsListClient:     &stateObjectsListClient{client: client},
 		stateTransitionsListClient: &stateTransitionsListClient{client: client},
@@ -133,18 +133,18 @@ type clientSet struct {
 	stateTransitionsListClient StateTransitionsListClient
 }
 
-func (x clientSet) StateObjectsLists() StateObjectsListClient {
+func (x *clientSet) StateObjectsLists() StateObjectsListClient {
 	return x.stateObjectsListClient
 }
 
-func (x clientSet) StateTransitionsLists() StateTransitionsListClient {
+func (x *clientSet) StateTransitionsLists() StateTransitionsListClient {
 	return x.stateTransitionsListClient
 }
 
-func (x clientSet) ExecCreateStateObjectsList(msg *CreateStateObjectsList) error {
+func (x *clientSet) ExecCreateStateObjectsList(msg *CreateStateObjectsList) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecCreateStateTransitionsList(msg *CreateStateTransitionsList) error {
+func (x *clientSet) ExecCreateStateTransitionsList(msg *CreateStateTransitionsList) error {
 	return x.client.Deliver(msg)
 }
