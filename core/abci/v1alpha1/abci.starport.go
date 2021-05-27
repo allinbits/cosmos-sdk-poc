@@ -411,14 +411,14 @@ var EndBlockStateSchema = schema.Definition{
 }
 
 type ClientSet interface {
-	CurrentBlocks() CurrentBlockClient
-	Stages() StageClient
-	InitChainInfos() InitChainInfoClient
-	BeginBlockStates() BeginBlockStateClient
-	CheckTxStates() CheckTxStateClient
-	DeliverTxStates() DeliverTxStateClient
+	CurrentBlock() CurrentBlockClient
+	Stage() StageClient
+	InitChainInfo() InitChainInfoClient
+	BeginBlockState() BeginBlockStateClient
+	CheckTxState() CheckTxStateClient
+	DeliverTxState() DeliverTxStateClient
 	ValidatorUpdates() ValidatorUpdatesClient
-	EndBlockStates() EndBlockStateClient
+	EndBlockState() EndBlockStateClient
 	ExecMsgSetBeginBlockState(msg *MsgSetBeginBlockState) error
 	ExecMsgSetCheckTxState(msg *MsgSetCheckTxState) error
 	ExecMsgSetDeliverTxState(msg *MsgSetDeliverTxState) error
@@ -461,27 +461,27 @@ type clientSet struct {
 	endBlockStateClient EndBlockStateClient
 }
 
-func (x *clientSet) CurrentBlocks() CurrentBlockClient {
+func (x *clientSet) CurrentBlock() CurrentBlockClient {
 	return x.currentBlockClient
 }
 
-func (x *clientSet) Stages() StageClient {
+func (x *clientSet) Stage() StageClient {
 	return x.stageClient
 }
 
-func (x *clientSet) InitChainInfos() InitChainInfoClient {
+func (x *clientSet) InitChainInfo() InitChainInfoClient {
 	return x.initChainInfoClient
 }
 
-func (x *clientSet) BeginBlockStates() BeginBlockStateClient {
+func (x *clientSet) BeginBlockState() BeginBlockStateClient {
 	return x.beginBlockStateClient
 }
 
-func (x *clientSet) CheckTxStates() CheckTxStateClient {
+func (x *clientSet) CheckTxState() CheckTxStateClient {
 	return x.checkTxStateClient
 }
 
-func (x *clientSet) DeliverTxStates() DeliverTxStateClient {
+func (x *clientSet) DeliverTxState() DeliverTxStateClient {
 	return x.deliverTxStateClient
 }
 
@@ -489,7 +489,7 @@ func (x *clientSet) ValidatorUpdates() ValidatorUpdatesClient {
 	return x.validatorUpdatesClient
 }
 
-func (x *clientSet) EndBlockStates() EndBlockStateClient {
+func (x *clientSet) EndBlockState() EndBlockStateClient {
 	return x.endBlockStateClient
 }
 

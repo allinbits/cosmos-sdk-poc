@@ -166,7 +166,7 @@ var ParamsSchema = schema.Definition{
 
 type ClientSet interface {
 	Accounts() AccountClient
-	CurrentAccountNumbers() CurrentAccountNumberClient
+	CurrentAccountNumber() CurrentAccountNumberClient
 	Params() ParamsClient
 	ExecMsgCreateAccount(msg *MsgCreateAccount) error
 	ExecMsgUpdateAccount(msg *MsgUpdateAccount) error
@@ -196,7 +196,7 @@ func (x *clientSet) Accounts() AccountClient {
 	return x.accountClient
 }
 
-func (x *clientSet) CurrentAccountNumbers() CurrentAccountNumberClient {
+func (x *clientSet) CurrentAccountNumber() CurrentAccountNumberClient {
 	return x.currentAccountNumberClient
 }
 

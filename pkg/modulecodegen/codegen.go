@@ -87,7 +87,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	// add state objects client interface
 	for _, obj := range objects {
 		// if it ends with s we don't add the 's' to indicate the plural of types
-		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
+		switch strings.HasSuffix(obj.GoIdent.GoName, "s") || isSingletonObject(obj) {
 		case false:
 			g.P(obj.GoIdent, "s()", " ", obj.GoIdent, "Client")
 		case true:
@@ -132,7 +132,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	for _, obj := range objects {
 		unexportedClient := toLowerCamelCase(obj.GoIdent) + "Client"
 		// if it ends with s we don't add the 's' to indicate the plural of types
-		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
+		switch strings.HasSuffix(obj.GoIdent.GoName, "s") || isSingletonObject(obj) {
 		case false:
 			g.P("func (x *clientSet) ", obj.GoIdent, "s()", " ", obj.GoIdent, "Client", " {")
 			g.P("return x.", unexportedClient)
@@ -154,6 +154,11 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 		g.P()
 	}
 	g.P()
+}
+
+func isSingletonObject(obj *protogen.Message) bool {
+	opts := obj.Desc.Options().(*descriptorpb.MessageOptions)
+	return proto.GetExtension(opts, modulegen.E_Singleton).(bool)
 }
 
 func meetsRequirements(file *protogen.File) bool {

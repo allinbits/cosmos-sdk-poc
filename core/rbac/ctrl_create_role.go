@@ -77,7 +77,7 @@ func (c CreateRoleAdmissionController) roleNotExist(id string) error {
 }
 
 func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) error {
-	stateObjects, err := c.rtClient.StateObjectsLists().Get()
+	stateObjects, err := c.rtClient.StateObjectsList().Get()
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) e
 }
 
 func (c CreateRoleAdmissionController) verifyStateTransitions(role *v1alpha1.Role) error {
-	stateTransitions, err := c.rtClient.StateTransitionsLists().Get()
+	stateTransitions, err := c.rtClient.StateTransitionsList().Get()
 	if err != nil {
 		return err
 	}

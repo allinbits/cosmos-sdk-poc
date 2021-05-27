@@ -111,8 +111,8 @@ var StateTransitionsListSchema = schema.Definition{
 }
 
 type ClientSet interface {
-	StateObjectsLists() StateObjectsListClient
-	StateTransitionsLists() StateTransitionsListClient
+	StateObjectsList() StateObjectsListClient
+	StateTransitionsList() StateTransitionsListClient
 	ExecCreateStateObjectsList(msg *CreateStateObjectsList) error
 	ExecCreateStateTransitionsList(msg *CreateStateTransitionsList) error
 }
@@ -133,11 +133,11 @@ type clientSet struct {
 	stateTransitionsListClient StateTransitionsListClient
 }
 
-func (x *clientSet) StateObjectsLists() StateObjectsListClient {
+func (x *clientSet) StateObjectsList() StateObjectsListClient {
 	return x.stateObjectsListClient
 }
 
-func (x *clientSet) StateTransitionsLists() StateTransitionsListClient {
+func (x *clientSet) StateTransitionsList() StateTransitionsListClient {
 	return x.stateTransitionsListClient
 }
 

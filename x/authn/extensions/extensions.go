@@ -71,7 +71,7 @@ type timeoutBlockExtension struct {
 
 func (t timeoutBlockExtension) Validate(reqTx authentication.Tx) error {
 	tx := reqTx.Raw().(*v1alpha12.Tx)
-	currentBlock, err := t.abci.CurrentBlocks().Get()
+	currentBlock, err := t.abci.CurrentBlock().Get()
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (a sigVerifier) Validate(aTx authentication.Tx) error {
 	raw := wrapper.TxRaw()
 	sigs := wrapper.Signers()
 	// get chainInfo
-	chainInfo, err := a.abci.InitChainInfos().Get()
+	chainInfo, err := a.abci.InitChainInfo().Get()
 	if err != nil {
 		return err
 	}

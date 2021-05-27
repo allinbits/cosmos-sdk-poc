@@ -22,7 +22,7 @@ type CreateAccountController struct {
 func (m *CreateAccountController) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateAccount)
 	// get last acc number
-	lastAccNum, err := m.auth.CurrentAccountNumbers().Get()
+	lastAccNum, err := m.auth.CurrentAccountNumber().Get()
 	if err != nil {
 		return statetransition.ExecutionResponse{}, err
 	}
@@ -39,7 +39,7 @@ func (m *CreateAccountController) Exec(req statetransition.ExecutionRequest) (re
 	}
 	// update last account number
 	lastAccNum.Number = lastAccNum.Number + 1
-	err = m.auth.CurrentAccountNumbers().Update(lastAccNum)
+	err = m.auth.CurrentAccountNumber().Update(lastAccNum)
 	if err != nil {
 		return
 	}
