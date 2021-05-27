@@ -22,12 +22,12 @@ func (a Authentication) Initialize(builder *module.AuthenticationExtensionBuilde
 }
 
 func NewFeeChecker(c module.Client) authentication.AdmissionHandler {
-	return FeeChecker{bank: v1alpha1.NewClient(c)}
+	return FeeChecker{bank: v1alpha1.NewClientSet(c)}
 }
 
 // FeeChecker checks if the account has the required amount of fees
 type FeeChecker struct {
-	bank *v1alpha1.Client
+	bank v1alpha1.ClientSet
 }
 
 func (x FeeChecker) Validate(req authentication.Tx) (err error) {
@@ -35,7 +35,7 @@ func (x FeeChecker) Validate(req authentication.Tx) (err error) {
 	fee := req.Fee()
 
 	// get balance of fee payer
-	balance, err := x.bank.GetBalance(payer)
+	balance, err := x.bank.Balances().Get(payer)
 	if err != nil {
 		return err
 	}
@@ -51,15 +51,19 @@ func (x FeeChecker) Validate(req authentication.Tx) (err error) {
 }
 
 func NewFeeDeduction(c module.Client) authentication.PostAuthenticationHandler {
-	return FeeDeduction{bank: v1alpha1.NewClient(c)}
+	return FeeDeduction{bank: v1alpha1.NewClientSet(c)}
 }
 
 // FeeDeduction deducts fees from the transaction fee payer and sends them to the fee collector
 type FeeDeduction struct {
-	bank *v1alpha1.Client
+	bank v1alpha1.ClientSet
 }
 
 func (x FeeDeduction) Exec(req authentication.PostAuthenticationRequest) (resp authentication.PostAuthenticationResponse, err error) {
 	// move coins and send them to fee collector
-	return resp, x.bank.Send(req.Tx.Payer(), "fee_collector", req.Tx.Fee())
+	return resp, x.bank.ExecMsgSendCoins(&v1alpha1.MsgSendCoins{
+		FromAddress: req.Tx.Payer(),
+		ToAddress:   "fee_collector",
+		Amount:      req.Tx.Fee(),
+	})
 }

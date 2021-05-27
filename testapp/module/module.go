@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	v1alpha13 "github.com/fdymylja/tmos/core/coin/v1alpha1"
+	coin "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/module"
-	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
-	"github.com/fdymylja/tmos/x/bank/v1alpha1"
+	authnv1alpha1 "github.com/fdymylja/tmos/x/authn/v1alpha1"
+	bankv1alpha1 "github.com/fdymylja/tmos/x/bank/v1alpha1"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -33,14 +33,14 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 
 func newGenesisController(client module.Client) genesisController {
 	return genesisController{
-		authn: v1alpha12.NewClient(client),
-		bank:  v1alpha1.NewClient(client),
+		authn: authnv1alpha1.NewClientSet(client),
+		bank:  bankv1alpha1.NewClientSet(client),
 	}
 }
 
 type genesisController struct {
-	authn *v1alpha12.Client
-	bank  *v1alpha1.Client
+	authn authnv1alpha1.ClientSet
+	bank  bankv1alpha1.ClientSet
 }
 
 func (g genesisController) Default() error {
@@ -49,22 +49,25 @@ func (g genesisController) Default() error {
 		return err
 	}
 	// create account
-	acc := &v1alpha12.Account{
+	acc := &authnv1alpha1.Account{
 		Address: accountAddress,
 		PubKey: &anypb.Any{
 			TypeUrl: pubKeyType,
 			Value:   pkB,
 		},
 	}
-	err = g.authn.CreateAccount(acc)
+	err = g.authn.ExecMsgCreateAccount(&authnv1alpha1.MsgCreateAccount{Account: acc})
 	if err != nil {
 		return err
 	}
 	// set an initial balance for the given account
-	err = g.bank.SetBalance(acc.Address, []*v1alpha13.Coin{
-		{
-			Denom:  "test",
-			Amount: "5000000000",
+	err = g.bank.ExecMsgSetBalance(&bankv1alpha1.MsgSetBalance{
+		Address: acc.Address,
+		Amount: []*coin.Coin{
+			{
+				Denom:  "test",
+				Amount: "5000000000",
+			},
 		},
 	})
 	if err != nil {

@@ -3,6 +3,7 @@ syntax="proto3";
 package tmos.abci.v1alpha1;
 
 import "core/abci/tendermint/abci/types.proto";
+import "core/modulegen/modulegen.proto";
 
 option go_package = "github.com/fdymylja/tmos/core/abci/v1alpha1";
 
@@ -18,57 +19,92 @@ enum ABCIStage {
 }
 
 message CurrentBlock {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   uint64 block_number = 1;
 }
 
 message Stage {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   ABCIStage stage = 1;
 }
 
 message InitChainInfo {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   string chain_id = 1;
 }
 
 message BeginBlockState {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   tendermint.abci.RequestBeginBlock begin_block = 1;
 }
 
 message CheckTxState {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   tendermint.abci.RequestCheckTx check_tx = 1;
 }
 
 message DeliverTxState {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   tendermint.abci.RequestDeliverTx deliver_tx = 1;
-}
-
-message MsgSetBeginBlockState {
-  tendermint.abci.RequestBeginBlock begin_block = 1;
-}
-
-message MsgSetCheckTxState {
-  tendermint.abci.RequestCheckTx check_tx = 1;
-}
-
-message MsgSetDeliverTxState {
-  tendermint.abci.RequestDeliverTx deliver_tx = 1;
-}
-
-message MsgSetEndBlockState {
-  tendermint.abci.RequestEndBlock end_block = 1;
-}
-
-message MsgSetInitChain {
-  InitChainInfo init_chain_info = 1;
 }
 
 message ValidatorUpdates {
-  repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
-}
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
 
-message MsgSetValidatorUpdates {
   repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
 }
 
 message EndBlockState {
+  option (tmos.core.modulegen.state_object) = true;
+  option (tmos.core.modulegen.singleton) = true;
+
   tendermint.abci.RequestEndBlock end_block = 1;
+}
+
+message MsgSetBeginBlockState {
+  option (tmos.core.modulegen.state_transition) = true;
+
+  tendermint.abci.RequestBeginBlock begin_block = 1;
+}
+
+message MsgSetCheckTxState {
+  option (tmos.core.modulegen.state_transition) = true;
+
+  tendermint.abci.RequestCheckTx check_tx = 1;
+}
+
+message MsgSetDeliverTxState {
+  option (tmos.core.modulegen.state_transition) = true;
+
+  tendermint.abci.RequestDeliverTx deliver_tx = 1;
+}
+
+message MsgSetEndBlockState {
+  option (tmos.core.modulegen.state_transition) = true;
+
+  tendermint.abci.RequestEndBlock end_block = 1;
+}
+
+message MsgSetInitChain {
+  option (tmos.core.modulegen.state_transition) = true;
+
+  InitChainInfo init_chain_info = 1;
+}
+
+message MsgSetValidatorUpdates {
+  option (tmos.core.modulegen.state_transition) = true;
+  repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
 }

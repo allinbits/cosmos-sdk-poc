@@ -23,7 +23,7 @@ func PluginRunner(plugin *protogen.Plugin) error {
 	}
 	// then we parse single groups
 	for _, group := range groups {
-		err := genFile(plugin, group)
+		err := genFiles(plugin, group)
 		if err != nil {
 			return err
 		}
@@ -31,14 +31,14 @@ func PluginRunner(plugin *protogen.Plugin) error {
 	return nil
 }
 
-func genFile(gen *protogen.Plugin, group []*protogen.File) error {
+func genFiles(gen *protogen.Plugin, group []*protogen.File) error {
 	for _, file := range group {
-		genObjects(file, gen)
+		genFile(file, gen)
 	}
 	return nil
 }
 
-func genObjects(file *protogen.File, gen *protogen.Plugin) {
+func genFile(file *protogen.File, gen *protogen.Plugin) {
 
 	if !meetsRequirements(file) {
 		return
@@ -70,6 +70,13 @@ func genObjects(file *protogen.File, gen *protogen.Plugin) {
 			stateTransitions = append(stateTransitions, msg)
 		}
 	}
+	// gen schema
+	for _, obj := range stateObjects {
+		err := genSchema(objectsFile, obj)
+		if err != nil {
+			gen.Error(err)
+		}
+	}
 	// gen clientset
 	genClientSet(objectsFile, stateObjects, stateTransitions)
 }
@@ -80,7 +87,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	// add state objects client interface
 	for _, obj := range objects {
 		// if it ends with s we don't add the 's' to indicate the plural of types
-		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
+		switch strings.HasSuffix(obj.GoIdent.GoName, "s") || isSingletonObject(obj) {
 		case false:
 			g.P(obj.GoIdent, "s()", " ", obj.GoIdent, "Client")
 		case true:
@@ -98,7 +105,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 
 	// gen constructor
 	g.P("func NewClientSet(client ", clientImportPackage.Ident("RuntimeClient"), ") ClientSet {")
-	g.P("return clientSet{")
+	g.P("return &clientSet{")
 	g.P("client: client", ",") // the normal module client
 	// add other clients
 	for _, obj := range objects {
@@ -125,14 +132,14 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	for _, obj := range objects {
 		unexportedClient := toLowerCamelCase(obj.GoIdent) + "Client"
 		// if it ends with s we don't add the 's' to indicate the plural of types
-		switch strings.HasSuffix(obj.GoIdent.GoName, "s") {
+		switch strings.HasSuffix(obj.GoIdent.GoName, "s") || isSingletonObject(obj) {
 		case false:
-			g.P("func (x clientSet) ", obj.GoIdent, "s()", " ", obj.GoIdent, "Client", " {")
+			g.P("func (x *clientSet) ", obj.GoIdent, "s()", " ", obj.GoIdent, "Client", " {")
 			g.P("return x.", unexportedClient)
 			g.P("}")
 			g.P()
 		case true:
-			g.P("func (x clientSet) ", obj.GoIdent, "()", " ", obj.GoIdent, "Client", " {")
+			g.P("func (x *clientSet) ", obj.GoIdent, "()", " ", obj.GoIdent, "Client", " {")
 			g.P("return x.", unexportedClient)
 			g.P("}")
 			g.P()
@@ -141,12 +148,17 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 
 	// gen state transitions interface
 	for _, t := range transitions {
-		g.P("func (x clientSet) Exec", t.GoIdent.GoName, "(msg *", t.GoIdent.GoName, ") error {")
+		g.P("func (x *clientSet) Exec", t.GoIdent.GoName, "(msg *", t.GoIdent.GoName, ") error {")
 		g.P("return x.client.Deliver(msg)")
 		g.P("}")
 		g.P()
 	}
 	g.P()
+}
+
+func isSingletonObject(obj *protogen.Message) bool {
+	opts := obj.Desc.Options().(*descriptorpb.MessageOptions)
+	return proto.GetExtension(opts, modulegen.E_Singleton).(bool)
 }
 
 func meetsRequirements(file *protogen.File) bool {

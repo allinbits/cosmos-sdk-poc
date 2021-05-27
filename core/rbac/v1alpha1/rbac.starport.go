@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	client "github.com/fdymylja/tmos/runtime/client"
 	meta "github.com/fdymylja/tmos/runtime/meta"
+	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
 func (x *Params) StateObject() {}
@@ -133,6 +134,30 @@ func (x *MsgBindRole) New() meta.StateTransition {
 	return new(MsgBindRole)
 }
 
+var ParamsSchema = schema.Definition{
+	Meta: meta.Meta{
+		APIGroup: "tmos.rbac.v1alpha1",
+		APIKind:  "Params",
+	},
+	Singleton: true,
+}
+
+var RoleSchema = schema.Definition{
+	Meta: meta.Meta{
+		APIGroup: "tmos.rbac.v1alpha1",
+		APIKind:  "Role",
+	},
+	PrimaryKey: "id",
+}
+
+var RoleBindingSchema = schema.Definition{
+	Meta: meta.Meta{
+		APIGroup: "tmos.rbac.v1alpha1",
+		APIKind:  "RoleBinding",
+	},
+	PrimaryKey: "subject",
+}
+
 type ClientSet interface {
 	Params() ParamsClient
 	Roles() RoleClient
@@ -142,7 +167,7 @@ type ClientSet interface {
 }
 
 func NewClientSet(client client.RuntimeClient) ClientSet {
-	return clientSet{
+	return &clientSet{
 		client:            client,
 		paramsClient:      &paramsClient{client: client},
 		roleClient:        &roleClient{client: client},
@@ -160,22 +185,22 @@ type clientSet struct {
 	roleBindingClient RoleBindingClient
 }
 
-func (x clientSet) Params() ParamsClient {
+func (x *clientSet) Params() ParamsClient {
 	return x.paramsClient
 }
 
-func (x clientSet) Roles() RoleClient {
+func (x *clientSet) Roles() RoleClient {
 	return x.roleClient
 }
 
-func (x clientSet) RoleBindings() RoleBindingClient {
+func (x *clientSet) RoleBindings() RoleBindingClient {
 	return x.roleBindingClient
 }
 
-func (x clientSet) ExecMsgCreateRole(msg *MsgCreateRole) error {
+func (x *clientSet) ExecMsgCreateRole(msg *MsgCreateRole) error {
 	return x.client.Deliver(msg)
 }
 
-func (x clientSet) ExecMsgBindRole(msg *MsgBindRole) error {
+func (x *clientSet) ExecMsgBindRole(msg *MsgBindRole) error {
 	return x.client.Deliver(msg)
 }
