@@ -7,7 +7,6 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/indexes"
 	"github.com/fdymylja/tmos/runtime/orm/objects"
-	"github.com/fdymylja/tmos/runtime/orm/schema"
 	crisis "github.com/fdymylja/tmos/x/crisis/v1alpha1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -21,10 +20,7 @@ func TestIterator(t *testing.T) {
 
 	store := orm.NewStore(obj, idx)
 	// register object
-	require.NoError(t, store.RegisterObject(&crisis.InvariantHandler{}, schema.Definition{
-		PrimaryKey:    "stateTransition",
-		SecondaryKeys: []string{"module", "route"},
-	}))
+	require.NoError(t, store.RegisterObject(&crisis.InvariantHandler{}, crisis.InvariantHandlerSchema))
 	// create object which belong to bank module
 	obj1 := &crisis.InvariantHandler{
 		StateTransition: "bank.v1alpha1.NonNegativeBalance",

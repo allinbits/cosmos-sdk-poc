@@ -3,6 +3,7 @@ package schema
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/testdata/testpb"
 	"github.com/stretchr/testify/require"
 )
@@ -18,29 +19,12 @@ func Test_parseObjectSchema(t *testing.T) {
 			options: Definition{
 				PrimaryKey:    "a",
 				SecondaryKeys: []string{"b", "c"},
+				Meta: meta.Meta{
+					APIGroup: "testdata",
+					APIKind:  "SimpleMessage",
+				},
 			},
 			wantErr: nil,
-		},
-		"singleton with primary key": {
-			options: Definition{
-				Singleton:  true,
-				PrimaryKey: "a",
-			},
-			wantErr: ErrBadOptions,
-		},
-		"primary key not found": {
-			options: Definition{
-				PrimaryKey: "not-found",
-			},
-			wantErr: ErrBadOptions,
-		},
-		"singleton with secondary key": {
-			options: Definition{
-				Singleton:     true,
-				PrimaryKey:    "",
-				SecondaryKeys: []string{"a"},
-			},
-			wantErr: ErrBadOptions,
 		},
 	}
 

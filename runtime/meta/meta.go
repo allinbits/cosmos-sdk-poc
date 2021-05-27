@@ -23,3 +23,7 @@ func (m Meta) Validate() error {
 	}
 	return nil
 }
+
+func (m Meta) Fullname() string {
+	return fmt.Sprintf("%s.%s", m.APIGroup, m.APIKind)
+}

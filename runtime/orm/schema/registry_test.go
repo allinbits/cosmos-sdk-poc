@@ -3,6 +3,7 @@ package schema
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/testdata/testpb"
 	"github.com/stretchr/testify/require"
 )
@@ -13,9 +14,15 @@ func TestRegistry(t *testing.T) {
 	_, err := reg.Get(&testpb.SimpleMessage{})
 	require.ErrorIs(t, err, ErrNotFound)
 	// test simple add
-	require.NoError(t, reg.AddObject(&testpb.SimpleMessage{}, Definition{PrimaryKey: "a"}))
+	require.NoError(t, reg.AddObject(&testpb.SimpleMessage{}, Definition{PrimaryKey: "a", Meta: meta.Meta{
+		APIGroup: "testdata",
+		APIKind:  "SimpleMessage",
+	}}))
 	// test double registration
-	require.ErrorIs(t, reg.AddObject(&testpb.SimpleMessage{}, Definition{PrimaryKey: "a"}), ErrAlreadyExists)
+	require.ErrorIs(t, reg.AddObject(&testpb.SimpleMessage{}, Definition{PrimaryKey: "a", Meta: meta.Meta{
+		APIGroup: "testdata",
+		APIKind:  "SimpleMessage",
+	}}), ErrAlreadyExists)
 	// test get
 	_, err = reg.Get(&testpb.SimpleMessage{})
 	require.NoError(t, err)

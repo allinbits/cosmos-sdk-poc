@@ -74,7 +74,7 @@ func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
 			Value: jsonObject,
 		}
 	default:
-		return types.ResponseQuery{Code: errors.CodeBadRequest, Log: "unsupported verb" + verb}
+		return types.ResponseQuery{Code: errors.CodeBadRequest, Log: "unsupported verb " + verb}
 	}
 }
 

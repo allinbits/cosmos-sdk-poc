@@ -25,8 +25,11 @@ type Definition struct {
 	SecondaryKeys []string
 }
 
-// Verify verifies a Definition
-func (d Definition) Verify() error {
+// Validate verifies a Definition
+func (d Definition) Validate() error {
+	if err := d.Meta.Validate(); err != nil {
+		return err
+	}
 	if d.Singleton && d.PrimaryKey != "" {
 		return fmt.Errorf("a StateObject can not be singleton and have a primary key at the same time")
 	}
@@ -49,6 +52,7 @@ type InterfaceEncoderFunc func(i interface{}) (value protoreflect.Value, valid b
 // Schema represents how a meta.StateObject is saved and indexed into the store
 // and provides all the required functionalities to index the fields of the object
 type Schema struct {
+	meta                 meta.Meta
 	messageType          protoreflect.MessageType
 	name                 string
 	typePrefix           []byte // TODO should we force copies of this?
@@ -69,7 +73,7 @@ func (s *Schema) TypePrefix() []byte {
 }
 
 func (s *Schema) Name() string {
-	return s.name
+	return s.meta.Fullname()
 }
 
 // EncodePrimaryKey returns the encoded primary given a meta.StateObject
@@ -99,7 +103,10 @@ func NewSchema(o meta.StateObject, options Definition) (*Schema, error) {
 }
 
 func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) {
-	schema := &Schema{}
+	if err := options.Validate(); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrBadOptions, err)
+	}
+	schema := &Schema{meta: options.Meta}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	switch options.Singleton {
 	case true:
