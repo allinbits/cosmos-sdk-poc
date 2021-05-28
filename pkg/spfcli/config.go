@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 type Config struct {
-	TendermintRPC string
+	TendermintRPC string `json:"tendermintRPC" yaml:"tendermintRPC"`
 }
 
 func (c *Config) Validate() error {

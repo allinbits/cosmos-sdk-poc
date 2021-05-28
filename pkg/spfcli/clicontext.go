@@ -16,7 +16,10 @@ type CLIContext interface {
 }
 
 func NewCLIContext() CLIContext {
-	return &cliContext{}
+	return &cliContext{
+		getConfigOnce: new(sync.Once),
+		client:        nil,
+	}
 }
 
 type cliContext struct {
