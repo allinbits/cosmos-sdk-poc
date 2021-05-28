@@ -1,31 +1,27 @@
 package runtime
 
 import (
-	"strings"
-
 	"github.com/fdymylja/tmos/core/abci/tendermint/abci"
 	abcictrl "github.com/fdymylja/tmos/core/abci/v1alpha1"
-	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/tendermint/tendermint/abci/types"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 func NewABCIApplication(rt *Runtime) ABCIApplication {
 	return ABCIApplication{
-		rt:   rt,
-		user: user.NewUsersFromString(user.ABCI),
+		rt:    rt,
+		user:  user.NewUsersFromString(user.ABCI),
+		query: NewQuerier(rt.store),
 	}
 }
 
 // ABCIApplication is a Runtime orchestrated by Tendermint
 type ABCIApplication struct {
-	rt   *Runtime
-	user user.Users
+	rt    *Runtime
+	user  user.Users
+	query *Querier
 }
 
 func (a ABCIApplication) Info(info types.RequestInfo) types.ResponseInfo {
@@ -43,39 +39,7 @@ func (a ABCIApplication) SetOption(option types.RequestSetOption) types.Response
 }
 
 func (a ABCIApplication) Query(query types.RequestQuery) types.ResponseQuery {
-	// TODO get store based on height
-	splitted := strings.Split(query.Path, "/")
-	switch len(splitted) {
-	case 3:
-	case 4:
-		splitted = splitted[1:]
-	default:
-		return types.ResponseQuery{Code: errors.CodeBadRequest, Log: "invalid path"}
-	}
-	verb := splitted[0]
-	stateObjectName := splitted[1] // TODO check if store knows of the existence of this stateObjectName
-	key := splitted[2]
-	switch verb {
-	case runtimev1alpha1.Verb_Get.String():
-		objType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(stateObjectName))
-		if err != nil {
-			return types.ResponseQuery{Code: errors.CodeNotFound}
-		}
-		object := objType.New().Interface().(meta.StateObject)
-		err = a.rt.Get(meta.NewStringID(key), object)
-		if err != nil {
-			return types.ResponseQuery{Code: errors.CodeUnknown, Log: err.Error()}
-		}
-		jsonObject, err := protojson.Marshal(object)
-		if err != nil {
-			return types.ResponseQuery{Code: errors.CodeUnknown, Log: err.Error()}
-		}
-		return types.ResponseQuery{
-			Value: jsonObject,
-		}
-	default:
-		return types.ResponseQuery{Code: errors.CodeBadRequest, Log: "unsupported verb " + verb}
-	}
+	return a.query.Handle(query)
 }
 
 func (a ABCIApplication) CheckTx(tmTx types.RequestCheckTx) types.ResponseCheckTx {

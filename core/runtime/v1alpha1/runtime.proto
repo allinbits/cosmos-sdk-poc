@@ -52,3 +52,16 @@ message CreateStateTransitionsList {
 
   repeated string state_transitions = 1;
 }
+
+// Resources defines the list of API resources
+// known to the runtime
+message Resources {
+  repeated APIGroupResources api_group_resources = 1;
+}
+
+message APIGroupResources {
+  string api_group = 1;
+
+  repeated string state_objects = 2;
+  repeated string state_transitions = 3;
+}

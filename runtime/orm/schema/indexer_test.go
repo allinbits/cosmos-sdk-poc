@@ -24,7 +24,7 @@ func TestNewIndexer(t *testing.T) {
 		"unknown field": {
 			Object:    &testpb.SimpleMessage{},
 			JsonField: "unknown",
-			wantErr:   ErrBadOptions,
+			wantErr:   ErrBadDefinition,
 		},
 	}
 

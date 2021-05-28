@@ -37,6 +37,7 @@ type StateTransition interface {
 type StateObject interface {
 	Type
 	StateObject()
+	New() StateObject
 }
 
 // ID defines the unique identification of an StateObject.

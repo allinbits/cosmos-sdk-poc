@@ -10,16 +10,16 @@ import (
 func NewIndexer(o meta.StateObject, jsonFieldName string) (*Indexer, error) {
 	fd := o.ProtoReflect().Descriptor().Fields().ByJSONName(jsonFieldName)
 	if fd == nil {
-		return nil, fmt.Errorf("%w: json field %s is not present in object %s", ErrBadOptions, jsonFieldName, meta.Name(o))
+		return nil, fmt.Errorf("%w: json field %s is not present in object %s", ErrBadDefinition, jsonFieldName, meta.Name(o))
 	}
 
 	valueEncoder, err := encoderForKind(fd.Kind())
 	if err != nil {
-		return nil, fmt.Errorf("%w: field %s of object %s: %s", ErrBadOptions, jsonFieldName, meta.Name(o), err)
+		return nil, fmt.Errorf("%w: field %s of object %s: %s", ErrBadDefinition, jsonFieldName, meta.Name(o), err)
 	}
 	interfaceEncoderFunc, err := interfaceToValueEncoderForKind(fd.Kind())
 	if err != nil {
-		return nil, fmt.Errorf("%w field %s of object %s: %s", ErrBadOptions, jsonFieldName, meta.Name(o), err)
+		return nil, fmt.Errorf("%w field %s of object %s: %s", ErrBadDefinition, jsonFieldName, meta.Name(o), err)
 	}
 
 	return &Indexer{

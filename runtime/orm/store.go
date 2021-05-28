@@ -157,28 +157,9 @@ func (s Store) ListRegisteredStateObjects() []string {
 	return s.schemas.List()
 }
 
-type Iterator struct {
-	store  Store
-	iter   kv.Iterator
-	schema *schema.Schema
+// SchemaRegistry returns the schema.Registry of the store
+// TODO(fdymylja): I'm not sure if the store should be returning this
+// or if the runtime should own this object.
+func (s Store) SchemaRegistry() *schema.Registry {
+	return s.schemas
 }
-
-func (i Iterator) Get(o meta.StateObject) error {
-	key := i.iter.Key()
-	return i.store.Get(meta.NewBytesID(key), o)
-}
-
-func (i Iterator) Next() {
-	i.iter.Next()
-}
-
-func (i Iterator) Valid() bool {
-	return i.iter.Valid()
-}
-
-func (i Iterator) Close() {
-	i.iter.Close()
-}
-
-// TODO implement fast delete function currently to delete you need to get object and delete it
-// when we can skip the unmarshalling part and go straight to deletion of the key.

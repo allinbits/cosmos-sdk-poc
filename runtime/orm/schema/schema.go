@@ -53,7 +53,7 @@ type InterfaceEncoderFunc func(i interface{}) (value protoreflect.Value, valid b
 // and provides all the required functionalities to index the fields of the object
 type Schema struct {
 	meta                 meta.Meta
-	messageType          protoreflect.MessageType
+	mType                meta.StateObject
 	name                 string
 	typePrefix           []byte // TODO should we force copies of this?
 	primaryKey           protoreflect.FieldDescriptor
@@ -62,6 +62,10 @@ type Schema struct {
 	secondaryKeysByField map[string]*Indexer
 	singleton            bool
 	hasIndexes           bool
+}
+
+func (s *Schema) NewStateObject() meta.StateObject {
+	return s.mType.New()
 }
 
 func (s *Schema) HasIndexes() bool {
@@ -104,24 +108,24 @@ func NewSchema(o meta.StateObject, options Definition) (*Schema, error) {
 
 func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) {
 	if err := options.Validate(); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrBadOptions, err)
+		return nil, fmt.Errorf("%w: %s", ErrBadDefinition, err)
 	}
-	schema := &Schema{meta: options.Meta}
+	schema := &Schema{meta: options.Meta, mType: o}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	switch options.Singleton {
 	case true:
 		schema.singleton = true
 		if options.PrimaryKey != "" {
-			return nil, fmt.Errorf("%w: can not register a singleton with a primary key in object %s", ErrBadOptions, meta.Name(o))
+			return nil, fmt.Errorf("%w: can not register a singleton with a primary key in object %s", ErrBadDefinition, meta.Name(o))
 		}
 	case false:
 		primaryKey := fds.ByJSONName(options.PrimaryKey)
 		if primaryKey == nil {
-			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrBadOptions, options.PrimaryKey, meta.Name(o))
+			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrBadDefinition, options.PrimaryKey, meta.Name(o))
 		}
 		primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
 		if err != nil {
-			return nil, fmt.Errorf("%w: %s has invalid primary key field: %s", ErrBadOptions, meta.Name(o), err)
+			return nil, fmt.Errorf("%w: %s has invalid primary key field: %s", ErrBadDefinition, meta.Name(o), err)
 		}
 		schema.primaryKey = primaryKey
 		schema.primaryKeyEncode = primaryKeyEncoder
@@ -136,7 +140,7 @@ func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) 
 	}
 	// singletons cannot be indexed
 	if options.Singleton && len(options.SecondaryKeys) != 0 {
-		return nil, fmt.Errorf("%w: singletons can not have secondary indexes in object %s", ErrBadOptions, meta.Name(o))
+		return nil, fmt.Errorf("%w: singletons can not have secondary indexes in object %s", ErrBadDefinition, meta.Name(o))
 	}
 	schema.secondaryKeys = make([]*Indexer, len(options.SecondaryKeys))
 	schema.secondaryKeysByField = make(map[string]*Indexer, len(options.SecondaryKeys))

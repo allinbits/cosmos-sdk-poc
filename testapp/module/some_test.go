@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/rpc/client/http"
 )
 
@@ -35,9 +36,13 @@ func TestQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := tm.ABCIQuery(context.Background(), "Get/tmos.x.authn.v1alpha1.Account/test17hrfajk9ukj6tkkcy2ftgsmr3fp9hk9rkzcc7w", nil)
+	resp, err := tm.ABCIQuery(context.Background(), "api_resources", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("%s %s", resp.Response.Log, resp.Response.Value)
+
+	resp, err = tm.ABCIQuery(context.Background(), "get/tmos.x.bank.v1alpha1/Balance/fee_collector", nil)
+	require.NoError(t, err)
 	t.Logf("%s %s", resp.Response.Log, resp.Response.Value)
 }
