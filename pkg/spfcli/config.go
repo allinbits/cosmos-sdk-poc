@@ -31,7 +31,11 @@ func GetConfig() (*Config, error) {
 	// first check if env is set
 	path, ok := os.LookupEnv(ConfigDirectoryEnv)
 	if !ok {
-		path = DefaultConfigDirectory
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		path = filepath.Join(homeDir, DefaultConfigDirectory)
 	}
 	configPath := filepath.Join(path, ConfigName)
 	configFile, err := os.Open(configPath)
