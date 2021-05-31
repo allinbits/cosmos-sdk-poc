@@ -1,4 +1,4 @@
-package extensions
+package authn
 
 import (
 	"fmt"
@@ -12,33 +12,6 @@ import (
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	"google.golang.org/protobuf/proto"
 )
-
-func New(c module.Client) module.AuthenticationExtension {
-	return authExtension{c: c}
-}
-
-type authExtension struct {
-	c module.Client
-}
-
-func (a authExtension) Initialize(builder *module.AuthenticationExtensionBuilder) {
-	// add admission controllers, they will only read state
-	// never modify it.
-	builder.
-		WithAdmissionController(mempoolFee{}).                  // verifies if fee matches the minimum
-		WithAdmissionController(newAccountExists(a.c)).         // verifies that all signer accounts exist
-		WithAdmissionController(newTimeoutBlockExtension(a.c)). // verifies if tx is not timed-out compared to block
-		WithAdmissionController(newValidateMemoExtension(a.c)). // validates memo length
-		WithAdmissionController(newValidateSigCount(a.c)).      // validates number of signatures
-		WithAdmissionController(newSigVerifier(a.c))            // validate signatures
-	// add transition controllers for tx, they CAN modify state after
-	// a tx is authenticated
-	builder.
-		WithTransitionController(newConsumeGasForTxSize(a.c)). // consumes gas for tx size
-		WithTransitionController(newSetPubKeys(a.c)).          // sets pub keys
-		WithTransitionController(newIncreaseSequence(a.c))     // increases sequence
-
-}
 
 func newAccountExists(c module.Client) accountExists {
 	return accountExists{
