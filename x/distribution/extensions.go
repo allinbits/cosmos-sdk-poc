@@ -1,4 +1,4 @@
-package extensions
+package distribution
 
 import (
 	v1alpha12 "github.com/fdymylja/tmos/core/coin/v1alpha1"
@@ -6,20 +6,6 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/x/bank/v1alpha1"
 )
-
-func NewAuthentication(c module.Client) module.AuthenticationExtension {
-	return Authentication{client: c}
-}
-
-type Authentication struct {
-	client module.Client
-}
-
-func (a Authentication) Initialize(builder *module.AuthenticationExtensionBuilder) {
-	builder.
-		WithAdmissionController(NewFeeChecker(a.client)).
-		WithTransitionController(NewFeeDeduction(a.client))
-}
 
 func NewFeeChecker(c module.Client) authentication.AdmissionHandler {
 	return FeeChecker{bank: v1alpha1.NewClientSet(c)}

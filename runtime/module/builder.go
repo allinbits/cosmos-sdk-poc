@@ -1,6 +1,7 @@
 package module
 
 import (
+	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/fdymylja/tmos/runtime/statetransition"
@@ -16,7 +17,8 @@ type Descriptor struct {
 	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
 	StateObjects                         []stateObject
 	Needs                                []meta.StateTransition
-	AuthenticationExtension              *AuthenticationExtensionDescriptor
+	AuthAdmissionHandlers                []authAdmissionHandler
+	PostAuthenticationHandler            []postAuthenticationHandler
 }
 
 type stateObject struct {
@@ -87,15 +89,18 @@ func (b *DescriptorBuilder) WithGenesis(ctrl GenesisHandler) *DescriptorBuilder 
 	return b
 }
 
-func (b *DescriptorBuilder) ExtendsAuthentication(xt AuthenticationExtension) *DescriptorBuilder {
-	authXtB := NewAuthenticationExtensionBuilder()
-	xt.Initialize(authXtB)
-	b.descriptor.AuthenticationExtension = authXtB.descriptor
+func (b *DescriptorBuilder) NeedsStateTransition(transition meta.StateTransition) *DescriptorBuilder {
+	b.descriptor.Needs = append(b.descriptor.Needs, transition)
 	return b
 }
 
-func (b *DescriptorBuilder) NeedsStateTransition(transition meta.StateTransition) *DescriptorBuilder {
-	b.descriptor.Needs = append(b.descriptor.Needs, transition)
+func (b *DescriptorBuilder) WithAuthAdmissionHandler(ctrl authentication.AdmissionHandler) *DescriptorBuilder {
+	b.descriptor.AuthAdmissionHandlers = append(b.descriptor.AuthAdmissionHandlers, authAdmissionHandler{Handler: ctrl})
+	return b
+}
+
+func (b *DescriptorBuilder) WithPostAuthenticationHandler(ctrl authentication.PostAuthenticationHandler) *DescriptorBuilder {
+	b.descriptor.PostAuthenticationHandler = append(b.descriptor.PostAuthenticationHandler, postAuthenticationHandler{Handler: ctrl})
 	return b
 }
 
