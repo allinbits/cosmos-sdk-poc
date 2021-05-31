@@ -9,5 +9,6 @@ func NewCLI() *cobra.Command {
 	}
 	cliCtx := NewCLIContext()
 	cmd.AddCommand(GetCmd(cliCtx))
+	cmd.AddCommand(ResourcesCmd(cliCtx))
 	return cmd
 }

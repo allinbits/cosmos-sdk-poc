@@ -9,7 +9,7 @@ func GetCmd(cli CLIContext) *cobra.Command {
 	return &cobra.Command{
 		Use:   "get",
 		Short: "fetch a state object in the apiserver",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := cli.Client()
 
