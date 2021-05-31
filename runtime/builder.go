@@ -304,10 +304,10 @@ func (b *Builder) installModules() error {
 
 func (b *Builder) installAuthenticationAdmissionHandlers() error {
 	for _, m := range b.moduleDescriptors {
-		if m.AuthenticationExtension == nil {
+		if m.AdmissionControllers == nil {
 			continue
 		}
-		for _, h := range m.AuthenticationExtension.AdmissionControllers {
+		for _, h := range m.AdmissionControllers {
 			b.router.AddTransactionAdmissionController(h.Handler)
 			klog.Infof("registered transaction admission controller %T for core %s", h.Handler, m.Name)
 		}
@@ -317,10 +317,10 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 
 func (b *Builder) installPostAuthenticationHandlers() error {
 	for _, m := range b.moduleDescriptors {
-		if m.AuthenticationExtension == nil {
+		if m.TransitionControllers == nil {
 			continue
 		}
-		for _, h := range m.AuthenticationExtension.TransitionControllers {
+		for _, h := range m.TransitionControllers {
 			b.router.AddTransactionPostAuthenticationController(h.Handler)
 			klog.Infof("registered transaction post authentication controller %T for core %s", h.Handler, m.Name)
 		}

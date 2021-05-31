@@ -1,4 +1,4 @@
-package extensions_test
+package authn_test
 
 import (
 	"testing"
