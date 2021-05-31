@@ -155,7 +155,8 @@ var RoleBindingSchema = schema.Definition{
 		APIGroup: "tmos.rbac.v1alpha1",
 		APIKind:  "RoleBinding",
 	},
-	PrimaryKey: "subject",
+	PrimaryKey:    "subject",
+	SecondaryKeys: []string{"roleRef"},
 }
 
 type ClientSet interface {
