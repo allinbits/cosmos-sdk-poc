@@ -80,6 +80,14 @@ func (s *Schema) Name() string {
 	return s.meta.Fullname()
 }
 
+func (s *Schema) APIGroup() meta.APIGroup {
+	return s.meta.APIGroup
+}
+
+func (s *Schema) APIKind() meta.APIKind {
+	return s.meta.APIKind
+}
+
 // EncodePrimaryKey returns the encoded primary given a meta.StateObject
 // NOTE: panics if the field does not belong to the message
 func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {

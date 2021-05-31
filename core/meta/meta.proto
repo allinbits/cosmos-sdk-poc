@@ -1,0 +1,24 @@
+syntax="proto3";
+
+package tmos.meta.v1alpha1;
+
+option go_package = "github.com/fdymylja/tmos/core/meta";
+
+// ResourceType marks the type of a resource
+enum ResourceType {
+  // StateObject is a resource that is saved into storage
+  StateObject = 0;
+  // StateTransition is a resource that is not saved into storage
+  // but is used to modify state.
+  StateTransition = 1;
+}
+
+// ResourceDefinition defines a resource
+message ResourceDefinition {
+  // group defines the name of the group the resource belongs to (ex: x.bank.v1alpha1;)
+  string group = 1;
+  // kind defines the unique name of the resource in the group it belongs to (ex: balance)
+  string kind = 2;
+  // resource_type marks the resource type
+  ResourceType resource_type = 3;
+}

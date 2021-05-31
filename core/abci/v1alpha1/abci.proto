@@ -19,92 +19,110 @@ enum ABCIStage {
 }
 
 message CurrentBlock {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 
   uint64 block_number = 1;
 }
 
 message Stage {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
-
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
   ABCIStage stage = 1;
 }
 
 message InitChainInfo {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
-
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
   string chain_id = 1;
 }
 
 message BeginBlockState {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 
   tendermint.abci.RequestBeginBlock begin_block = 1;
 }
 
 message CheckTxState {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 
   tendermint.abci.RequestCheckTx check_tx = 1;
 }
 
 message DeliverTxState {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 
   tendermint.abci.RequestDeliverTx deliver_tx = 1;
 }
 
 message ValidatorUpdates {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 
   repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
 }
 
 message EndBlockState {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 
   tendermint.abci.RequestEndBlock end_block = 1;
 }
 
 message MsgSetBeginBlockState {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
 
   tendermint.abci.RequestBeginBlock begin_block = 1;
 }
 
 message MsgSetCheckTxState {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
 
   tendermint.abci.RequestCheckTx check_tx = 1;
 }
 
 message MsgSetDeliverTxState {
-  option (tmos.core.modulegen.state_transition) = true;
-
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
   tendermint.abci.RequestDeliverTx deliver_tx = 1;
 }
 
 message MsgSetEndBlockState {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
 
   tendermint.abci.RequestEndBlock end_block = 1;
 }
 
 message MsgSetInitChain {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
 
   InitChainInfo init_chain_info = 1;
 }
 
 message MsgSetValidatorUpdates {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
+
   repeated tendermint.abci.ValidatorUpdate validator_updates = 1;
 }

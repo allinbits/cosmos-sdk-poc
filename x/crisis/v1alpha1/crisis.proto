@@ -31,10 +31,11 @@ message MsgVerifyInvariant {
 }
 
 message InvariantHandler {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.primary_key) = "stateTransition";
-  option (tmos.core.modulegen.secondary_key) = "module";
-  option (tmos.core.modulegen.secondary_key) = "route";
+  option (tmos.core.modulegen.state_object) = {
+    primary_key: "stateTransition",
+    secondary_keys: "module",
+    secondary_keys: "route",
+  };
 
   string state_transition = 1;
   string module = 2;

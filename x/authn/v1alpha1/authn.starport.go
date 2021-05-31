@@ -145,7 +145,7 @@ var AccountSchema = schema.Definition{
 		APIKind:  "Account",
 	},
 	PrimaryKey:    "address",
-	SecondaryKeys: []string{"accountNumber", "sequence"},
+	SecondaryKeys: []string{"accountNumber"},
 }
 
 var CurrentAccountNumberSchema = schema.Definition{
