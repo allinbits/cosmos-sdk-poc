@@ -41,19 +41,19 @@ func (m *Module) Initialize(c module.Client) module.Descriptor {
 	// add admission controllers, they will only read state
 	// never modify it.
 	builder.
-		WithAdmissionController(mempoolFee{}).                // verifies if fee matches the minimum
-		WithAdmissionController(newAccountExists(c)).         // verifies that all signer accounts exist
-		WithAdmissionController(newTimeoutBlockExtension(c)). // verifies if tx is not timed-out compared to block
-		WithAdmissionController(newValidateMemoExtension(c)). // validates memo length
-		WithAdmissionController(newValidateSigCount(c)).      // validates number of signatures
-		WithAdmissionController(newSigVerifier(c))            // validate signatures
+		WithAuthAdmissionHandler(mempoolFee{}). // verifies if fee matches the minimum
+		WithAuthAdmissionHandler(newAccountExists(c)). // verifies that all signer accounts exist
+		WithAuthAdmissionHandler(newTimeoutBlockExtension(c)). // verifies if tx is not timed-out compared to block
+		WithAuthAdmissionHandler(newValidateMemoExtension(c)). // validates memo length
+		WithAuthAdmissionHandler(newValidateSigCount(c)). // validates number of signatures
+		WithAuthAdmissionHandler(newSigVerifier(c)) // validate signatures
 
 	// add transition controllers for tx, they CAN modify state after
 	// a tx is authenticated
 	builder.
-		WithTransitionController(newConsumeGasForTxSize(c)). // consumes gas for tx size
-		WithTransitionController(newSetPubKeys(c)).          // sets pub keys
-		WithTransitionController(newIncreaseSequence(c))     // increases sequence
+		WithPostAuthenticationHandler(newConsumeGasForTxSize(c)). // consumes gas for tx size
+		WithPostAuthenticationHandler(newSetPubKeys(c)). // sets pub keys
+		WithPostAuthenticationHandler(newIncreaseSequence(c)) // increases sequence
 
 	return builder.Build()
 }
