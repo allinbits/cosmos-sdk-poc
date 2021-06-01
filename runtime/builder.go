@@ -157,30 +157,32 @@ func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 	return nil
 }
 
-func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.Role) error {
-	for _, so := range m.StateObjects {
+func (b *Builder) registerStateObjects(md module.Descriptor) error {
+	for _, so := range md.StateObjects {
 		err := b.store.RegisterObject(so.StateObject, so.Options)
 		if err != nil {
 			return err
 		}
-		err = extendRoleForStateObject(role, so.StateObject)
+
+		err = extendRoleForStateObject(b.moduleRoles[md.Name], so.StateObject)
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state object %s for core %s", meta.Name(so.StateObject), m.Name)
+
+		klog.Infof("registered state object %s for core %s", meta.Name(so.StateObject), md.Name)
 	}
 
 	return nil
 }
 
 func (b *Builder) installStateObjects() error {
-	for _, m := range b.moduleDescriptors {
-		moduleRole := b.moduleRoles[m.Name]
-		err := b.registerStateObjects(m, moduleRole)
+	for _, md := range b.moduleDescriptors {
+		err := b.registerStateObjects(md)
 		if err != nil {
-			return fmt.Errorf("unable to install state objects for core %s: %w", m.Name, err)
+			return fmt.Errorf("unable to install state objects for core %s: %w", md.Name, err)
 		}
 	}
+
 	return nil
 }
 
