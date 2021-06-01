@@ -10,6 +10,7 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -32,7 +33,7 @@ func NewQuerier(store orm.Store) *Querier {
 
 func (q *Querier) Handle(query types.RequestQuery) types.ResponseQuery {
 	splitPath := strings.Split(query.Path, "/")
-	var response meta.Type
+	var response proto.Message
 	var err error
 	switch splitPath[0] {
 	case ResourcesPath:
@@ -56,7 +57,7 @@ func (q *Querier) Handle(query types.RequestQuery) types.ResponseQuery {
 	}
 }
 
-func (q *Querier) apiResources(_ types.RequestQuery) (meta.Type, error) {
+func (q *Querier) apiResources(_ types.RequestQuery) (proto.Message, error) {
 	// TODO we shouldn't do it in this way... we should enable runtime to hold this info
 	// so it can be dynamically queried based on height.
 	groups := q.reg.ListAPIGroups()
@@ -86,7 +87,7 @@ func (q *Querier) apiResources(_ types.RequestQuery) (meta.Type, error) {
 	return m, nil
 }
 
-func (q *Querier) get(req types.RequestQuery) (meta.Type, error) {
+func (q *Querier) get(req types.RequestQuery) (meta.APIObject, error) {
 	split := strings.Split(req.Path, "/")
 	if len(split) < 4 {
 		return nil, fmt.Errorf("invalid path for get")

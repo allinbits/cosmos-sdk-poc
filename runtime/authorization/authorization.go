@@ -19,7 +19,7 @@ type Attributes struct {
 	// Verb returns the runtime verb associated with the request
 	Verb runtimev1alpha1.Verb
 	// Resource contains the resource name being accessed
-	Resource meta.Type
+	Resource meta.APIObject
 	// Users contains the information of the users who made the request
 	Users user.Users
 }

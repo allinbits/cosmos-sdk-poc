@@ -220,7 +220,7 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 	return nil
 }
 
-func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, users user.Users) error {
+func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.APIObject, users user.Users) error {
 	if !r.rbacEnabled {
 		return nil
 	}
