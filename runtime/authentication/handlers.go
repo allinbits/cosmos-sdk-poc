@@ -1,6 +1,6 @@
 package authentication
 
-// AdmissionHandler is a controller for Authentication requests
+// AdmissionHandler is a handler for Authentication requests
 // which does checks that MUST NOT change state but can read it
 // for example:
 //         was the minimum fee reached?

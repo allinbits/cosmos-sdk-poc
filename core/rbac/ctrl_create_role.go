@@ -13,34 +13,34 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-func NewCreateRoleController(client module.Client) statetransition.ExecutionHandler {
-	return CreateRoleController{
+func NewCreateRoleHandler(client module.Client) statetransition.ExecutionHandler {
+	return CreateRoleHandler{
 		client: client,
 	}
 }
 
-type CreateRoleController struct {
+type CreateRoleHandler struct {
 	client module.Client
 }
 
-func (c CreateRoleController) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
+func (c CreateRoleHandler) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	return statetransition.ExecutionResponse{}, c.client.Create(msg.NewRole)
 }
 
-func NewCreateRoleAdmissionController(client module.Client) CreateRoleAdmissionController {
-	return CreateRoleAdmissionController{
+func NewCreateRoleAdmissionHandler(client module.Client) CreateRoleAdmissionHandler {
+	return CreateRoleAdmissionHandler{
 		client:   client,
 		rtClient: runtimev1alpha1.NewClientSet(client),
 	}
 }
 
-type CreateRoleAdmissionController struct {
+type CreateRoleAdmissionHandler struct {
 	client   module.Client
 	rtClient runtimev1alpha1.ClientSet
 }
 
-func (c CreateRoleAdmissionController) Validate(req statetransition.AdmissionRequest) error {
+func (c CreateRoleAdmissionHandler) Validate(req statetransition.AdmissionRequest) error {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
 	if msg.NewRole == nil {
 		return fmt.Errorf("new role is nil")
@@ -64,7 +64,7 @@ func (c CreateRoleAdmissionController) Validate(req statetransition.AdmissionReq
 	return nil
 }
 
-func (c CreateRoleAdmissionController) roleNotExist(id string) error {
+func (c CreateRoleAdmissionHandler) roleNotExist(id string) error {
 	err := c.client.Get(meta.NewStringID(id), new(v1alpha1.Role))
 	switch {
 	case err == nil:
@@ -76,7 +76,7 @@ func (c CreateRoleAdmissionController) roleNotExist(id string) error {
 	}
 }
 
-func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) error {
+func (c CreateRoleAdmissionHandler) verifyStateObjects(role *v1alpha1.Role) error {
 	stateObjects, err := c.rtClient.StateObjectsList().Get()
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (c CreateRoleAdmissionController) verifyStateObjects(role *v1alpha1.Role) e
 	return nil
 }
 
-func (c CreateRoleAdmissionController) verifyStateTransitions(role *v1alpha1.Role) error {
+func (c CreateRoleAdmissionHandler) verifyStateTransitions(role *v1alpha1.Role) error {
 	stateTransitions, err := c.rtClient.StateTransitionsList().Get()
 	if err != nil {
 		return err

@@ -7,19 +7,19 @@ import (
 	"github.com/fdymylja/tmos/x/authn/v1alpha1"
 )
 
-func NewCreateAccountController(c module.Client) *CreateAccountController {
-	return &CreateAccountController{
+func NewCreateAccountHandler(c module.Client) *CreateAccountHandler {
+	return &CreateAccountHandler{
 		auth: v1alpha1.NewClientSet(c),
 		rbac: rbacv1alpha1.NewClientSet(c),
 	}
 }
 
-type CreateAccountController struct {
+type CreateAccountHandler struct {
 	auth v1alpha1.ClientSet
 	rbac rbacv1alpha1.ClientSet
 }
 
-func (m *CreateAccountController) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func (m *CreateAccountHandler) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateAccount)
 	// get last acc number
 	lastAccNum, err := m.auth.CurrentAccountNumber().Get()
