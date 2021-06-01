@@ -21,27 +21,6 @@ func Test_parseObjectSchema(t *testing.T) {
 			},
 			wantErr: nil,
 		},
-		"singleton with primary key": {
-			options: Definition{
-				Singleton:  true,
-				PrimaryKey: "a",
-			},
-			wantErr: ErrBadOptions,
-		},
-		"primary key not found": {
-			options: Definition{
-				PrimaryKey: "not-found",
-			},
-			wantErr: ErrBadOptions,
-		},
-		"singleton with secondary key": {
-			options: Definition{
-				Singleton:     true,
-				PrimaryKey:    "",
-				SecondaryKeys: []string{"a"},
-			},
-			wantErr: ErrBadOptions,
-		},
 	}
 
 	for name, tc := range cases {

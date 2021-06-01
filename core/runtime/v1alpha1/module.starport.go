@@ -1,14 +1,20 @@
 package v1alpha1
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	client "github.com/fdymylja/tmos/runtime/client"
-	meta "github.com/fdymylja/tmos/runtime/meta"
 	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (x *StateObjectsList) StateObject() {}
+func (x *StateObjectsList) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.runtime.v1alpha1",
+		Kind:    "StateObjectsList",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *StateObjectsList) New() meta.StateObject {
+func (x *StateObjectsList) NewStateObject() meta.StateObject {
 	return new(StateObjectsList)
 }
 
@@ -44,9 +50,15 @@ func (x *stateObjectsListClient) Update(stateObjectsList *StateObjectsList, opts
 	return x.client.Update(stateObjectsList, opts...)
 }
 
-func (x *StateTransitionsList) StateObject() {}
+func (x *StateTransitionsList) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.runtime.v1alpha1",
+		Kind:    "StateTransitionsList",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *StateTransitionsList) New() meta.StateObject {
+func (x *StateTransitionsList) NewStateObject() meta.StateObject {
 	return new(StateTransitionsList)
 }
 
@@ -82,31 +94,35 @@ func (x *stateTransitionsListClient) Update(stateTransitionsList *StateTransitio
 	return x.client.Update(stateTransitionsList, opts...)
 }
 
-func (x *CreateStateObjectsList) StateTransition() {}
+func (x *CreateStateObjectsList) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.runtime.v1alpha1",
+		Kind:    "CreateStateObjectsList",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *CreateStateObjectsList) New() meta.StateTransition {
+func (x *CreateStateObjectsList) NewStateTransition() meta.StateTransition {
 	return new(CreateStateObjectsList)
 }
 
-func (x *CreateStateTransitionsList) StateTransition() {}
+func (x *CreateStateTransitionsList) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.runtime.v1alpha1",
+		Kind:    "CreateStateTransitionsList",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *CreateStateTransitionsList) New() meta.StateTransition {
+func (x *CreateStateTransitionsList) NewStateTransition() meta.StateTransition {
 	return new(CreateStateTransitionsList)
 }
 
 var StateObjectsListSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.runtime.v1alpha1",
-		APIKind:  "StateObjectsList",
-	},
 	Singleton: true,
 }
 
 var StateTransitionsListSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.runtime.v1alpha1",
-		APIKind:  "StateTransitionsList",
-	},
 	Singleton: true,
 }
 

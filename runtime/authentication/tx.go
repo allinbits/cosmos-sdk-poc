@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/core/coin/v1alpha1"
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // TxDecoder represents the component which decodes transactions given raw bytes

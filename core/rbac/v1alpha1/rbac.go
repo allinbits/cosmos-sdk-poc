@@ -3,8 +3,8 @@ package v1alpha1
 import (
 	"fmt"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -32,7 +32,7 @@ func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	}
 }
 
-func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resource meta.Type) error {
+func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
 	name := meta.Name(resource)
 	switch verb {
 	case runtimev1alpha1.Verb_Get:
@@ -58,7 +58,7 @@ func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resource meta.Type) error
 	}
 }
 
-func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.Type) error {
+func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
 	res := x.GetResourcesForVerb(verb)
 	set := strset.New(res...)
 	if len(res) != 0 && set.Has(meta.Name(resource)) {

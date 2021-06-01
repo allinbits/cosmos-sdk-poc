@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const metaImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/meta")
 const clientImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/client")
 
 const GenCodeFileSuffix = ".starport.go"
@@ -54,19 +53,25 @@ func genFile(file *protogen.File, gen *protogen.Plugin) {
 		md := msg.Desc
 		// check if message option is present
 		messageOptions := md.Options().(*descriptorpb.MessageOptions)
-		isStateObject := proto.GetExtension(messageOptions, modulegen.E_StateObject).(bool)
+		soDesc := proto.GetExtension(messageOptions, modulegen.E_StateObject).(*modulegen.StateObjectDescriptor)
 		processed := false
-		if isStateObject {
-			genStateObject(objectsFile, msg)
+		if soDesc != nil {
+			err := genStateObject(objectsFile, msg)
+			if err != nil {
+				gen.Error(err)
+			}
 			processed = true
 			stateObjects = append(stateObjects, msg)
 		}
-		isStateTransition := proto.GetExtension(messageOptions, modulegen.E_StateTransition).(bool)
-		if isStateTransition {
+		stDesc := proto.GetExtension(messageOptions, modulegen.E_StateTransition).(*modulegen.StateTransitionDescriptor)
+		if stDesc != nil {
 			if processed {
 				gen.Error(fmt.Errorf("%s is defined as state object and state transition too which is not allowed", msg.Desc.Name()))
 			}
-			genStateTransition(objectsFile, msg)
+			err := genStateTransition(objectsFile, msg)
+			if err != nil {
+				gen.Error(err)
+			}
 			stateTransitions = append(stateTransitions, msg)
 		}
 	}
@@ -158,7 +163,11 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 
 func isSingletonObject(obj *protogen.Message) bool {
 	opts := obj.Desc.Options().(*descriptorpb.MessageOptions)
-	return proto.GetExtension(opts, modulegen.E_Singleton).(bool)
+	xt := proto.GetExtension(opts, modulegen.E_StateObject).(*modulegen.StateObjectDescriptor)
+	if xt == nil {
+		panic(fmt.Sprintf("nil state object descriptor"))
+	}
+	return xt.Singleton
 }
 
 func meetsRequirements(file *protogen.File) bool {
@@ -166,39 +175,44 @@ func meetsRequirements(file *protogen.File) bool {
 		md := msg.Desc
 		// check if message option is present
 		messageOptions := md.Options().(*descriptorpb.MessageOptions)
-		isStateObject := proto.GetExtension(messageOptions, modulegen.E_StateObject).(bool)
-		if isStateObject {
+		desc := proto.GetExtension(messageOptions, modulegen.E_StateObject).(*modulegen.StateObjectDescriptor)
+		if desc != nil {
 			return true
 		}
-		isStateTransition := proto.GetExtension(messageOptions, modulegen.E_StateTransition).(bool)
-		if isStateTransition {
+		stDesc := proto.GetExtension(messageOptions, modulegen.E_StateTransition).(*modulegen.StateTransitionDescriptor)
+		if stDesc != nil {
 			return true
 		}
 	}
 	return false
 }
 
-func genStateTransition(g *protogen.GeneratedFile, message *protogen.Message) {
-	// add state transition interface
-	g.Import(metaImportPackage)
-	g.P("func (x *", message.GoIdent, ") StateTransition() {}")
-	g.P()
-	g.P("func (x *", message.GoIdent, ") New() ", metaImportPackage.Ident("StateTransition"), " {")
+func genStateTransition(g *protogen.GeneratedFile, message *protogen.Message) error {
+	stateTransition := metaPkg.Ident("StateTransition")
+	err := genAPIDefinition(g, message)
+	if err != nil {
+		return err
+	}
+	g.P("func (x *", message.GoIdent, ") NewStateTransition() ", stateTransition, "{")
 	g.P("return new(", message.GoIdent, ")")
 	g.P("}")
 	g.P()
+
+	return nil
 }
 
-func genStateObject(g *protogen.GeneratedFile, message *protogen.Message) {
-	g.Import(metaImportPackage)
-	g.P("func (x *", message.GoIdent, ") StateObject() {}")
-	g.P()
-	g.P("func (x *", message.GoIdent, ") New() ", metaImportPackage.Ident("StateObject"), " {")
+func genStateObject(g *protogen.GeneratedFile, message *protogen.Message) error {
+	stateObject := metaPkg.Ident("StateObject")
+	err := genAPIDefinition(g, message)
+	if err != nil {
+		return err
+	}
+	g.P("func (x *", message.GoIdent, ") NewStateObject()", stateObject, " {")
 	g.P("return new(", message.GoIdent, ")")
 	g.P("}")
 	g.P()
-
 	genStateObjectClient(g, message)
+	return nil
 }
 
 func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) {
@@ -231,7 +245,7 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 	case true:
 		g.P("func (x *", unexportedClient, ") ", "Get(opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error) {")
 		g.P("_spfGenO := new(", message.GoIdent, ")")
-		g.P("_spfGenErr := x.client.Get(", metaImportPackage.Ident("SingletonID"), ", _spfGenO, opts...)")
+		g.P("_spfGenErr := x.client.Get(", metaPkg.Ident("SingletonID"), ", _spfGenO, opts...)")
 		g.P("if _spfGenErr != nil {")
 		g.P("return nil, _spfGenErr")
 		g.P("}")
@@ -240,7 +254,7 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 	case false:
 		g.P("func (x *", unexportedClient, ") ", "Get(", primaryKey, " ", primaryKeyGoType, ", opts... ", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error) {")
 		g.P("_spfGenO := new(", message.GoIdent, ")")
-		g.P("_spfGenID := ", metaImportPackage.Ident(metaIDConstructor[primaryKeyGoType]), "(", primaryKey, ")")
+		g.P("_spfGenID := ", metaPkg.Ident(metaIDConstructor[primaryKeyGoType]), "(", primaryKey, ")")
 		g.P("_spfGenErr := x.client.Get(_spfGenID, _spfGenO, opts...)")
 		g.P("if _spfGenErr != nil {")
 		g.P("return nil, _spfGenErr")
@@ -267,14 +281,16 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 }
 
 func parseSaveInfo(m *protogen.Message) (bool, string, string, error) {
-	opts := m.Desc.Options().(*descriptorpb.MessageOptions)
+	stateObjectDesc, err := getStateObjectDesc(m.Desc)
+	if err != nil {
+		return false, "", "", err
+	}
 	// check if singleton
-	isSingleton := proto.GetExtension(opts, modulegen.E_Singleton).(bool)
-	if isSingleton {
+	if stateObjectDesc.Singleton {
 		return true, "", "", nil
 	}
 	// if it's not singleton find the primary key
-	primaryKey := proto.GetExtension(opts, modulegen.E_PrimaryKey).(string)
+	primaryKey := stateObjectDesc.PrimaryKey
 	if primaryKey == "" {
 		return false, "", "", fmt.Errorf("%s has no primary key", m.Desc.Name())
 	}
@@ -287,6 +303,15 @@ func parseSaveInfo(m *protogen.Message) (bool, string, string, error) {
 		return false, "", "", fmt.Errorf("%s has unsupported primary key kind %s", m.Desc.Name(), fd.Kind())
 	}
 	return false, primaryKey, goType, nil
+}
+
+func getStateObjectDesc(md protoreflect.MessageDescriptor) (*modulegen.StateObjectDescriptor, error) {
+	opts := md.Options().(*descriptorpb.MessageOptions)
+	xt := proto.GetExtension(opts, modulegen.E_StateObject).(*modulegen.StateObjectDescriptor)
+	if xt == nil {
+		return nil, fmt.Errorf("%s has not expected state object descriptor", md.FullName())
+	}
+	return xt, nil
 }
 
 var protoKindToGoType = map[protoreflect.Kind]string{

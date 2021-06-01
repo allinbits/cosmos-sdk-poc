@@ -1,8 +1,8 @@
 package statetransition
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // ExecutionRequest is the request forwarded to the ExecutionHandler

@@ -7,16 +7,19 @@ option go_package = "github.com/fdymylja/tmos/core/rbac/v1alpha1";
 import "core/modulegen/modulegen.proto";
 
 message Params {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
 }
 
 // Role defines a role, which defines what resources
 // can be accessed and which operations can be performed
 // on those resources
 message Role {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.primary_key) = "id";
+  option (tmos.core.modulegen.state_object) = {
+    primary_key: "id",
+  };
+
   // id is the unique of the role, it does not identify the subject
   // it just identifies the role as multiple subjects can be bound
   // to the same role via RoleBinding
@@ -37,8 +40,10 @@ message Role {
 
 // RoleBinding defines the role for a given subject
 message RoleBinding {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.primary_key) = "subject";
+  option (tmos.core.modulegen.state_object) = {
+    primary_key: "subject",
+    secondary_keys: "roleRef",
+  };
   // subject defines which account the binding refers to
   string subject = 1;
   // role_ref points to the Role associated with subject
@@ -47,13 +52,18 @@ message RoleBinding {
 
 // MsgCreateRole creates a new role
 message MsgCreateRole {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
+
   Role new_role = 1;
 }
 
 // MsgBindRole binds subject to role_id
 message MsgBindRole {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
   string role_id = 1;
   string subject = 2;
 }

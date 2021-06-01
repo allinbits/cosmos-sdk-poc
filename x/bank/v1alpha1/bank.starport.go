@@ -1,26 +1,44 @@
 package v1alpha1
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	client "github.com/fdymylja/tmos/runtime/client"
-	meta "github.com/fdymylja/tmos/runtime/meta"
 	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (x *MsgSendCoins) StateTransition() {}
+func (x *MsgSendCoins) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.bank.v1alpha1",
+		Kind:    "MsgSendCoins",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSendCoins) New() meta.StateTransition {
+func (x *MsgSendCoins) NewStateTransition() meta.StateTransition {
 	return new(MsgSendCoins)
 }
 
-func (x *MsgSetBalance) StateTransition() {}
+func (x *MsgSetBalance) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.bank.v1alpha1",
+		Kind:    "MsgSetBalance",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetBalance) New() meta.StateTransition {
+func (x *MsgSetBalance) NewStateTransition() meta.StateTransition {
 	return new(MsgSetBalance)
 }
 
-func (x *Balance) StateObject() {}
+func (x *Balance) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.bank.v1alpha1",
+		Kind:    "Balance",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *Balance) New() meta.StateObject {
+func (x *Balance) NewStateObject() meta.StateObject {
 	return new(Balance)
 }
 
@@ -58,10 +76,6 @@ func (x *balanceClient) Update(balance *Balance, opts ...client.UpdateOption) er
 }
 
 var BalanceSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.x.bank.v1alpha1",
-		APIKind:  "Balance",
-	},
 	PrimaryKey: "address",
 }
 

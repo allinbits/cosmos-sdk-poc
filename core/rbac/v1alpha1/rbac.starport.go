@@ -1,14 +1,20 @@
 package v1alpha1
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	client "github.com/fdymylja/tmos/runtime/client"
-	meta "github.com/fdymylja/tmos/runtime/meta"
 	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (x *Params) StateObject() {}
+func (x *Params) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.rbac.v1alpha1",
+		Kind:    "Params",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *Params) New() meta.StateObject {
+func (x *Params) NewStateObject() meta.StateObject {
 	return new(Params)
 }
 
@@ -44,9 +50,15 @@ func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error
 	return x.client.Update(params, opts...)
 }
 
-func (x *Role) StateObject() {}
+func (x *Role) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.rbac.v1alpha1",
+		Kind:    "Role",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *Role) New() meta.StateObject {
+func (x *Role) NewStateObject() meta.StateObject {
 	return new(Role)
 }
 
@@ -83,9 +95,15 @@ func (x *roleClient) Update(role *Role, opts ...client.UpdateOption) error {
 	return x.client.Update(role, opts...)
 }
 
-func (x *RoleBinding) StateObject() {}
+func (x *RoleBinding) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.rbac.v1alpha1",
+		Kind:    "RoleBinding",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *RoleBinding) New() meta.StateObject {
+func (x *RoleBinding) NewStateObject() meta.StateObject {
 	return new(RoleBinding)
 }
 
@@ -122,40 +140,41 @@ func (x *roleBindingClient) Update(roleBinding *RoleBinding, opts ...client.Upda
 	return x.client.Update(roleBinding, opts...)
 }
 
-func (x *MsgCreateRole) StateTransition() {}
+func (x *MsgCreateRole) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.rbac.v1alpha1",
+		Kind:    "MsgCreateRole",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgCreateRole) New() meta.StateTransition {
+func (x *MsgCreateRole) NewStateTransition() meta.StateTransition {
 	return new(MsgCreateRole)
 }
 
-func (x *MsgBindRole) StateTransition() {}
+func (x *MsgBindRole) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.rbac.v1alpha1",
+		Kind:    "MsgBindRole",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgBindRole) New() meta.StateTransition {
+func (x *MsgBindRole) NewStateTransition() meta.StateTransition {
 	return new(MsgBindRole)
 }
 
 var ParamsSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.rbac.v1alpha1",
-		APIKind:  "Params",
-	},
 	Singleton: true,
 }
 
 var RoleSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.rbac.v1alpha1",
-		APIKind:  "Role",
-	},
 	PrimaryKey: "id",
 }
 
 var RoleBindingSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.rbac.v1alpha1",
-		APIKind:  "RoleBinding",
-	},
-	PrimaryKey: "subject",
+	PrimaryKey:    "subject",
+	SecondaryKeys: []string{"roleRef"},
 }
 
 type ClientSet interface {

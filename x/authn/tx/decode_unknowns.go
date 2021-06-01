@@ -3,7 +3,7 @@ package tx
 import (
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/meta"
+	meta "github.com/fdymylja/tmos/core/meta"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"

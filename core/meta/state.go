@@ -1,9 +1,5 @@
 package meta
 
-import (
-	"google.golang.org/protobuf/proto"
-)
-
 var SingletonID = BytesID("unique")
 
 func NewStringID(id string) StringID {
@@ -22,29 +18,12 @@ type BytesID []byte
 
 func (b BytesID) Bytes() []byte { return b }
 
-// Type defines a generalized type that can be fed to the runtime
-type Type interface {
-	proto.Message
-}
-
-// StateTransition is a type which is used to cause state transitions
-type StateTransition interface {
-	Type
-	StateTransition()
-}
-
-// StateObject defines an object which is saved in the state
-type StateObject interface {
-	Type
-	StateObject()
-}
-
 // ID defines the unique identification of an StateObject.
 type ID interface {
 	Bytes() []byte
 }
 
 // Name returns the unique name for the Type
-func Name(t Type) string {
+func Name(t APIObject) string {
 	return (string)(t.ProtoReflect().Descriptor().FullName())
 }
