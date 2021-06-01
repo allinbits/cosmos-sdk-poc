@@ -18,14 +18,14 @@ import (
 )
 
 type deliverOptions struct {
-	skipAdmissionController bool
+	skipAdmissionHandler bool
 }
 
 type DeliverOption func(opt *deliverOptions)
 
-func DeliverSkipAdmissionControllers() DeliverOption {
+func DeliverSkipAdmissionHandlers() DeliverOption {
 	return func(opt *deliverOptions) {
-		opt.skipAdmissionController = true
+		opt.skipAdmissionHandler = true
 	}
 }
 
@@ -60,7 +60,7 @@ func (r *Runtime) InitGenesis() error {
 	}
 	// initialize the initial runtime components information
 	// so that modules such as Authorizer can have access to it.
-	klog.Infof("initializing runtime controller default state")
+	klog.Infof("initializing runtime handler default state")
 	err := r.deliver(r.user, &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
 	if err != nil {
 		return err
@@ -143,14 +143,14 @@ func (r *Runtime) Deliver(subjects user.Users, transition meta.StateTransition, 
 	return r.deliver(subjects, transition, opts...)
 }
 
-// deliver delivers a meta.StateTransition to the handling controller
+// deliver delivers a meta.StateTransition to the handler
 // returns error in case of routing errors or execution errors.
 func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition, opts ...DeliverOption) (err error) {
 	deliverOpt := new(deliverOptions)
 	for _, opt := range opts {
 		opt(deliverOpt)
 	}
-	if !deliverOpt.skipAdmissionController {
+	if !deliverOpt.skipAdmissionHandler {
 		err := r.runAdmissionChain(users, stateTransition)
 		if err != nil {
 			return err
@@ -178,10 +178,10 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 	return nil
 }
 
-// runAdmissionChain runs the controller.AdmissionHandler handlers related to the
+// runAdmissionChain runs the AdmissionHandler handlers related to the
 // provided state transition.
 func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTransition) error {
-	ctrls, err := r.router.GetStateTransitionAdmissionControllers(transition)
+	ctrls, err := r.router.GetStateTransitionAdmissionHandlers(transition)
 	if err != nil {
 		return fmt.Errorf("unable to execute request %s: %w", meta.Name(transition), err)
 	}

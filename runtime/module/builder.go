@@ -11,7 +11,7 @@ import (
 type Descriptor struct {
 	Name                                 string
 	GenesisHandler                       GenesisHandler
-	StateTransitionAdmissionHandlers     []stateTransitionAdmissionHandlers
+	StateTransitionAdmissionHandlers     []stateTransitionAdmissionHandler
 	StateTransitionPreExecHandlers       []stateTransitionPreExecutionHandler
 	StateTransitionExecutionHandlers     []stateTransitionExecutionHandler
 	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
@@ -26,9 +26,9 @@ type stateObject struct {
 	Options     schema.Definition
 }
 
-type stateTransitionAdmissionHandlers struct {
-	StateTransition meta.StateTransition
-	Controller      statetransition.AdmissionHandler
+type stateTransitionAdmissionHandler struct {
+	StateTransition  meta.StateTransition
+	AdmissionHandler statetransition.AdmissionHandler
 }
 
 type stateTransitionPreExecutionHandler struct {
@@ -38,7 +38,7 @@ type stateTransitionPreExecutionHandler struct {
 
 type stateTransitionExecutionHandler struct {
 	StateTransition meta.StateTransition
-	Controller      statetransition.ExecutionHandler
+	Handler         statetransition.ExecutionHandler
 	External        bool
 }
 
@@ -64,14 +64,14 @@ func (b *DescriptorBuilder) Named(name string) *DescriptorBuilder {
 func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.ExecutionHandler, external bool) *DescriptorBuilder {
 	b.descriptor.StateTransitionExecutionHandlers = append(b.descriptor.StateTransitionExecutionHandlers, stateTransitionExecutionHandler{
 		StateTransition: transition,
-		Controller:      ctrl,
+		Handler:         ctrl,
 		External:        external,
 	})
 	return b
 }
 
 func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ctrl statetransition.AdmissionHandler) *DescriptorBuilder {
-	b.descriptor.StateTransitionAdmissionHandlers = append(b.descriptor.StateTransitionAdmissionHandlers, stateTransitionAdmissionHandlers{transition, ctrl})
+	b.descriptor.StateTransitionAdmissionHandlers = append(b.descriptor.StateTransitionAdmissionHandlers, stateTransitionAdmissionHandler{transition, ctrl})
 	return b
 }
 

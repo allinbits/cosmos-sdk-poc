@@ -126,7 +126,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 	// cache again
 	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
-		err = a.rt.Deliver(tx.Users(), transition, DeliverSkipAdmissionControllers())
+		err = a.rt.Deliver(tx.Users(), transition, DeliverSkipAdmissionHandlers())
 		if err != nil {
 			return errors.ToABCIResponse(0, 0, err)
 		}
