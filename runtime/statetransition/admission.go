@@ -4,7 +4,7 @@ import (
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 )
 
-// AdmissionRequest is the request sent to admission controllers
+// AdmissionRequest is the request sent to admission handlers
 type AdmissionRequest struct {
 	// Transition defines the meta.StateTransition that needs to be validated
 	Transition StateTransition
@@ -13,7 +13,7 @@ type AdmissionRequest struct {
 	Users user.Users
 }
 
-// AdmissionHandler defines the admission controller
+// AdmissionHandler defines the admission handler
 // its duty is to verify that the state transition
 // can be executed.
 // It can read state but it cannot modify it.

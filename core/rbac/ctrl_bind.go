@@ -7,15 +7,15 @@ import (
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func NewBindRoleController(client module.Client) statetransition.ExecutionHandler {
-	return BindRoleController{client: client}
+func NewBindRoleHandler(client module.Client) statetransition.ExecutionHandler {
+	return BindRoleHandler{client: client}
 }
 
-type BindRoleController struct {
+type BindRoleHandler struct {
 	client module.Client
 }
 
-func (b BindRoleController) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
+func (b BindRoleHandler) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgBindRole)
 	return statetransition.ExecutionResponse{}, b.client.Create(&v1alpha1.RoleBinding{
 		Subject: msg.Subject,

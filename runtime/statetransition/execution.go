@@ -5,7 +5,7 @@ import (
 	"github.com/fdymylja/tmos/runtime/meta"
 )
 
-// ExecutionRequest is the request forwarded to the ExecutionHandler controller
+// ExecutionRequest is the request forwarded to the ExecutionHandler
 type ExecutionRequest struct {
 	// Users contains information on the entities that have authorized the meta.StateTransition
 	Users user.Users
@@ -13,7 +13,7 @@ type ExecutionRequest struct {
 	Transition meta.StateTransition
 }
 
-// ExecutionResponse is the response returned by ExecutionHandler controller
+// ExecutionResponse is the response returned by ExecutionHandler
 type ExecutionResponse struct{}
 
 // ExecutionHandler identifies the state transition handler

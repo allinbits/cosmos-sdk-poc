@@ -17,18 +17,18 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		Named(user.Runtime).
 		OwnsStateObject(&v1alpha1.StateObjectsList{}, v1alpha1.StateObjectsListSchema).
 		OwnsStateObject(&v1alpha1.StateTransitionsList{}, v1alpha1.StateTransitionsListSchema).
-		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsController(client), false).
-		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsController(client), false).Build()
+		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsHandler(client), false).
+		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsHandler(client), false).Build()
 }
 
-func newCreateStateObjectsController(client module.Client) statetransition.ExecutionHandlerFunc {
+func newCreateStateObjectsHandler(client module.Client) statetransition.ExecutionHandlerFunc {
 	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateObjectsList)
 		return resp, client.Create(&v1alpha1.StateObjectsList{StateObjects: msg.StateObjects})
 	}
 }
 
-func newCreateStateTransitionsController(client module.Client) statetransition.ExecutionHandlerFunc {
+func newCreateStateTransitionsHandler(client module.Client) statetransition.ExecutionHandlerFunc {
 	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateTransitionsList)
 		return resp, client.Create(&v1alpha1.StateTransitionsList{

@@ -117,41 +117,41 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) registerStateTransitionControllers(m module.Descriptor, role *rbacv1alpha1.Role) error {
-	for _, ctrl := range m.StateTransitionExecutionHandlers {
-		// add state transition controller to the router
-		err := b.router.AddStateTransitionExecutionHandler(ctrl.StateTransition, ctrl.Controller)
+func (b *Builder) registerStateTransitionHandlers(m module.Descriptor, role *rbacv1alpha1.Role) error {
+	for _, handler := range m.StateTransitionExecutionHandlers {
+		// add state transition handler to the router
+		err := b.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
 		if err != nil {
 			return err
 		}
 
 		// add deliver rights for the state transition
-		err = role.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
+		err = role.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
 		if err != nil {
 			return err
 		}
 
 		// if the state transition is marked as external we extend the external_account role
-		if ctrl.External {
-			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, ctrl.StateTransition)
+		if handler.External {
+			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
 			if err != nil {
 				return err
 			}
 		}
 
-		klog.Infof("registered state transition %s for core %s", meta.Name(ctrl.StateTransition), m.Name)
+		klog.Infof("registered state transition %s for core %s", meta.Name(handler.StateTransition), m.Name)
 	}
 
 	return nil
 }
 
-func (b *Builder) registerAdmissionControllers(m module.Descriptor) error {
-	for _, ctrl := range m.StateTransitionAdmissionHandlers {
-		err := b.router.AddStateTransitionAdmissionHandler(ctrl.StateTransition, ctrl.Controller)
+func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
+	for _, handler := range m.StateTransitionAdmissionHandlers {
+		err := b.router.AddStateTransitionAdmissionHandler(handler.StateTransition, handler.AdmissionHandler)
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered admission controller %s for core %s", meta.Name(ctrl.StateTransition), m.Name)
+		klog.Infof("registered admission handler %s for core %s", meta.Name(handler.StateTransition), m.Name)
 	}
 
 	return nil
@@ -201,7 +201,7 @@ func (b *Builder) initEmptyRoles() error {
 func (b *Builder) installStateTransitions() error {
 	for _, m := range b.moduleDescriptors {
 		role := b.moduleRoles[m.Name]
-		err := b.registerStateTransitionControllers(m, role)
+		err := b.registerStateTransitionHandlers(m, role)
 		if err != nil {
 			return fmt.Errorf("unable to install state transitions for core %s: %w", m.Name, err)
 		}
@@ -211,7 +211,7 @@ func (b *Builder) installStateTransitions() error {
 
 func (b *Builder) installStateTransitionAdmissionHandlers() error {
 	for _, m := range b.moduleDescriptors {
-		err := b.registerAdmissionControllers(m)
+		err := b.registerAdmissionHandlers(m)
 		if err != nil {
 			return err
 		}
@@ -254,47 +254,38 @@ func (b *Builder) installStateTransitionPostExecHandlers() error {
 }
 
 func (b *Builder) installModules() error {
-	// initialize empty roles for modules
 	if err := b.initEmptyRoles(); err != nil {
 		return fmt.Errorf("unable to initialize core roles: %w", err)
 	}
 
-	// first we install state objects
 	if err := b.installStateObjects(); err != nil {
 		return fmt.Errorf("unable to install state objects: %w", err)
 	}
 
-	// after we install state transitions
 	if err := b.installStateTransitions(); err != nil {
 		return fmt.Errorf("unable to install state transitions: %w", err)
 	}
 
-	// then state transition admission controllers
 	if err := b.installStateTransitionAdmissionHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition admission handlers: %w", err)
 	}
 
-	// then state transition pre exec handlers
 	if err := b.installStateTransitionPreExecHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition pre execution handlers: %w", err)
 	}
 
-	// then state transition post exec handlers
 	if err := b.installStateTransitionPostExecHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition post execution handlers: %w", err)
 	}
 
-	// then transaction admission handlers
 	if err := b.installAuthenticationAdmissionHandlers(); err != nil {
 		return fmt.Errorf("unable to install authentication admission handlers: %w", err)
 	}
 
-	// then transaction post authentication handlers
 	if err := b.installPostAuthenticationHandlers(); err != nil {
 		return fmt.Errorf("unable to install post authentication handlers: %w", err)
 	}
 
-	// then dependencies
 	if err := b.installDependencies(); err != nil {
 		return fmt.Errorf("unable to install core dependencies: %w", err)
 	}
@@ -308,8 +299,8 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 			continue
 		}
 		for _, h := range m.AuthAdmissionHandlers {
-			b.router.AddTransactionAdmissionController(h.Handler)
-			klog.Infof("registered transaction admission controller %T for core %s", h.Handler, m.Name)
+			b.router.AddTransactionAdmissionHandler(h.Handler)
+			klog.Infof("registered transaction admission handler %T for core %s", h.Handler, m.Name)
 		}
 	}
 	return nil
@@ -321,8 +312,8 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 			continue
 		}
 		for _, h := range m.PostAuthenticationHandler {
-			b.router.AddTransactionPostAuthenticationController(h.Handler)
-			klog.Infof("registered transaction post authentication controller %T for core %s", h.Handler, m.Name)
+			b.router.AddTransactionPostAuthenticationHandler(h.Handler)
+			klog.Infof("registered transaction post authentication handler %T for core %s", h.Handler, m.Name)
 		}
 	}
 	return nil

@@ -46,10 +46,10 @@ func (r *Router) AddStateTransitionAdmissionHandler(transition meta.StateTransit
 	return nil
 }
 
-func (r *Router) GetStateTransitionAdmissionControllers(transition meta.StateTransition) ([]statetransition.AdmissionHandler, error) {
+func (r *Router) GetStateTransitionAdmissionHandlers(transition meta.StateTransition) ([]statetransition.AdmissionHandler, error) {
 	if !r.knownStateTransition(transition) {
 		return nil, fmt.Errorf(
-			"%w: unable to provide state transition admission controllers for unknown state transition %s",
+			"%w: unable to provide state transition admission handlers for unknown state transition %s",
 			ErrTransitionNotFound,
 			r.name(transition),
 		)
@@ -138,7 +138,7 @@ func (r *Router) GetTransactionAdmissionHandlers() []authentication.AdmissionHan
 	return r.transactionAdmissionHandlers
 }
 
-func (r *Router) AddTransactionAdmissionController(ctrl authentication.AdmissionHandler) {
+func (r *Router) AddTransactionAdmissionHandler(ctrl authentication.AdmissionHandler) {
 	r.transactionAdmissionHandlers = append(r.transactionAdmissionHandlers, ctrl)
 }
 
@@ -146,7 +146,7 @@ func (r *Router) GetTransactionPostAuthenticationHandlers() []authentication.Pos
 	return r.transactionPostAuthenticationHandlers
 }
 
-func (r *Router) AddTransactionPostAuthenticationController(ctrl authentication.PostAuthenticationHandler) {
+func (r *Router) AddTransactionPostAuthenticationHandler(ctrl authentication.PostAuthenticationHandler) {
 	r.transactionPostAuthenticationHandlers = append(r.transactionPostAuthenticationHandlers, ctrl)
 }
 
