@@ -1,32 +1,56 @@
 package v1alpha1
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	client "github.com/fdymylja/tmos/runtime/client"
-	meta "github.com/fdymylja/tmos/runtime/meta"
 	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (x *MsgCreateAccount) StateTransition() {}
+func (x *MsgCreateAccount) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.authn.v1alpha1",
+		Kind:    "MsgCreateAccount",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgCreateAccount) New() meta.StateTransition {
+func (x *MsgCreateAccount) NewStateTransition() meta.StateTransition {
 	return new(MsgCreateAccount)
 }
 
-func (x *MsgUpdateAccount) StateTransition() {}
+func (x *MsgUpdateAccount) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.authn.v1alpha1",
+		Kind:    "MsgUpdateAccount",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgUpdateAccount) New() meta.StateTransition {
+func (x *MsgUpdateAccount) NewStateTransition() meta.StateTransition {
 	return new(MsgUpdateAccount)
 }
 
-func (x *MsgDeleteAccount) StateTransition() {}
+func (x *MsgDeleteAccount) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.authn.v1alpha1",
+		Kind:    "MsgDeleteAccount",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgDeleteAccount) New() meta.StateTransition {
+func (x *MsgDeleteAccount) NewStateTransition() meta.StateTransition {
 	return new(MsgDeleteAccount)
 }
 
-func (x *Account) StateObject() {}
+func (x *Account) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.authn.v1alpha1",
+		Kind:    "Account",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *Account) New() meta.StateObject {
+func (x *Account) NewStateObject() meta.StateObject {
 	return new(Account)
 }
 
@@ -63,9 +87,15 @@ func (x *accountClient) Update(account *Account, opts ...client.UpdateOption) er
 	return x.client.Update(account, opts...)
 }
 
-func (x *CurrentAccountNumber) StateObject() {}
+func (x *CurrentAccountNumber) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.authn.v1alpha1",
+		Kind:    "CurrentAccountNumber",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *CurrentAccountNumber) New() meta.StateObject {
+func (x *CurrentAccountNumber) NewStateObject() meta.StateObject {
 	return new(CurrentAccountNumber)
 }
 
@@ -101,9 +131,15 @@ func (x *currentAccountNumberClient) Update(currentAccountNumber *CurrentAccount
 	return x.client.Update(currentAccountNumber, opts...)
 }
 
-func (x *Params) StateObject() {}
+func (x *Params) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.authn.v1alpha1",
+		Kind:    "Params",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *Params) New() meta.StateObject {
+func (x *Params) NewStateObject() meta.StateObject {
 	return new(Params)
 }
 
@@ -140,27 +176,15 @@ func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error
 }
 
 var AccountSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.x.authn.v1alpha1",
-		APIKind:  "Account",
-	},
 	PrimaryKey:    "address",
-	SecondaryKeys: []string{"accountNumber", "sequence"},
+	SecondaryKeys: []string{"accountNumber"},
 }
 
 var CurrentAccountNumberSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.x.authn.v1alpha1",
-		APIKind:  "CurrentAccountNumber",
-	},
 	Singleton: true,
 }
 
 var ParamsSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.x.authn.v1alpha1",
-		APIKind:  "Params",
-	},
 	Singleton: true,
 }
 

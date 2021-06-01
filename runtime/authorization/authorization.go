@@ -1,9 +1,9 @@
 package authorization
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // Decision defines the Authorizer choice regarding the request
@@ -19,7 +19,7 @@ type Attributes struct {
 	// Verb returns the runtime verb associated with the request
 	Verb runtimev1alpha1.Verb
 	// Resource contains the resource name being accessed
-	Resource meta.Type
+	Resource meta.APIObject
 	// Users contains the information of the users who made the request
 	Users user.Users
 }

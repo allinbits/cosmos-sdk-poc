@@ -1,7 +1,5 @@
 package v1alpha1
 
-func (x *InvariantHandler) StateObject() {}
-
 func (x *Params) StateObject() {}
 
 func (x *MsgRegisterInvariant) StateTransition()        {}

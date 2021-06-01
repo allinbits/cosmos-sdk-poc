@@ -1,0 +1,17 @@
+syntax="proto3";
+package tmos.runtime.v1alpha1;
+
+option go_package = "github.com/fdymylja/tmos/core/runtime/v1alpha1";
+
+// Resources defines the list of API resources
+// known to the runtime
+message Resources {
+  repeated APIGroupResources api_group_resources = 1;
+}
+
+message APIGroupResources {
+  string api_group = 1;
+
+  repeated string state_objects = 2;
+  repeated string state_transitions = 3;
+}

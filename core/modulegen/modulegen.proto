@@ -7,9 +7,17 @@ option go_package="github.com/fdymylja/tmos/core/modulegen";
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.MessageOptions {
-  bool state_transition = 111000;
-  bool state_object = 111001;
-  string primary_key = 111002;
-  repeated string secondary_key = 111003;
-  bool singleton = 111004;
+  StateTransitionDescriptor state_transition = 1110001;
+  StateObjectDescriptor state_object = 1110002;
+}
+
+// StateTransitionDescriptor describes a state transition
+message StateTransitionDescriptor {
+  bool external = 1;
+}
+
+message StateObjectDescriptor {
+  bool singleton = 1;
+  string primary_key = 2;
+  repeated string secondary_keys = 3;
 }

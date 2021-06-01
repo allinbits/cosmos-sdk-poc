@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authorization"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
@@ -220,7 +220,7 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 	return nil
 }
 
-func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, users user.Users) error {
+func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.APIObject, users user.Users) error {
 	if !r.rbacEnabled {
 		return nil
 	}

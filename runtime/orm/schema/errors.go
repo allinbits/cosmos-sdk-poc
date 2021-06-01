@@ -7,5 +7,5 @@ var (
 	ErrAlreadyExists     = errors.New("schema: already registered")
 	ErrSecondaryKey      = errors.New("schema: secondary key not found in schema")
 	ErrFieldTypeMismatch = errors.New("schema: field type mismatch")
-	ErrBadOptions        = errors.New("schema: invalid registering options")
+	ErrBadDefinition     = errors.New("schema: invalid definition")
 )

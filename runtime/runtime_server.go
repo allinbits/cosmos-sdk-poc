@@ -1,9 +1,9 @@
 package runtime
 
 import (
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 var _ client.RuntimeServer = server{}

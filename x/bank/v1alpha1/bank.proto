@@ -9,7 +9,9 @@ import "core/modulegen/modulegen.proto";
 option go_package = "github.com/fdymylja/tmos/x/bank/v1alpha1";
 
 message MsgSendCoins {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: true,
+  };
 
   string from_address = 1;
   string to_address = 2;
@@ -17,15 +19,18 @@ message MsgSendCoins {
 }
 
 message MsgSetBalance {
-  option (tmos.core.modulegen.state_transition) = true;
+  option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };;
 
   string address = 1;
   repeated core.coin.v1alpha1.Coin amount = 2;
 }
 
 message Balance {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.primary_key) = "address";
+  option (tmos.core.modulegen.state_object) = {
+    primary_key: "address",
+  };
 
   // address identifies the user who owns balance TODO: i'd rename this user...
   string address = 1;

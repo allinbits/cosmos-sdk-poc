@@ -1,9 +1,8 @@
 syntax="proto3";
+
 package tmos.runtime.v1alpha1;
 
 option go_package = "github.com/fdymylja/tmos/core/runtime/v1alpha1";
-
-import "core/modulegen/modulegen.proto";
 
 // Verb defines an action that can be performed on the runtime by external entities
 enum Verb {
@@ -21,34 +20,4 @@ enum Verb {
   Delete = 5;
   // Deliver identifies the DELIVER operation
   Deliver = 6;
-}
-
-// StateObjectsList provides the list of state objects
-// represented as protobuf.Fullname(meta.StateObject)
-message StateObjectsList {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
-
-  repeated string state_objects = 1;
-}
-
-// StateTransitionsList provides the list of state transitions
-// that can be delivered to the runtime represented as protobuf.Fullname(meta.StateTransition)
-message StateTransitionsList {
-  option (tmos.core.modulegen.state_object) = true;
-  option (tmos.core.modulegen.singleton) = true;
-
-  repeated string state_transitions = 1;
-}
-
-message CreateStateObjectsList {
-  option (tmos.core.modulegen.state_transition) = true;
-
-  repeated string state_objects = 1;
-}
-
-message CreateStateTransitionsList {
-  option (tmos.core.modulegen.state_transition) = true;
-
-  repeated string state_transitions = 1;
 }

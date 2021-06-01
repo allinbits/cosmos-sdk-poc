@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	rterr "github.com/fdymylja/tmos/runtime/errors"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 	"github.com/scylladb/go-set/strset"
