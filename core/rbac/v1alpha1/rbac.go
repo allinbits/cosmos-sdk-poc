@@ -13,6 +13,10 @@ import (
 // access to Exec on external handlers.
 const ExternalAccountRoleID = "external_account"
 
+func NewEmptyRole(name string) *Role {
+	return &Role{Id: roleNameForModule(name)}
+}
+
 func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	switch verb {
 	case runtimev1alpha1.Verb_Get:
@@ -69,4 +73,9 @@ func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.Type) error {
 		return err
 	}
 	return nil
+}
+
+func roleNameForModule(name string) string {
+	const moduleRoleSuffix = "role"
+	return fmt.Sprintf("%s-%s", name, moduleRoleSuffix)
 }

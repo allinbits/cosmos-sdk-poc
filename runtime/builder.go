@@ -184,18 +184,26 @@ func (b *Builder) installStateObjects() error {
 	return nil
 }
 
+// initEmptyRoles creates an empty role by every module descriptor.
 func (b *Builder) initEmptyRoles() error {
 	for _, m := range b.moduleDescriptors {
 		if isModuleNameEmpty(m.Name) {
 			return errEmptyModuleName
 		}
-		// check if core role exists already
-		if _, exists := b.moduleRoles[m.Name]; exists {
+
+		if b.roleExists(m.Name) {
 			return fmt.Errorf("core already registered %s", m.Name)
 		}
-		b.moduleRoles[m.Name] = &rbacv1alpha1.Role{Id: roleNameForModule(m.Name)}
+
+		b.moduleRoles[m.Name] = rbacv1alpha1.NewEmptyRole(m.Name)
 	}
+
 	return nil
+}
+
+func (b *Builder) roleExists(name string) bool {
+	_, exists := b.moduleRoles[name]
+	return exists
 }
 
 func (b *Builder) installStateTransitions() error {
@@ -345,11 +353,6 @@ func (b *Builder) initStore() error {
 
 func isModuleNameEmpty(name string) bool {
 	return name == ""
-}
-
-func roleNameForModule(name string) string {
-	const moduleRoleSuffix = "role"
-	return fmt.Sprintf("%s-%s", name, moduleRoleSuffix)
 }
 
 func extendRoleForStateObject(role *rbacv1alpha1.Role, so meta.StateObject) (err error) {
