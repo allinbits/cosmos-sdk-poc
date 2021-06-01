@@ -161,8 +161,6 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 	if err = r.authorized(runtimev1alpha1.Verb_Deliver, stateTransition, users); err != nil {
 		return err
 	}
-	// execute pre state transitions hooks
-	err = r.RunPreStateTransitionHooks(stateTransition)
 	// get the handler
 	handler, err := r.router.GetStateTransitionExecutionHandler(stateTransition)
 	if err != nil {
@@ -173,11 +171,6 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		Users:      users,
 		Transition: stateTransition,
 	})
-	if err != nil {
-		return err
-	}
-	// execute post state transition hooks
-	err = r.RunPostStateTransitionHooks(stateTransition)
 	if err != nil {
 		return err
 	}
@@ -206,7 +199,7 @@ func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTrans
 
 // runTxAdmissionChain runs the authentication.AdmissionHandler handlers
 func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
-	ctrls := r.router.GetTransactionAdmissionControllers()
+	ctrls := r.router.GetTransactionAdmissionHandlers()
 	for _, ctrl := range ctrls {
 		err := ctrl.Validate(tx)
 		if err != nil {
@@ -217,7 +210,7 @@ func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 }
 
 func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
-	ctrls := r.router.GetTransactionPostAuthenticationControllers()
+	ctrls := r.router.GetTransactionPostAuthenticationHandlers()
 	for _, ctrl := range ctrls {
 		_, err := ctrl.Exec(authentication.PostAuthenticationRequest{Tx: tx})
 		if err != nil {
@@ -240,14 +233,6 @@ func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.Type, user
 		return nil
 	}
 	return fmt.Errorf("%w: %s", errors.ErrUnauthorized, err)
-}
-
-func (r *Runtime) RunPreStateTransitionHooks(transition meta.StateTransition) error {
-	return nil
-}
-
-func (r *Runtime) RunPostStateTransitionHooks(transition meta.StateTransition) error {
-	return nil
 }
 
 // convertStoreError converts the store error to a runtime error

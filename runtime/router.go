@@ -134,7 +134,7 @@ func (r *Router) GetStateTransitionPostExecutionHandlers(transition meta.StateTr
 	return postExecHandlers, nil
 }
 
-func (r *Router) GetTransactionAdmissionControllers() []authentication.AdmissionHandler {
+func (r *Router) GetTransactionAdmissionHandlers() []authentication.AdmissionHandler {
 	return r.transactionAdmissionHandlers
 }
 
@@ -142,7 +142,7 @@ func (r *Router) AddTransactionAdmissionController(ctrl authentication.Admission
 	r.transactionAdmissionHandlers = append(r.transactionAdmissionHandlers, ctrl)
 }
 
-func (r *Router) GetTransactionPostAuthenticationControllers() []authentication.PostAuthenticationHandler {
+func (r *Router) GetTransactionPostAuthenticationHandlers() []authentication.PostAuthenticationHandler {
 	return r.transactionPostAuthenticationHandlers
 }
 
