@@ -3,7 +3,7 @@ package schema
 import (
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 

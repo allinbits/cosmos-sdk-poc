@@ -1,14 +1,20 @@
 package v1alpha1
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	client "github.com/fdymylja/tmos/runtime/client"
-	meta "github.com/fdymylja/tmos/runtime/meta"
 	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (x *CurrentBlock) StateObject() {}
+func (x *CurrentBlock) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "CurrentBlock",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *CurrentBlock) New() meta.StateObject {
+func (x *CurrentBlock) NewStateObject() meta.StateObject {
 	return new(CurrentBlock)
 }
 
@@ -44,9 +50,15 @@ func (x *currentBlockClient) Update(currentBlock *CurrentBlock, opts ...client.U
 	return x.client.Update(currentBlock, opts...)
 }
 
-func (x *Stage) StateObject() {}
+func (x *Stage) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "Stage",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *Stage) New() meta.StateObject {
+func (x *Stage) NewStateObject() meta.StateObject {
 	return new(Stage)
 }
 
@@ -82,9 +94,15 @@ func (x *stageClient) Update(stage *Stage, opts ...client.UpdateOption) error {
 	return x.client.Update(stage, opts...)
 }
 
-func (x *InitChainInfo) StateObject() {}
+func (x *InitChainInfo) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "InitChainInfo",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *InitChainInfo) New() meta.StateObject {
+func (x *InitChainInfo) NewStateObject() meta.StateObject {
 	return new(InitChainInfo)
 }
 
@@ -120,9 +138,15 @@ func (x *initChainInfoClient) Update(initChainInfo *InitChainInfo, opts ...clien
 	return x.client.Update(initChainInfo, opts...)
 }
 
-func (x *BeginBlockState) StateObject() {}
+func (x *BeginBlockState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "BeginBlockState",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *BeginBlockState) New() meta.StateObject {
+func (x *BeginBlockState) NewStateObject() meta.StateObject {
 	return new(BeginBlockState)
 }
 
@@ -158,9 +182,15 @@ func (x *beginBlockStateClient) Update(beginBlockState *BeginBlockState, opts ..
 	return x.client.Update(beginBlockState, opts...)
 }
 
-func (x *CheckTxState) StateObject() {}
+func (x *CheckTxState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "CheckTxState",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *CheckTxState) New() meta.StateObject {
+func (x *CheckTxState) NewStateObject() meta.StateObject {
 	return new(CheckTxState)
 }
 
@@ -196,9 +226,15 @@ func (x *checkTxStateClient) Update(checkTxState *CheckTxState, opts ...client.U
 	return x.client.Update(checkTxState, opts...)
 }
 
-func (x *DeliverTxState) StateObject() {}
+func (x *DeliverTxState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "DeliverTxState",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *DeliverTxState) New() meta.StateObject {
+func (x *DeliverTxState) NewStateObject() meta.StateObject {
 	return new(DeliverTxState)
 }
 
@@ -234,9 +270,15 @@ func (x *deliverTxStateClient) Update(deliverTxState *DeliverTxState, opts ...cl
 	return x.client.Update(deliverTxState, opts...)
 }
 
-func (x *ValidatorUpdates) StateObject() {}
+func (x *ValidatorUpdates) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "ValidatorUpdates",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *ValidatorUpdates) New() meta.StateObject {
+func (x *ValidatorUpdates) NewStateObject() meta.StateObject {
 	return new(ValidatorUpdates)
 }
 
@@ -272,9 +314,15 @@ func (x *validatorUpdatesClient) Update(validatorUpdates *ValidatorUpdates, opts
 	return x.client.Update(validatorUpdates, opts...)
 }
 
-func (x *EndBlockState) StateObject() {}
+func (x *EndBlockState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "EndBlockState",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *EndBlockState) New() meta.StateObject {
+func (x *EndBlockState) NewStateObject() meta.StateObject {
 	return new(EndBlockState)
 }
 
@@ -310,103 +358,107 @@ func (x *endBlockStateClient) Update(endBlockState *EndBlockState, opts ...clien
 	return x.client.Update(endBlockState, opts...)
 }
 
-func (x *MsgSetBeginBlockState) StateTransition() {}
+func (x *MsgSetBeginBlockState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "MsgSetBeginBlockState",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetBeginBlockState) New() meta.StateTransition {
+func (x *MsgSetBeginBlockState) NewStateTransition() meta.StateTransition {
 	return new(MsgSetBeginBlockState)
 }
 
-func (x *MsgSetCheckTxState) StateTransition() {}
+func (x *MsgSetCheckTxState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "MsgSetCheckTxState",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetCheckTxState) New() meta.StateTransition {
+func (x *MsgSetCheckTxState) NewStateTransition() meta.StateTransition {
 	return new(MsgSetCheckTxState)
 }
 
-func (x *MsgSetDeliverTxState) StateTransition() {}
+func (x *MsgSetDeliverTxState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "MsgSetDeliverTxState",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetDeliverTxState) New() meta.StateTransition {
+func (x *MsgSetDeliverTxState) NewStateTransition() meta.StateTransition {
 	return new(MsgSetDeliverTxState)
 }
 
-func (x *MsgSetEndBlockState) StateTransition() {}
+func (x *MsgSetEndBlockState) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "MsgSetEndBlockState",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetEndBlockState) New() meta.StateTransition {
+func (x *MsgSetEndBlockState) NewStateTransition() meta.StateTransition {
 	return new(MsgSetEndBlockState)
 }
 
-func (x *MsgSetInitChain) StateTransition() {}
+func (x *MsgSetInitChain) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "MsgSetInitChain",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetInitChain) New() meta.StateTransition {
+func (x *MsgSetInitChain) NewStateTransition() meta.StateTransition {
 	return new(MsgSetInitChain)
 }
 
-func (x *MsgSetValidatorUpdates) StateTransition() {}
+func (x *MsgSetValidatorUpdates) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.abci.v1alpha1",
+		Kind:    "MsgSetValidatorUpdates",
+		ApiType: meta.APIType_StateTransition,
+	}
+}
 
-func (x *MsgSetValidatorUpdates) New() meta.StateTransition {
+func (x *MsgSetValidatorUpdates) NewStateTransition() meta.StateTransition {
 	return new(MsgSetValidatorUpdates)
 }
 
 var CurrentBlockSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "CurrentBlock",
-	},
 	Singleton: true,
 }
 
 var StageSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "Stage",
-	},
 	Singleton: true,
 }
 
 var InitChainInfoSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "InitChainInfo",
-	},
 	Singleton: true,
 }
 
 var BeginBlockStateSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "BeginBlockState",
-	},
 	Singleton: true,
 }
 
 var CheckTxStateSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "CheckTxState",
-	},
 	Singleton: true,
 }
 
 var DeliverTxStateSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "DeliverTxState",
-	},
 	Singleton: true,
 }
 
 var ValidatorUpdatesSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "ValidatorUpdates",
-	},
 	Singleton: true,
 }
 
 var EndBlockStateSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.abci.v1alpha1",
-		APIKind:  "EndBlockState",
-	},
 	Singleton: true,
 }
 

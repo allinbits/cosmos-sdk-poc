@@ -27,19 +27,6 @@ type Type interface {
 	proto.Message
 }
 
-// StateTransition is a type which is used to cause state transitions
-type StateTransition interface {
-	Type
-	StateTransition()
-}
-
-// StateObject defines an object which is saved in the state
-type StateObject interface {
-	Type
-	StateObject()
-	New() StateObject
-}
-
 // ID defines the unique identification of an StateObject.
 type ID interface {
 	Bytes() []byte

@@ -2,8 +2,8 @@ package bank
 
 import (
 	coin "github.com/fdymylja/tmos/core/coin/v1alpha1"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/errors"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 	authnv1alpha1 "github.com/fdymylja/tmos/x/authn/v1alpha1"

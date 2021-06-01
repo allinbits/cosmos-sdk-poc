@@ -1,14 +1,20 @@
 package v1alpha1
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	client "github.com/fdymylja/tmos/runtime/client"
-	meta "github.com/fdymylja/tmos/runtime/meta"
 	schema "github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (x *InvariantHandler) StateObject() {}
+func (x *InvariantHandler) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "tmos.x.crisis.v1alpha1",
+		Kind:    "InvariantHandler",
+		ApiType: meta.APIType_StateObject,
+	}
+}
 
-func (x *InvariantHandler) New() meta.StateObject {
+func (x *InvariantHandler) NewStateObject() meta.StateObject {
 	return new(InvariantHandler)
 }
 
@@ -46,10 +52,6 @@ func (x *invariantHandlerClient) Update(invariantHandler *InvariantHandler, opts
 }
 
 var InvariantHandlerSchema = schema.Definition{
-	Meta: meta.Meta{
-		APIGroup: "tmos.x.crisis.v1alpha1",
-		APIKind:  "InvariantHandler",
-	},
 	PrimaryKey:    "stateTransition",
 	SecondaryKeys: []string{"module", "route"},
 }

@@ -1,7 +1,10 @@
 package meta
 
+import "google.golang.org/protobuf/proto"
+
 // APIObject defines a golang object that can be processed and understood by the runtime
 type APIObject interface {
+	proto.Message
 	// APIDefinition describes the API
 	APIDefinition() *APIDefinition
 }

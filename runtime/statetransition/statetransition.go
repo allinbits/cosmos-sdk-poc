@@ -1,6 +1,8 @@
 package statetransition
 
-import "github.com/fdymylja/tmos/runtime/meta"
+import (
+	meta "github.com/fdymylja/tmos/core/meta"
+)
 
 // StateTransition aliases meta.StateTransition
 type StateTransition = meta.StateTransition

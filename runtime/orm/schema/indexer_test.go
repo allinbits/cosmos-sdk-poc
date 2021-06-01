@@ -3,7 +3,7 @@ package schema
 import (
 	"testing"
 
-	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/testdata/testpb"
 	"github.com/stretchr/testify/require"
 )

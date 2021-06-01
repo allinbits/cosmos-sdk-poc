@@ -3,8 +3,8 @@ package indexes
 import (
 	"fmt"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/kv"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 )
 

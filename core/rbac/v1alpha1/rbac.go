@@ -3,8 +3,8 @@ package v1alpha1
 import (
 	"fmt"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/scylladb/go-set/strset"
 )
 

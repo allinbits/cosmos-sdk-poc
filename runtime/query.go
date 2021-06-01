@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/tendermint/tendermint/abci/types"
@@ -72,10 +72,10 @@ func (q *Querier) apiResources(_ types.RequestQuery) (meta.Type, error) {
 
 		stateObjectsStr := make([]string, len(stateObjects))
 		for j, so := range stateObjects {
-			stateObjectsStr[j] = so.String()
+			stateObjectsStr[j] = so
 		}
 		res := &runtimev1alpha1.APIGroupResources{
-			ApiGroup:         g.String(),
+			ApiGroup:         g,
 			StateObjects:     stateObjectsStr,
 			StateTransitions: nil,
 		}
@@ -92,9 +92,9 @@ func (q *Querier) get(req types.RequestQuery) (meta.Type, error) {
 		return nil, fmt.Errorf("invalid path for get")
 	}
 	// TODO we should check this in state
-	sch, err := q.reg.GetByMeta(meta.Meta{
-		APIGroup: meta.APIGroup(split[1]),
-		APIKind:  meta.APIKind(split[2]),
+	sch, err := q.reg.GetByAPIDefinition(&meta.APIDefinition{
+		Group: split[1],
+		Kind:  split[2],
 	})
 	if err != nil {
 		return nil, err

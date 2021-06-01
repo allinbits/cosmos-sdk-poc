@@ -3,14 +3,12 @@ package schema
 import (
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/meta"
+	meta "github.com/fdymylja/tmos/core/meta"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // Definition defines an object *Schema
 type Definition struct {
-	// Meta contains the information regarding the type API
-	Meta meta.Meta
 	// Singleton marks if there can exist only one instance of this object
 	// it's invalid to use primary key alongside a Singleton
 	Singleton bool
@@ -27,9 +25,6 @@ type Definition struct {
 
 // Validate verifies a Definition
 func (d Definition) Validate() error {
-	if err := d.Meta.Validate(); err != nil {
-		return err
-	}
 	if d.Singleton && d.PrimaryKey != "" {
 		return fmt.Errorf("a StateObject can not be singleton and have a primary key at the same time")
 	}
@@ -52,7 +47,7 @@ type InterfaceEncoderFunc func(i interface{}) (value protoreflect.Value, valid b
 // Schema represents how a meta.StateObject is saved and indexed into the store
 // and provides all the required functionalities to index the fields of the object
 type Schema struct {
-	meta                 meta.Meta
+	apiDefinition        *meta.APIDefinition
 	mType                meta.StateObject
 	name                 string
 	typePrefix           []byte // TODO should we force copies of this?
@@ -65,7 +60,7 @@ type Schema struct {
 }
 
 func (s *Schema) NewStateObject() meta.StateObject {
-	return s.mType.New()
+	return s.mType.NewStateObject()
 }
 
 func (s *Schema) HasIndexes() bool {
@@ -77,15 +72,7 @@ func (s *Schema) TypePrefix() []byte {
 }
 
 func (s *Schema) Name() string {
-	return s.meta.Fullname()
-}
-
-func (s *Schema) APIGroup() meta.APIGroup {
-	return s.meta.APIGroup
-}
-
-func (s *Schema) APIKind() meta.APIKind {
-	return s.meta.APIKind
+	return meta.Name(s.mType)
 }
 
 // EncodePrimaryKey returns the encoded primary given a meta.StateObject
@@ -118,7 +105,7 @@ func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) 
 	if err := options.Validate(); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrBadDefinition, err)
 	}
-	schema := &Schema{meta: options.Meta, mType: o}
+	schema := &Schema{mType: o, apiDefinition: o.APIDefinition()}
 	fds := o.ProtoReflect().Descriptor().Fields()
 	switch options.Singleton {
 	case true:

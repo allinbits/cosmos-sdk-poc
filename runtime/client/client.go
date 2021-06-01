@@ -1,8 +1,8 @@
 package client
 
 import (
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // RuntimeServer represents runtime.Runtime as a server

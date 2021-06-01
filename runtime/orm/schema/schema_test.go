@@ -3,7 +3,6 @@ package schema
 import (
 	"testing"
 
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/testdata/testpb"
 	"github.com/stretchr/testify/require"
 )
@@ -19,10 +18,6 @@ func Test_parseObjectSchema(t *testing.T) {
 			options: Definition{
 				PrimaryKey:    "a",
 				SecondaryKeys: []string{"b", "c"},
-				Meta: meta.Meta{
-					APIGroup: "testdata",
-					APIKind:  "SimpleMessage",
-				},
 			},
 			wantErr: nil,
 		},

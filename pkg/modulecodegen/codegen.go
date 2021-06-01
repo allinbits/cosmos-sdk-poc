@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const metaImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/meta")
 const clientImportPackage = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/client")
 
 const GenCodeFileSuffix = ".starport.go"
@@ -57,7 +56,10 @@ func genFile(file *protogen.File, gen *protogen.Plugin) {
 		soDesc := proto.GetExtension(messageOptions, modulegen.E_StateObject).(*modulegen.StateObjectDescriptor)
 		processed := false
 		if soDesc != nil {
-			genStateObject(objectsFile, msg)
+			err := genStateObject(objectsFile, msg)
+			if err != nil {
+				gen.Error(err)
+			}
 			processed = true
 			stateObjects = append(stateObjects, msg)
 		}
@@ -66,7 +68,10 @@ func genFile(file *protogen.File, gen *protogen.Plugin) {
 			if processed {
 				gen.Error(fmt.Errorf("%s is defined as state object and state transition too which is not allowed", msg.Desc.Name()))
 			}
-			genStateTransition(objectsFile, msg)
+			err := genStateTransition(objectsFile, msg)
+			if err != nil {
+				gen.Error(err)
+			}
 			stateTransitions = append(stateTransitions, msg)
 		}
 	}
@@ -182,27 +187,32 @@ func meetsRequirements(file *protogen.File) bool {
 	return false
 }
 
-func genStateTransition(g *protogen.GeneratedFile, message *protogen.Message) {
-	// add state transition interface
-	g.Import(metaImportPackage)
-	g.P("func (x *", message.GoIdent, ") StateTransition() {}")
-	g.P()
-	g.P("func (x *", message.GoIdent, ") New() ", metaImportPackage.Ident("StateTransition"), " {")
+func genStateTransition(g *protogen.GeneratedFile, message *protogen.Message) error {
+	stateTransition := metaPkg.Ident("StateTransition")
+	err := genAPIDefinition(g, message)
+	if err != nil {
+		return err
+	}
+	g.P("func (x *", message.GoIdent, ") NewStateTransition() ", stateTransition, "{")
 	g.P("return new(", message.GoIdent, ")")
 	g.P("}")
 	g.P()
+
+	return nil
 }
 
-func genStateObject(g *protogen.GeneratedFile, message *protogen.Message) {
-	g.Import(metaImportPackage)
-	g.P("func (x *", message.GoIdent, ") StateObject() {}")
-	g.P()
-	g.P("func (x *", message.GoIdent, ") New() ", metaImportPackage.Ident("StateObject"), " {")
+func genStateObject(g *protogen.GeneratedFile, message *protogen.Message) error {
+	stateObject := metaPkg.Ident("StateObject")
+	err := genAPIDefinition(g, message)
+	if err != nil {
+		return err
+	}
+	g.P("func (x *", message.GoIdent, ") NewStateObject()", stateObject, " {")
 	g.P("return new(", message.GoIdent, ")")
 	g.P("}")
 	g.P()
-
 	genStateObjectClient(g, message)
+	return nil
 }
 
 func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) {
@@ -235,7 +245,7 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 	case true:
 		g.P("func (x *", unexportedClient, ") ", "Get(opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error) {")
 		g.P("_spfGenO := new(", message.GoIdent, ")")
-		g.P("_spfGenErr := x.client.Get(", metaImportPackage.Ident("SingletonID"), ", _spfGenO, opts...)")
+		g.P("_spfGenErr := x.client.Get(", metaPkg.Ident("SingletonID"), ", _spfGenO, opts...)")
 		g.P("if _spfGenErr != nil {")
 		g.P("return nil, _spfGenErr")
 		g.P("}")
@@ -244,7 +254,7 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 	case false:
 		g.P("func (x *", unexportedClient, ") ", "Get(", primaryKey, " ", primaryKeyGoType, ", opts... ", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error) {")
 		g.P("_spfGenO := new(", message.GoIdent, ")")
-		g.P("_spfGenID := ", metaImportPackage.Ident(metaIDConstructor[primaryKeyGoType]), "(", primaryKey, ")")
+		g.P("_spfGenID := ", metaPkg.Ident(metaIDConstructor[primaryKeyGoType]), "(", primaryKey, ")")
 		g.P("_spfGenErr := x.client.Get(_spfGenID, _spfGenO, opts...)")
 		g.P("if _spfGenErr != nil {")
 		g.P("return nil, _spfGenErr")

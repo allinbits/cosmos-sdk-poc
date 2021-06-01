@@ -8,10 +8,8 @@ import (
 )
 
 const schemaImport = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/orm/schema")
-const metaImport = protogen.GoImportPath("github.com/fdymylja/tmos/runtime/meta")
 
 var schemaDefinition = schemaImport.Ident("Definition")
-var metaMeta = metaImport.Ident("Meta")
 
 // genSchema generates the schema.Schema for the object
 func genSchema(g *protogen.GeneratedFile, object *protogen.Message) error {
@@ -28,11 +26,6 @@ func genSchema(g *protogen.GeneratedFile, object *protogen.Message) error {
 
 	// write the schema
 	g.P("var ", object.GoIdent, "Schema = ", schemaDefinition, "{")
-	// write meta
-	g.P("Meta: ", metaMeta, "{")
-	g.P("APIGroup: \"", object.Desc.FullName().Parent(), "\",")
-	g.P("APIKind: \"", object.Desc.Name(), "\",")
-	g.P("},")
 	if stateObjectDesc.PrimaryKey != "" {
 		g.P("PrimaryKey: \"", stateObjectDesc.PrimaryKey, "\"", ",")
 	}

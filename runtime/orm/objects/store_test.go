@@ -3,9 +3,9 @@ package objects
 import (
 	"testing"
 
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/pkg/prototest"
 	"github.com/fdymylja/tmos/runtime/kv"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/fdymylja/tmos/testdata/testpb"
@@ -13,10 +13,7 @@ import (
 )
 
 func TestStore(t *testing.T) {
-	sch, err := schema.NewSchema(&testpb.SimpleMessage{}, schema.Definition{PrimaryKey: "a", Meta: meta.Meta{
-		APIGroup: "testdata",
-		APIKind:  "SimpleMessage",
-	}})
+	sch, err := schema.NewSchema(&testpb.SimpleMessage{}, schema.Definition{PrimaryKey: "a"})
 	require.NoError(t, err)
 	s := kv.NewBadger()
 	store := NewStore(s)

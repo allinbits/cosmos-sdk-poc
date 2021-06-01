@@ -6,7 +6,6 @@ import (
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/pkg/client"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 type CLIContext interface {
@@ -72,6 +71,6 @@ func (f failedClient) Resources(_ context.Context) (*runtimev1alpha1.Resources, 
 	return nil, f.err
 }
 
-func (f failedClient) Get(_ context.Context, _ meta.APIGroup, _ meta.APIKind, _ string) ([]byte, error) {
+func (f failedClient) Get(_ context.Context, _ string, _ string, _ string) ([]byte, error) {
 	return nil, f.err
 }

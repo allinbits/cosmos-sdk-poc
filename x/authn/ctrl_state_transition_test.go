@@ -3,12 +3,12 @@ package authn
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/fdymylja/tmos/runtime"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 func TestCreateAccountController(t *testing.T) {

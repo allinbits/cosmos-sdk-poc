@@ -5,7 +5,7 @@ import (
 
 	"github.com/fdymylja/tmos/core/abci/tendermint/abci"
 	"github.com/fdymylja/tmos/core/abci/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/meta"
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )

@@ -1,9 +1,9 @@
 package authorization
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/meta"
 )
 
 // Decision defines the Authorizer choice regarding the request

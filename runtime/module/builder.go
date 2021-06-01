@@ -1,8 +1,8 @@
 package module
 
 import (
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication"
-	"github.com/fdymylja/tmos/runtime/meta"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )

@@ -28,9 +28,9 @@ func genAPIDefinition(g *protogen.GeneratedFile, message *protogen.Message) erro
 
 	g.Import(metaPkg)
 	g.P("func (x *", message.GoIdent, ") APIDefinition() *", apiDefinitionIdent, " {")
-	g.P("return ", apiDefinitionIdent, "{")
-	g.P("Group: ", message.Desc.FullName().Parent(), ",")
-	g.P("Kind: ", message.Desc.Name(), ",")
+	g.P("return &", apiDefinitionIdent, "{")
+	g.P("Group: \"", message.Desc.FullName().Parent(), "\",")
+	g.P("Kind: \"", message.Desc.Name(), "\",")
 	switch {
 	case stateObject != nil:
 		g.P("ApiType: ", apiTypeStateObject, ",")

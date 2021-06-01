@@ -3,21 +3,21 @@ package schema
 import (
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/meta"
+	"github.com/fdymylja/tmos/core/meta"
 )
 
 func NewRegistry() *Registry {
 	return &Registry{
 		schemas:      map[string]*Schema{},
-		apiGroups:    map[meta.APIGroup][]meta.APIKind{},
-		schemaByMeta: map[meta.APIGroup]map[meta.APIKind]*Schema{},
+		apiGroups:    map[string][]string{},
+		schemaByMeta: map[string]map[string]*Schema{},
 	}
 }
 
 type Registry struct {
 	schemas      map[string]*Schema
-	apiGroups    map[meta.APIGroup][]meta.APIKind
-	schemaByMeta map[meta.APIGroup]map[meta.APIKind]*Schema
+	apiGroups    map[string][]string
+	schemaByMeta map[string]map[string]*Schema
 }
 
 func (s *Registry) Add(sch *Schema) error {
@@ -26,15 +26,15 @@ func (s *Registry) Add(sch *Schema) error {
 		return fmt.Errorf("%w: %s", ErrAlreadyExists, sch.Name())
 	}
 	s.schemas[sch.Name()] = sch
-	s.apiGroups[sch.meta.APIGroup] = append(s.apiGroups[sch.meta.APIGroup], sch.meta.APIKind)
+	s.apiGroups[sch.apiDefinition.Group] = append(s.apiGroups[sch.apiDefinition.Group], sch.apiDefinition.Kind)
 
 	// map by group and kind
-	_, exists = s.schemaByMeta[sch.meta.APIGroup]
+	_, exists = s.schemaByMeta[sch.apiDefinition.Group]
 	// if group was not set add it
 	if !exists {
-		s.schemaByMeta[sch.meta.APIGroup] = map[meta.APIKind]*Schema{}
+		s.schemaByMeta[sch.apiDefinition.Group] = map[string]*Schema{}
 	}
-	s.schemaByMeta[sch.meta.APIGroup][sch.meta.APIKind] = sch
+	s.schemaByMeta[sch.apiDefinition.Group][sch.apiDefinition.Kind] = sch
 	return nil
 }
 
@@ -62,15 +62,15 @@ func (s *Registry) List() []string {
 	return list
 }
 
-func (s *Registry) ListAPIGroups() []meta.APIGroup {
-	groups := make([]meta.APIGroup, 0, len(s.apiGroups))
+func (s *Registry) ListAPIGroups() []string {
+	groups := make([]string, 0, len(s.apiGroups))
 	for k := range s.apiGroups {
 		groups = append(groups, k)
 	}
 	return groups
 }
 
-func (s *Registry) ListKindsInGroup(group meta.APIGroup) ([]meta.APIKind, error) {
+func (s *Registry) ListKindsInGroup(group string) ([]string, error) {
 	kinds, exists := s.apiGroups[group]
 	if !exists {
 		return nil, fmt.Errorf("%w: API Group not found %s", ErrNotFound, group)
@@ -78,14 +78,14 @@ func (s *Registry) ListKindsInGroup(group meta.APIGroup) ([]meta.APIKind, error)
 	return kinds, nil
 }
 
-func (s *Registry) GetByMeta(m meta.Meta) (*Schema, error) {
-	kinds, exist := s.schemaByMeta[m.APIGroup]
+func (s *Registry) GetByAPIDefinition(ad *meta.APIDefinition) (*Schema, error) {
+	kinds, exist := s.schemaByMeta[ad.Group]
 	if !exist {
-		return nil, fmt.Errorf("%w: API group does not exist %s", ErrNotFound, m.APIGroup)
+		return nil, fmt.Errorf("%w: API group does not exist %s", ErrNotFound, ad.Group)
 	}
-	sch, exist := kinds[m.APIKind]
+	sch, exist := kinds[ad.Kind]
 	if !exist {
-		return nil, fmt.Errorf("%w: kind %s not found in API group %s", ErrNotFound, m.APIKind, m.APIGroup)
+		return nil, fmt.Errorf("%w: kind %s not found in API group %s", ErrNotFound, ad.Kind, ad.Group)
 	}
 	return sch, nil
 }

@@ -1,8 +1,13 @@
 package testpb
 
-import "github.com/fdymylja/tmos/runtime/meta"
+import (
+	meta "github.com/fdymylja/tmos/core/meta"
+)
 
-func (x *SimpleMessage) StateObject() {}
-func (x *SimpleMessage) New() meta.StateObject {
+func (x *SimpleMessage) NewStateObject() meta.StateObject {
 	return new(SimpleMessage)
+}
+
+func (x *SimpleMessage) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{Group: "", Kind: ""}
 }

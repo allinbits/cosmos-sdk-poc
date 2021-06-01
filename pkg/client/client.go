@@ -6,7 +6,6 @@ import (
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
-	"github.com/fdymylja/tmos/runtime/meta"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -14,7 +13,7 @@ import (
 
 type Client interface {
 	Resources(ctx context.Context) (*runtimev1alpha1.Resources, error)
-	Get(ctx context.Context, apiGroup meta.APIGroup, apiKind meta.APIKind, name string) ([]byte, error)
+	Get(ctx context.Context, apiGroup string, apiKind string, name string) ([]byte, error)
 }
 
 func NewRPC(endpoint string) (Client, error) {
@@ -47,7 +46,7 @@ func (c *client) Resources(ctx context.Context) (*runtimev1alpha1.Resources, err
 	return res, nil
 }
 
-func (c *client) Get(ctx context.Context, apiGroup meta.APIGroup, apiKind meta.APIKind, name string) ([]byte, error) {
+func (c *client) Get(ctx context.Context, apiGroup string, apiKind string, name string) ([]byte, error) {
 	path := fmt.Sprintf("%s/%s/%s/%s", runtime.GetStateObjectsPath, apiGroup, apiKind, name)
 	resp, err := c.rpc.ABCIQuery(ctx, path, nil)
 	if err != nil {

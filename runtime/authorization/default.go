@@ -3,7 +3,7 @@ package authorization
 import (
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/meta"
+	meta "github.com/fdymylja/tmos/core/meta"
 )
 
 var _ Authorizer = AlwaysAllowAuthorizer{}
