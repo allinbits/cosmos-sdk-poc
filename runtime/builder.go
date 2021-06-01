@@ -254,47 +254,38 @@ func (b *Builder) installStateTransitionPostExecHandlers() error {
 }
 
 func (b *Builder) installModules() error {
-	// initialize empty roles for modules
 	if err := b.initEmptyRoles(); err != nil {
 		return fmt.Errorf("unable to initialize core roles: %w", err)
 	}
 
-	// first we install state objects
 	if err := b.installStateObjects(); err != nil {
 		return fmt.Errorf("unable to install state objects: %w", err)
 	}
 
-	// after we install state transitions
 	if err := b.installStateTransitions(); err != nil {
 		return fmt.Errorf("unable to install state transitions: %w", err)
 	}
 
-	// then state transition admission handlers
 	if err := b.installStateTransitionAdmissionHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition admission handlers: %w", err)
 	}
 
-	// then state transition pre exec handlers
 	if err := b.installStateTransitionPreExecHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition pre execution handlers: %w", err)
 	}
 
-	// then state transition post exec handlers
 	if err := b.installStateTransitionPostExecHandlers(); err != nil {
 		return fmt.Errorf("unable to install state transition post execution handlers: %w", err)
 	}
 
-	// then transaction admission handlers
 	if err := b.installAuthenticationAdmissionHandlers(); err != nil {
 		return fmt.Errorf("unable to install authentication admission handlers: %w", err)
 	}
 
-	// then transaction post authentication handlers
 	if err := b.installPostAuthenticationHandlers(); err != nil {
 		return fmt.Errorf("unable to install post authentication handlers: %w", err)
 	}
 
-	// then dependencies
 	if err := b.installDependencies(); err != nil {
 		return fmt.Errorf("unable to install core dependencies: %w", err)
 	}
