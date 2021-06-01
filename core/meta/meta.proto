@@ -5,7 +5,7 @@ package tmos.meta.v1alpha1;
 option go_package = "github.com/fdymylja/tmos/core/meta";
 
 // ResourceType marks the type of a resource
-enum ResourceType {
+enum APIType {
   // StateObject is a resource that is saved into storage
   StateObject = 0;
   // StateTransition is a resource that is not saved into storage
@@ -13,12 +13,12 @@ enum ResourceType {
   StateTransition = 1;
 }
 
-// ResourceDefinition defines a resource
-message ResourceDefinition {
+// APIDefinition defines a resource by its: group, kind and type
+message APIDefinition {
   // group defines the name of the group the resource belongs to (ex: x.bank.v1alpha1;)
   string group = 1;
   // kind defines the unique name of the resource in the group it belongs to (ex: balance)
   string kind = 2;
-  // resource_type marks the resource type
-  ResourceType resource_type = 3;
+  // api_type marks the resource type
+ APIType api_type = 3;
 }
