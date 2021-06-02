@@ -88,6 +88,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	err = b.installModules()
 	if err != nil {
 		return nil, fmt.Errorf("unable to install modules: %w", err)
@@ -117,21 +118,18 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) registerStateTransitionHandlers(m module.Descriptor, role *rbacv1alpha1.Role) error {
+func (b *Builder) registerStateTransitionHandlers(m module.Descriptor) error {
 	for _, handler := range m.StateTransitionExecutionHandlers {
-		// add state transition handler to the router
 		err := b.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
 		if err != nil {
 			return err
 		}
 
-		// add deliver rights for the state transition
-		err = role.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
+		err = b.moduleRoles[m.Name].Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
 		if err != nil {
 			return err
 		}
 
-		// if the state transition is marked as external we extend the external_account role
 		if handler.External {
 			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
 			if err != nil {
@@ -151,6 +149,7 @@ func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 		if err != nil {
 			return err
 		}
+
 		klog.Infof("registered admission handler %s for core %s", meta.Name(handler.StateTransition), m.Name)
 	}
 
@@ -210,12 +209,12 @@ func (b *Builder) roleExists(name string) bool {
 
 func (b *Builder) installStateTransitions() error {
 	for _, m := range b.moduleDescriptors {
-		role := b.moduleRoles[m.Name]
-		err := b.registerStateTransitionHandlers(m, role)
+		err := b.registerStateTransitionHandlers(m)
 		if err != nil {
 			return fmt.Errorf("unable to install state transitions for core %s: %w", m.Name, err)
 		}
 	}
+
 	return nil
 }
 
@@ -226,6 +225,7 @@ func (b *Builder) installStateTransitionAdmissionHandlers() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -243,6 +243,7 @@ func (b *Builder) installStateTransitionPreExecHandlers() error {
 				m.Name)
 		}
 	}
+
 	return nil
 }
 
