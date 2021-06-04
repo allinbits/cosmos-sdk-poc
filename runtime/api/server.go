@@ -170,10 +170,10 @@ func writeResponse(writer http.ResponseWriter, obj meta.StateObject) {
 
 func notFound(writer http.ResponseWriter, format string, values ...interface{}) {
 	writer.WriteHeader(http.StatusNotFound)
-	_, _ = writer.Write([]byte(fmt.Sprintf("%s", values...)))
+	_, _ = writer.Write([]byte(fmt.Sprintf(format, values...)))
 }
 
 func badRequest(writer http.ResponseWriter, format string, values ...interface{}) {
 	writer.WriteHeader(http.StatusBadRequest)
-	_, _ = writer.Write([]byte(fmt.Sprintf("%s", values...)))
+	_, _ = writer.Write([]byte(fmt.Sprintf(format, values...)))
 }
