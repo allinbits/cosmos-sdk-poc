@@ -3,25 +3,25 @@ package distribution
 import (
 	v1alpha12 "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/x/bank/v1alpha1"
 )
 
-func NewFeeChecker(c module.Client) authentication.AdmissionHandler {
-	return FeeChecker{bank: v1alpha1.NewClientSet(c)}
+func NewFeeChecker() authentication.AdmissionHandler {
+	return FeeChecker{}
 }
 
 // FeeChecker checks if the account has the required amount of fees
-type FeeChecker struct {
-	bank v1alpha1.ClientSet
-}
+type FeeChecker struct{}
 
-func (x FeeChecker) Validate(req authentication.Tx) (err error) {
+func (x FeeChecker) Validate(client client.RuntimeClient, req authentication.Tx) (err error) {
+	bankClient := v1alpha1.NewClientSet(client)
 	payer := req.Payer()
 	fee := req.Fee()
 
 	// get balance of fee payer
-	balance, err := x.bank.Balances().Get(payer)
+	balance, err := bankClient.Balances().Get(payer)
 	if err != nil {
 		return err
 	}

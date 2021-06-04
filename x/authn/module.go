@@ -33,12 +33,12 @@ func (m *Module) Initialize(c module.Client) module.Descriptor {
 	// add admission handlers, they will only read state
 	// never modify it.
 	builder.
-		WithAuthAdmissionHandler(mempoolFee{}).                // verifies if fee matches the minimum
-		WithAuthAdmissionHandler(newAccountExists(c)).         // verifies that all signer accounts exist
-		WithAuthAdmissionHandler(newTimeoutBlockExtension(c)). // verifies if tx is not timed-out compared to block
-		WithAuthAdmissionHandler(newValidateMemoExtension(c)). // validates memo length
-		WithAuthAdmissionHandler(newValidateSigCount(c)).      // validates number of signatures
-		WithAuthAdmissionHandler(newSigVerifier(c))            // validate signatures
+		WithAuthAdmissionHandler(mempoolFee{}).               // verifies if fee matches the minimum
+		WithAuthAdmissionHandler(newAccountExists()).         // verifies that all signer accounts exist
+		WithAuthAdmissionHandler(newTimeoutBlockExtension()). // verifies if tx is not timed-out compared to block
+		WithAuthAdmissionHandler(newValidateMemoExtension()). // validates memo length
+		WithAuthAdmissionHandler(newValidateSigCount()).      // validates number of signatures
+		WithAuthAdmissionHandler(newSigVerifier())            // validate signatures
 
 	// add transition handlers for tx, they CAN modify state after
 	// a tx is authenticated

@@ -79,7 +79,7 @@ func (r *Runtime) InitGenesis() error {
 			continue
 		}
 		klog.Infof("initializing genesis state for %s", m.Name)
-		if err := m.GenesisHandler.Default(client.New(newRuntimeAsServer(r))); err != nil {
+		if err := m.GenesisHandler.Default(r.asClient()); err != nil {
 			return fmt.Errorf("runtime: failed genesis initalization for core %s: %w", m.Name, err)
 		}
 	}
@@ -169,7 +169,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		return err
 	}
 	// deliver the request
-	_, err = handler.Exec(client.New(newRuntimeAsServer(r)), statetransition.ExecutionRequest{
+	_, err = handler.Exec(r.asClient(), statetransition.ExecutionRequest{
 		Users:      users,
 		Transition: stateTransition,
 	})
@@ -203,7 +203,7 @@ func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTrans
 func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
 	ctrls := r.router.GetTransactionAdmissionHandlers()
 	for _, ctrl := range ctrls {
-		err := ctrl.Validate(tx)
+		err := ctrl.Validate(r.asClient(), tx)
 		if err != nil {
 			return fmt.Errorf("%w: %s", errors.ErrBadRequest, err)
 		}
@@ -235,6 +235,10 @@ func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.APIObject,
 		return nil
 	}
 	return fmt.Errorf("%w: %s", errors.ErrUnauthorized, err)
+}
+
+func (r *Runtime) asClient() client.RuntimeClient {
+	return client.New(newRuntimeAsServer(r))
 }
 
 // convertStoreError converts the store error to a runtime error

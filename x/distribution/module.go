@@ -15,7 +15,7 @@ type Module struct {
 func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
 		Named("distribution").
-		WithAuthAdmissionHandler(NewFeeChecker(client)).
+		WithAuthAdmissionHandler(NewFeeChecker()).
 		WithPostAuthenticationHandler(NewFeeDeduction(client)).
 		NeedsStateTransition(&v1alpha1.MsgSendCoins{}).Build()
 }
