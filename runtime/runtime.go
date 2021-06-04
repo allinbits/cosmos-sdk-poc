@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/fdymylja/tmos/runtime/client"
+
 	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
@@ -33,7 +35,7 @@ type Runtime struct {
 	initialized bool
 	user        user.Users // user uniquely identifies Runtime as a user.User in the system
 
-	modules []module.Descriptor
+	moduleDescriptors []module.Descriptor
 
 	txDecoder authentication.TxDecoder
 
@@ -72,12 +74,12 @@ func (r *Runtime) InitGenesis() error {
 	klog.Infof("initializing default genesis state for modules")
 
 	// iterate through modules and call the genesis
-	for _, m := range r.modules {
+	for _, m := range r.moduleDescriptors {
 		if m.GenesisHandler == nil {
 			continue
 		}
 		klog.Infof("initializing genesis state for %s", m.Name)
-		if err := m.GenesisHandler.Default(); err != nil {
+		if err := m.GenesisHandler.Default(client.New(newRuntimeAsServer(r))); err != nil {
 			return fmt.Errorf("runtime: failed genesis initalization for core %s: %w", m.Name, err)
 		}
 	}
@@ -94,7 +96,7 @@ func (r *Runtime) Import(stateBytes []byte) error {
 		return err
 	}
 
-	for _, m := range r.modules {
+	for _, m := range r.moduleDescriptors {
 		if m.GenesisHandler == nil {
 			continue
 		}

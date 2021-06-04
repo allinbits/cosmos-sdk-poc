@@ -13,12 +13,11 @@ func newGenesisHandler() module.GenesisHandler {
 	return &genesisHandler{}
 }
 
-func (g genesisHandler) Default() error {
+func (g genesisHandler) Default(module.Client) error {
 	return nil
 }
 
 func (g genesisHandler) Import(state json.RawMessage) error {
-	// fmt.Println("%v", state)
 	return nil
 }
 

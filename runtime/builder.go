@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/core/abci"
-	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac"
 	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/core/runtime"
@@ -97,7 +97,7 @@ func (b *Builder) Build() (*Runtime, error) {
 
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
-	b.rt.modules = b.moduleDescriptors
+	b.rt.moduleDescriptors = b.moduleDescriptors
 	b.rt.rbac = b.rbac.AsAuthorizer()
 	b.rt.user = user.NewUsersFromString(user.Runtime)
 	switch b.decoder {

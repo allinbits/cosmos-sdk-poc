@@ -28,22 +28,19 @@ type Module struct {
 func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
 		Named("testing").
-		WithGenesis(newGenesisController(client)).Build()
+		WithGenesis(newGenesisController()).Build()
 }
 
-func newGenesisController(client module.Client) genesisController {
-	return genesisController{
-		authn: authnv1alpha1.NewClientSet(client),
-		bank:  bankv1alpha1.NewClientSet(client),
-	}
+func newGenesisController() genesisController {
+	return genesisController{}
 }
 
-type genesisController struct {
-	authn authnv1alpha1.ClientSet
-	bank  bankv1alpha1.ClientSet
-}
+type genesisController struct{}
 
-func (g genesisController) Default() error {
+func (g genesisController) Default(client module.Client) error {
+	authClient := authnv1alpha1.NewClientSet(client)
+	bankClient := bankv1alpha1.NewClientSet(client)
+
 	pkB, err := hex.DecodeString(pubKeyAsAny)
 	if err != nil {
 		return err
@@ -56,12 +53,12 @@ func (g genesisController) Default() error {
 			Value:   pkB,
 		},
 	}
-	err = g.authn.ExecMsgCreateAccount(&authnv1alpha1.MsgCreateAccount{Account: acc})
+	err = authClient.ExecMsgCreateAccount(&authnv1alpha1.MsgCreateAccount{Account: acc})
 	if err != nil {
 		return err
 	}
 	// set an initial balance for the given account
-	err = g.bank.ExecMsgSetBalance(&bankv1alpha1.MsgSetBalance{
+	err = bankClient.ExecMsgSetBalance(&bankv1alpha1.MsgSetBalance{
 		Address: acc.Address,
 		Amount: []*coin.Coin{
 			{
