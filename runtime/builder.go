@@ -33,8 +33,9 @@ func NewBuilder() *Builder {
 		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
 		rbac:              nil,
 		decoder:           nil,
-		router:            NewRouter(),
-		rt:                &Runtime{},
+		rt: &Runtime{
+			router: NewRouter(),
+		},
 	}
 
 	// we already add the core modules in order
@@ -49,6 +50,7 @@ func NewBuilder() *Builder {
 	b.externalRole = &rbacv1alpha1.Role{
 		Id: rbacv1alpha1.ExternalAccountRoleID,
 	}
+
 	return b
 }
 
@@ -61,9 +63,7 @@ type Builder struct {
 	rbac         *rbac.Module
 	decoder      authentication.TxDecoder
 
-	router *Router
-	store  orm.Store
-	rt     *Runtime
+	rt *Runtime
 }
 
 // AddModule adds a new module.Module to the list of modules to install
@@ -103,8 +103,6 @@ func (b *Builder) Build() (*Runtime, error) {
 
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
-	b.rt.store = b.store
-	b.rt.router = b.router
 	b.rt.modules = b.moduleDescriptors
 	b.rt.rbac = b.rbac.AsAuthorizer()
 	b.rt.user = user.NewUsersFromString(user.Runtime)
@@ -120,7 +118,7 @@ func (b *Builder) Build() (*Runtime, error) {
 
 func (b *Builder) registerStateTransitionHandlers(m module.Descriptor) error {
 	for _, handler := range m.StateTransitionExecutionHandlers {
-		err := b.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
+		err := b.rt.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
 		if err != nil {
 			return err
 		}
@@ -145,7 +143,7 @@ func (b *Builder) registerStateTransitionHandlers(m module.Descriptor) error {
 
 func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 	for _, handler := range m.StateTransitionAdmissionHandlers {
-		err := b.router.AddStateTransitionAdmissionHandler(handler.StateTransition, handler.AdmissionHandler)
+		err := b.rt.router.AddStateTransitionAdmissionHandler(handler.StateTransition, handler.AdmissionHandler)
 		if err != nil {
 			return err
 		}
@@ -158,7 +156,7 @@ func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 
 func (b *Builder) registerStateObjects(md module.Descriptor) error {
 	for _, so := range md.StateObjects {
-		err := b.store.RegisterObject(so.StateObject, so.Options)
+		err := b.rt.store.RegisterObject(so.StateObject, so.Options)
 		if err != nil {
 			return err
 		}
@@ -232,7 +230,7 @@ func (b *Builder) installStateTransitionAdmissionHandlers() error {
 func (b *Builder) installStateTransitionPreExecHandlers() error {
 	for _, m := range b.moduleDescriptors {
 		for _, h := range m.StateTransitionPreExecHandlers {
-			err := b.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
+			err := b.rt.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
 				return fmt.Errorf("unable to install state transition pre execution handler for core %s: %w", m.Name, err)
 			}
@@ -250,7 +248,7 @@ func (b *Builder) installStateTransitionPreExecHandlers() error {
 func (b *Builder) installStateTransitionPostExecHandlers() error {
 	for _, m := range b.moduleDescriptors {
 		for _, h := range m.StateTransitionPostExecutionHandlers {
-			err := b.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
+			err := b.rt.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
 				return fmt.Errorf("unable to install state transition post execution handler for core %s: %w", m.Name, err)
 			}
@@ -310,7 +308,7 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 			continue
 		}
 		for _, h := range m.AuthAdmissionHandlers {
-			b.router.AddTransactionAdmissionHandler(h.Handler)
+			b.rt.router.AddTransactionAdmissionHandler(h.Handler)
 			klog.Infof("registered transaction admission handler %T for core %s", h.Handler, m.Name)
 		}
 	}
@@ -323,7 +321,7 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 			continue
 		}
 		for _, h := range m.PostAuthenticationHandler {
-			b.router.AddTransactionPostAuthenticationHandler(h.Handler)
+			b.rt.router.AddTransactionPostAuthenticationHandler(h.Handler)
 			klog.Infof("registered transaction post authentication handler %T for core %s", h.Handler, m.Name)
 		}
 	}
@@ -348,8 +346,8 @@ func (b *Builder) initStore() error {
 	obj := objects.NewStore(okv)
 	idxKv := kv.NewBadger()
 	idx := indexes.NewStore(idxKv)
-	store := orm.NewStore(obj, idx)
-	b.store = store
+
+	b.rt.store = orm.NewStore(obj, idx)
 
 	return nil
 }
