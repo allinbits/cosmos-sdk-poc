@@ -163,3 +163,14 @@ func (s Store) ListRegisteredStateObjects() []string {
 func (s Store) SchemaRegistry() *schema.Registry {
 	return s.schemas
 }
+
+func (s Store) LatestVersion() Store {
+	return s
+}
+
+// LoadVersion returns an instance of the Store at the given height
+// returns an error if the version cannot be loaded
+// TODO load correct version
+func (s Store) LoadVersion(height uint64) (Store, error) {
+	return s, nil
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/pkg/protoutils/kindencoder"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -37,26 +38,19 @@ func (d Definition) Validate() error {
 	return nil
 }
 
-// ValueEncoderFunc is a function that encodes a protoreflect.Value to bytes
-type ValueEncoderFunc func(value protoreflect.Value) []byte
-
-// InterfaceEncoderFunc converts an interface to protoreflect.Value,
-// returns false if the interface does not match the correct expected type.
-type InterfaceEncoderFunc func(i interface{}) (value protoreflect.Value, valid bool)
-
 // Schema represents how a meta.StateObject is saved and indexed into the store
 // and provides all the required functionalities to index the fields of the object
 type Schema struct {
-	apiDefinition        *meta.APIDefinition
-	mType                meta.StateObject
-	name                 string
-	typePrefix           []byte // TODO should we force copies of this?
-	primaryKey           protoreflect.FieldDescriptor
-	primaryKeyEncode     ValueEncoderFunc
-	secondaryKeys        []*Indexer
-	secondaryKeysByField map[string]*Indexer
-	singleton            bool
-	hasIndexes           bool
+	apiDefinition         *meta.APIDefinition
+	mType                 meta.StateObject
+	name                  string
+	typePrefix            []byte // TODO should we force copies of this?
+	primaryKey            protoreflect.FieldDescriptor
+	primaryKeyKindEncoder kindencoder.KindEncoder
+	secondaryKeys         []*Indexer
+	secondaryKeysByField  map[string]*Indexer
+	singleton             bool
+	hasIndexes            bool
 }
 
 func (s *Schema) NewStateObject() meta.StateObject {
@@ -82,7 +76,7 @@ func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
 		return []byte("unique")
 	}
 	pkValue := o.ProtoReflect().Get(s.primaryKey)
-	return s.primaryKeyEncode(pkValue)
+	return s.primaryKeyKindEncoder.EncodeBytes(pkValue)
 }
 
 func (s *Schema) Indexer(fieldName string) (*Indexer, error) {
@@ -118,12 +112,12 @@ func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) 
 		if primaryKey == nil {
 			return nil, fmt.Errorf("%w: invalid primary key field %s in object %s", ErrBadDefinition, options.PrimaryKey, meta.Name(o))
 		}
-		primaryKeyEncoder, err := encoderForKind(primaryKey.Kind())
+		primaryKeyEncoder, err := kindencoder.NewKindEncoder(primaryKey.Kind())
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s has invalid primary key field: %s", ErrBadDefinition, meta.Name(o), err)
 		}
 		schema.primaryKey = primaryKey
-		schema.primaryKeyEncode = primaryKeyEncoder
+		schema.primaryKeyKindEncoder = primaryKeyEncoder
 	}
 	// add prefix and name to schema
 	schema.typePrefix = []byte(meta.Name(o))

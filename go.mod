@@ -7,6 +7,7 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2011.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/gogo/protobuf v1.3.3
+	github.com/gorilla/mux v1.8.0
 	github.com/scylladb/go-set v1.0.2
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
