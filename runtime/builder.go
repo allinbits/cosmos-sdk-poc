@@ -30,8 +30,8 @@ func NewBuilder() *Builder {
 	b := &Builder{
 		moduleDescriptors: nil,
 		moduleRoles:       map[string]*rbacv1alpha1.Role{},
-		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
-		rbac:              nil,
+		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID}, // we add the initial external role, with basically no authorization towards no resource.
+		rbac:              rbac.NewModule(),                                           // we set the rbac core inside so that we can prepare initial genesis with rbac
 		decoder:           nil,
 		rt: &Runtime{
 			router: NewRouter(),
@@ -42,14 +42,8 @@ func NewBuilder() *Builder {
 	// in theory we could add a dependency system
 	// for genesis initialization, but for now lets keep it simple.
 	b.AddModule(runtime.NewModule()) // needs to be first as it has state transitions/state object info
-	b.rbac = rbac.NewModule()        // we set the rbac core inside so that we can prepare initial genesis with rbac
 	b.AddModule(b.rbac)              // needs to be second as it provides the authorization layer
 	b.AddModule(abci.NewModule())    // abci third so other modules can have access to this information
-
-	// we add the initial external role, with basically no authorization towards no resource.
-	b.externalRole = &rbacv1alpha1.Role{
-		Id: rbacv1alpha1.ExternalAccountRoleID,
-	}
 
 	return b
 }
