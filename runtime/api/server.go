@@ -10,13 +10,14 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/encoding/protojson"
+	"k8s.io/klog/v2"
 )
 
 func NewServer(store orm.Store) *Server {
 	return &Server{
 		server:  nil,
 		store:   store,
-		mux:     nil,
+		mux:     mux.NewRouter(),
 		modules: map[string]module.Descriptor{},
 	}
 }
@@ -43,6 +44,16 @@ func (s *Server) RegisterModuleAPI(module module.Descriptor) error {
 		}
 	}
 	return nil
+}
+
+func (s *Server) Start() {
+	klog.Infof("starting api server...")
+	go func() {
+		s.server = &http.Server{
+			Addr: ":8080", // TODO configurable
+		}
+		panic(s.server.ListenAndServe()) // TODO me better
+	}()
 }
 
 func (s *Server) loadStore(writer http.ResponseWriter, request *http.Request) (orm.Store, bool) {
@@ -101,16 +112,48 @@ func (s *Server) registerStateObjectHandlers(descriptor module.Descriptor, obj m
 				writeResponse(writer, newObj)
 			})
 	case false:
+		sch, err := s.store.SchemaRegistry().GetByAPIDefinition(obj.StateObject.APIDefinition())
+		if err != nil {
+			return err
+		}
 		// create get
 		s.mux.
 			Methods(http.MethodGet).
 			Path(path).
 			HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				vars := mux.Vars(request)
+				primaryKeyValue, exists := vars[obj.Options.PrimaryKey]
+				// if the user didn't set the primary key in the url variables
+				if !exists {
+					badRequest(writer, "missing object key in url path")
+					return
+				}
+				// encode primary key
+				pkBytes, err := sch.EncodePrimaryKeyString(primaryKeyValue)
+				if err != nil {
+					badRequest(writer, "bad primary key format in url path: %s", err)
+					return
+				}
+				store, ok := s.loadStore(writer, request)
+				if !ok {
+					return
+				}
+				newObj := obj.StateObject.NewStateObject()
+				err = store.Get(meta.NewBytesID(pkBytes), newObj)
+				if err != nil {
+					notFound(writer, err.Error())
+					return
+				}
+				writeResponse(writer, newObj)
+
 			})
 		// create list
 		s.mux.Methods(http.MethodGet).
 			Path(path + "s"). // TODO the plural name should be in the state object schema options
 			HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				// TODO implement
+				writer.WriteHeader(http.StatusNotImplemented)
+				_, _ = writer.Write([]byte("not implemented"))
 			})
 	}
 
@@ -126,9 +169,11 @@ func writeResponse(writer http.ResponseWriter, obj meta.StateObject) {
 }
 
 func notFound(writer http.ResponseWriter, format string, values ...interface{}) {
-
+	writer.WriteHeader(http.StatusNotFound)
+	_, _ = writer.Write([]byte(fmt.Sprintf("%s", values...)))
 }
 
 func badRequest(writer http.ResponseWriter, format string, values ...interface{}) {
-
+	writer.WriteHeader(http.StatusBadRequest)
+	_, _ = writer.Write([]byte(fmt.Sprintf("%s", values...)))
 }

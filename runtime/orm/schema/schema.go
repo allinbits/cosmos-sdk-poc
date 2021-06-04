@@ -79,6 +79,17 @@ func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
 	return s.primaryKeyKindEncoder.EncodeBytes(pkValue)
 }
 
+func (s *Schema) EncodePrimaryKeyString(str string) ([]byte, error) {
+	if s.singleton {
+		return nil, fmt.Errorf("schema: singleton") // TODO better error format
+	}
+	v, err := s.primaryKeyKindEncoder.EncodeString(str)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrFieldTypeMismatch, err)
+	}
+	return s.primaryKeyKindEncoder.EncodeBytes(v), nil
+}
+
 func (s *Schema) Indexer(fieldName string) (*Indexer, error) {
 	sk, exists := s.secondaryKeysByField[fieldName]
 	if !exists {
