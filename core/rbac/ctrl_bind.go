@@ -3,21 +3,20 @@ package rbac
 import (
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func NewBindRoleHandler(client module.Client) statetransition.ExecutionHandler {
-	return BindRoleHandler{client: client}
+func NewBindRoleHandler() statetransition.ExecutionHandler {
+	return BindRoleHandler{}
 }
 
-type BindRoleHandler struct {
-	client module.Client
-}
+type BindRoleHandler struct{}
 
-func (b BindRoleHandler) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
+func (b BindRoleHandler) Exec(client client.RuntimeClient, req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgBindRole)
-	return statetransition.ExecutionResponse{}, b.client.Create(&v1alpha1.RoleBinding{
+	return statetransition.ExecutionResponse{}, client.Create(&v1alpha1.RoleBinding{
 		Subject: msg.Subject,
 		RoleRef: msg.RoleId,
 	})

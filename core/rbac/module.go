@@ -32,9 +32,9 @@ func (m *Module) Initialize(client module.Client) module.Descriptor {
 		OwnsStateObject(&v1alpha1.Role{}, v1alpha1.RoleSchema).
 		OwnsStateObject(&v1alpha1.RoleBinding{}, v1alpha1.RoleBindingSchema).
 		OwnsStateObject(&v1alpha1.Params{}, v1alpha1.ParamsSchema).
-		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleHandler(), false).
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleHandler(), false).
 		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client)).
 		WithGenesis(m.genesis).Build()
 }

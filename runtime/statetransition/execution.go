@@ -3,6 +3,7 @@ package statetransition
 import (
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
+	"github.com/fdymylja/tmos/runtime/client"
 )
 
 // ExecutionRequest is the request forwarded to the ExecutionHandler
@@ -21,11 +22,11 @@ type ExecutionResponse struct{}
 // based on the received execution request.
 type ExecutionHandler interface {
 	// Exec is called when the ExecutionRequest needs to be processed
-	Exec(req ExecutionRequest) (ExecutionResponse, error)
+	Exec(client client.RuntimeClient, req ExecutionRequest) (ExecutionResponse, error)
 }
 
-type ExecutionHandlerFunc func(req ExecutionRequest) (resp ExecutionResponse, err error)
+type ExecutionHandlerFunc func(client client.RuntimeClient, req ExecutionRequest) (resp ExecutionResponse, err error)
 
-func (s ExecutionHandlerFunc) Exec(req ExecutionRequest) (ExecutionResponse, error) {
-	return s(req)
+func (s ExecutionHandlerFunc) Exec(client client.RuntimeClient, req ExecutionRequest) (ExecutionResponse, error) {
+	return s(client, req)
 }

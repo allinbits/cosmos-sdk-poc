@@ -22,7 +22,7 @@ func (m *Module) Initialize(c module.Client) module.Descriptor {
 	builder := module.NewDescriptorBuilder()
 
 	builder.Named("authn").
-		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountHandler(c), true).
+		HandlesStateTransition(&v1alpha1.MsgCreateAccount{}, NewCreateAccountHandler(), true).
 		HandlesAdmission(&v1alpha1.MsgCreateAccount{}, NewCreateAccountAdmissionHandler()).
 		OwnsStateObject(&v1alpha1.Account{}, v1alpha1.AccountSchema).
 		OwnsStateObject(&v1alpha1.Params{}, v1alpha1.ParamsSchema).
