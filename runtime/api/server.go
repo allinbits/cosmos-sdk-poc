@@ -50,7 +50,8 @@ func (s *Server) Start() {
 	klog.Infof("starting api server...")
 	go func() {
 		s.server = &http.Server{
-			Addr: ":8080", // TODO configurable
+			Addr:    ":8080", // TODO configurable
+			Handler: s.mux,
 		}
 		panic(s.server.ListenAndServe()) // TODO me better
 	}()
