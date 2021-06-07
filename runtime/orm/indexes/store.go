@@ -33,7 +33,7 @@ func (s Store) Index(sch *schema.Schema, o meta.StateObject) error {
 		key := &indexObjectWithSecondaryKey{
 			objectPrefix:      sch.TypePrefix(),
 			indexPrefix:       sk.Prefix(),
-			secondaryKeyValue: sk.Encode(o),
+			secondaryKeyValue: sk.MustEncodeFromObject(o),
 			primaryKey:        primaryKey,
 		}
 		keyBytes := key.marshal()

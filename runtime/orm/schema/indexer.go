@@ -42,9 +42,9 @@ func (s *Indexer) Name() string {
 	return s.name
 }
 
-func (s *Indexer) Encode(o meta.StateObject) []byte {
+func (s *Indexer) MustEncodeFromObject(o meta.StateObject) []byte {
 	v := o.ProtoReflect().Get(s.fd)
-	return s.kindEncoder.EncodeBytes(v)
+	return s.kindEncoder.EncodeValueToBytes(v)
 }
 
 func (s *Indexer) EncodeInterface(v interface{}) ([]byte, error) {
@@ -52,5 +52,13 @@ func (s *Indexer) EncodeInterface(v interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFieldTypeMismatch, err)
 	}
-	return s.kindEncoder.EncodeBytes(value), nil
+	return s.kindEncoder.EncodeValueToBytes(value), nil
+}
+
+func (s *Indexer) EncodeString(value string) ([]byte, error) {
+	v, err := s.kindEncoder.EncodeString(value)
+	if err != nil {
+		return nil, err
+	}
+	return s.kindEncoder.EncodeValueToBytes(v), nil
 }

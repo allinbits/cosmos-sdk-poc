@@ -76,7 +76,7 @@ func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
 		return []byte("unique")
 	}
 	pkValue := o.ProtoReflect().Get(s.primaryKey)
-	return s.primaryKeyKindEncoder.EncodeBytes(pkValue)
+	return s.primaryKeyKindEncoder.EncodeValueToBytes(pkValue)
 }
 
 func (s *Schema) EncodePrimaryKeyString(str string) ([]byte, error) {
@@ -87,13 +87,13 @@ func (s *Schema) EncodePrimaryKeyString(str string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFieldTypeMismatch, err)
 	}
-	return s.primaryKeyKindEncoder.EncodeBytes(v), nil
+	return s.primaryKeyKindEncoder.EncodeValueToBytes(v), nil
 }
 
 func (s *Schema) Indexer(fieldName string) (*Indexer, error) {
 	sk, exists := s.secondaryKeysByField[fieldName]
 	if !exists {
-		return nil, fmt.Errorf("%w: %s in object %s", ErrSecondaryKey, fieldName, s.name)
+		return nil, fmt.Errorf("%w: '%s' in object %s", ErrSecondaryKey, fieldName, s.name)
 	}
 	return sk, nil
 }

@@ -1,6 +1,8 @@
 package orm
 
 import (
+	"fmt"
+
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
@@ -120,21 +122,44 @@ func (s Store) Delete(object meta.StateObject) error {
 }
 
 type ListOptionsRaw struct {
-	MatchFields []ListMatchField
+	MatchFieldInterface []ListMatchFieldInterface
+	MatchFieldString    []ListMatchFieldString
+	ListRange
 }
 
-type ListMatchField struct {
+func (l ListOptionsRaw) String() string {
+	return fmt.Sprintf("%#v", l)
+}
+
+type ListMatchFieldInterface struct {
 	Field string
 	Value interface{}
 }
 
-func (l ListMatchField) apply(opt *ListOptionsRaw) {
-	opt.MatchFields = append(opt.MatchFields, l)
+func (l ListMatchFieldInterface) apply(opt *ListOptionsRaw) {
+	opt.MatchFieldInterface = append(opt.MatchFieldInterface, l)
 }
 
-type ListOptionApplier interface{ apply(opt *ListOptionsRaw) }
+type ListRange struct {
+	Start, End uint64
+}
 
-func (s Store) List(object meta.StateObject, options ...ListOptionApplier) (Iterator, error) {
+func (l ListRange) apply(opt *ListOptionsRaw) {
+	opt.ListRange = l
+}
+
+type ListMatchFieldString struct {
+	Field string
+	Value string
+}
+
+func (l ListMatchFieldString) apply(opt *ListOptionsRaw) {
+	opt.MatchFieldString = append(opt.MatchFieldString, l)
+}
+
+type ListOption interface{ apply(opt *ListOptionsRaw) }
+
+func (s Store) List(object meta.StateObject, options ...ListOption) (Iterator, error) {
 	opt := new(ListOptionsRaw)
 	for _, o := range options {
 		o.apply(opt)

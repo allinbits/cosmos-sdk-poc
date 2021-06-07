@@ -13,7 +13,7 @@ type KindEncoder interface {
 	Kind() protoreflect.Kind
 	EncodeString(s string) (protoreflect.Value, error)
 	EncodeInterface(i interface{}) (protoreflect.Value, error)
-	EncodeBytes(value protoreflect.Value) []byte
+	EncodeValueToBytes(value protoreflect.Value) []byte
 }
 
 func NewKindEncoder(kind protoreflect.Kind) (KindEncoder, error) {
@@ -54,7 +54,7 @@ func (k kString) EncodeInterface(i interface{}) (protoreflect.Value, error) {
 	return protoreflect.ValueOfString(v), nil
 }
 
-func (k kString) EncodeBytes(value protoreflect.Value) []byte {
+func (k kString) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	// NOTE: skipping UTF8 checks, anyways marshalling would fail
 	// if the string is invalid.
@@ -87,7 +87,7 @@ func (k kBool) EncodeInterface(i interface{}) (protoreflect.Value, error) {
 	return protoreflect.ValueOfBool(v), nil
 }
 
-func (k kBool) EncodeBytes(value protoreflect.Value) []byte {
+func (k kBool) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	b = protowire.AppendVarint(b, protowire.EncodeBool(value.Bool()))
 	return b
@@ -116,7 +116,7 @@ func (k kInt32) EncodeInterface(i interface{}) (protoreflect.Value, error) {
 	return protoreflect.ValueOfInt32(v), nil
 }
 
-func (k kInt32) EncodeBytes(value protoreflect.Value) []byte {
+func (k kInt32) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	b = protowire.AppendVarint(b, uint64(int32(value.Int())))
 	return b
@@ -144,7 +144,7 @@ func (k kUint32) EncodeInterface(i interface{}) (protoreflect.Value, error) {
 	return protoreflect.ValueOfUint32(v), nil
 }
 
-func (k kUint32) EncodeBytes(value protoreflect.Value) []byte {
+func (k kUint32) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	b = protowire.AppendVarint(b, uint64(uint32(value.Uint())))
 	return b
@@ -172,7 +172,7 @@ func (k kInt64Kind) EncodeInterface(i interface{}) (protoreflect.Value, error) {
 	return protoreflect.ValueOfInt64(v), nil
 }
 
-func (k kInt64Kind) EncodeBytes(value protoreflect.Value) []byte {
+func (k kInt64Kind) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	b = protowire.AppendVarint(b, uint64(value.Int()))
 	return b
@@ -193,7 +193,7 @@ func (k kSint64Kind) EncodeInterface(i interface{}) (protoreflect.Value, error) 
 	panic("implement me")
 }
 
-func (k kSint64Kind) EncodeBytes(value protoreflect.Value) []byte {
+func (k kSint64Kind) EncodeValueToBytes(value protoreflect.Value) []byte {
 	panic("implement me")
 }
 
@@ -220,7 +220,7 @@ func (k kUint64Kind) EncodeInterface(i interface{}) (protoreflect.Value, error) 
 	return protoreflect.ValueOfUint64(v), nil
 }
 
-func (k kUint64Kind) EncodeBytes(value protoreflect.Value) []byte {
+func (k kUint64Kind) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	b = protowire.AppendVarint(b, value.Uint())
 	return b
@@ -249,7 +249,7 @@ func (k kBytes) EncodeInterface(i interface{}) (protoreflect.Value, error) {
 	return protoreflect.ValueOfBytes(v), nil
 }
 
-func (k kBytes) EncodeBytes(value protoreflect.Value) []byte {
+func (k kBytes) EncodeValueToBytes(value protoreflect.Value) []byte {
 	var b []byte
 	b = protowire.AppendBytes(b, value.Bytes())
 	// NOTE: removes the length prefix which is not needed
