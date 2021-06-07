@@ -12,8 +12,7 @@ func newTxDecoder() txDecoder {
 }
 
 type txDecoder struct {
-	decoder      *tx.Decoder
-	bech32Prefix string
+	decoder *tx.Decoder
 }
 
 func (a txDecoder) DecodeTx(txBytes []byte) (tx authentication.Tx, err error) {

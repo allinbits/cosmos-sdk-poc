@@ -72,7 +72,7 @@ func (s *Schema) Name() string {
 // EncodePrimaryKey returns the encoded primary given a meta.StateObject
 // NOTE: panics if the field does not belong to the message
 func (s *Schema) EncodePrimaryKey(o meta.StateObject) []byte {
-	if s.singleton == true {
+	if s.singleton {
 		return []byte("unique")
 	}
 	pkValue := o.ProtoReflect().Get(s.primaryKey)
