@@ -3,16 +3,15 @@ package abci
 import (
 	"fmt"
 
-	client2 "github.com/fdymylja/tmos/runtime/client"
-
 	"github.com/fdymylja/tmos/core/abci/tendermint/abci"
 	"github.com/fdymylja/tmos/core/abci/v1alpha1"
 	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-func setInitChainInfo() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func setInitChainInfo(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetInitChain)
 		// set init chain info
 		err = client.Update(&v1alpha1.InitChainInfo{ChainId: msg.InitChainInfo.ChainId})
@@ -28,8 +27,8 @@ func setInitChainInfo() statetransition.ExecutionHandlerFunc {
 	}
 }
 
-func checkTxHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func checkTxHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetCheckTxState)
 		switch msg.CheckTx.Type {
 		case abci.CheckTxType_NEW:
@@ -50,8 +49,8 @@ func checkTxHandler() statetransition.ExecutionHandlerFunc {
 	}
 }
 
-func beginBlockHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func beginBlockHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetBeginBlockState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_BeginBlock})
 		if err != nil {
@@ -66,8 +65,8 @@ func beginBlockHandler() statetransition.ExecutionHandlerFunc {
 	}
 }
 
-func endBlockHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func endBlockHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetEndBlockState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_EndBlock})
 		if err != nil {
@@ -83,8 +82,8 @@ func endBlockHandler() statetransition.ExecutionHandlerFunc {
 	}
 }
 
-func deliverTxHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func deliverTxHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetDeliverTxState)
 		err = client.Update(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_DeliverTx})
 		if err != nil {
@@ -95,8 +94,8 @@ func deliverTxHandler() statetransition.ExecutionHandlerFunc {
 	}
 }
 
-func validatorUpdatesHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func validatorUpdatesHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.MsgSetValidatorUpdates)
 		stage := new(v1alpha1.Stage)
 		err = client.Get(meta.SingletonID, stage)

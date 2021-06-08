@@ -3,24 +3,29 @@ package bank
 import (
 	coin "github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/core/meta"
-	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/errors"
+	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 	authnv1alpha1 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	v1alpha12 "github.com/fdymylja/tmos/x/bank/v1alpha1"
 )
 
-func NewSendCoinsHandler() SendCoinsHandler {
-	return SendCoinsHandler{}
+func NewSendCoinsHandler(client module.Client) SendCoinsHandler {
+	return SendCoinsHandler{
+		bank: v1alpha12.NewClientSet(client),
+		auth: authnv1alpha1.NewClientSet(client),
+	}
 }
 
-type SendCoinsHandler struct{}
+type SendCoinsHandler struct {
+	bank v1alpha12.ClientSet
+	auth authnv1alpha1.ClientSet
+}
 
-func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
-	bankClient := v1alpha12.NewClientSet(client)
+func (s SendCoinsHandler) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha12.MsgSendCoins)
 
-	senderBalance, err := bankClient.Balances().Get(msg.FromAddress)
+	senderBalance, err := s.bank.Balances().Get(msg.FromAddress)
 	if err != nil {
 		return resp, err
 	}
@@ -32,7 +37,7 @@ func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.
 	}
 
 	// update balance of sender
-	err = bankClient.ExecMsgSetBalance(&v1alpha12.MsgSetBalance{
+	err = s.bank.ExecMsgSetBalance(&v1alpha12.MsgSetBalance{
 		Address: msg.FromAddress,
 		Amount:  newSenderBalance,
 	})
@@ -42,7 +47,7 @@ func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.
 	}
 
 	// get balance of receiver
-	recvBalance, err := bankClient.Balances().Get(msg.ToAddress)
+	recvBalance, err := s.bank.Balances().Get(msg.ToAddress)
 
 	// we do a switch check to assert if the balance exists or not
 	switch {
@@ -53,7 +58,7 @@ func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.
 		if err != nil {
 			return resp, err
 		}
-		err = bankClient.ExecMsgSetBalance(&v1alpha12.MsgSetBalance{
+		err = s.bank.ExecMsgSetBalance(&v1alpha12.MsgSetBalance{
 			Address: msg.ToAddress,
 			Amount:  newRecvBalance,
 		})
@@ -65,7 +70,7 @@ func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.
 	// if not found create the balance for the account
 	// then attempt to create the account itself if it does not exist
 	case errors.Is(err, errors.ErrNotFound):
-		err = bankClient.ExecMsgSetBalance(&v1alpha12.MsgSetBalance{
+		err = s.bank.ExecMsgSetBalance(&v1alpha12.MsgSetBalance{
 			Address: msg.ToAddress,
 			Amount:  msg.Amount,
 		})
@@ -73,7 +78,7 @@ func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.
 			return
 		}
 
-		return resp, s.createAccountIfNotExist(client, msg.ToAddress)
+		return resp, s.createAccountIfNotExist(msg.ToAddress)
 	// another error exit...
 	default:
 		return resp, err
@@ -84,9 +89,8 @@ func (s SendCoinsHandler) Exec(client client.RuntimeClient, req statetransition.
 // so its public key can be sent
 // TODO: is this really required?
 // TODO: This should be done via Exec to AUTH.
-func (s SendCoinsHandler) createAccountIfNotExist(client client.RuntimeClient, address string) error {
-	authClient := authnv1alpha1.NewClientSet(client)
-	_, err := authClient.Accounts().Get(address)
+func (s SendCoinsHandler) createAccountIfNotExist(address string) error {
+	_, err := s.auth.Accounts().Get(address)
 	switch {
 	// default case it's another error we can't handle
 	default:
@@ -98,34 +102,34 @@ func (s SendCoinsHandler) createAccountIfNotExist(client client.RuntimeClient, a
 	case errors.Is(err, errors.ErrNotFound):
 		break
 	}
-	err = authClient.ExecMsgCreateAccount(&authnv1alpha1.MsgCreateAccount{Account: &authnv1alpha1.Account{
+	err = s.auth.ExecMsgCreateAccount(&authnv1alpha1.MsgCreateAccount{Account: &authnv1alpha1.Account{
 		Address: address,
 	}})
-
 	return err
 }
 
-func NewSetCoinsHandler() SetCoinsHandler {
-	return SetCoinsHandler{}
+func NewSetCoinsHandler(c module.Client) SetCoinsHandler {
+	return SetCoinsHandler{c: c}
 }
 
 type SetCoinsHandler struct {
+	c module.Client
 }
 
-func (s SetCoinsHandler) Exec(client client.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func (s SetCoinsHandler) Exec(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 	msg := req.Transition.(*v1alpha12.MsgSetBalance)
 	// set balance i guess
 	balance := new(v1alpha12.Balance)
-	err = client.Get(meta.NewStringID(msg.Address), balance)
+	err = s.c.Get(meta.NewStringID(msg.Address), balance)
 	switch {
 	case err == nil:
-		err = client.Update(&v1alpha12.Balance{
+		err = s.c.Update(&v1alpha12.Balance{
 			Address: msg.Address,
 			Balance: msg.Amount,
 		})
 		return
 	case errors.Is(err, errors.ErrNotFound):
-		err = client.Create(&v1alpha12.Balance{
+		err = s.c.Create(&v1alpha12.Balance{
 			Address: msg.Address,
 			Balance: msg.Amount,
 		})

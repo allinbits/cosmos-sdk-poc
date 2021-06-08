@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/client"
-
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
@@ -15,16 +13,19 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-func NewCreateRoleHandler() statetransition.ExecutionHandler {
-	return CreateRoleHandler{}
+func NewCreateRoleHandler(client module.Client) statetransition.ExecutionHandler {
+	return CreateRoleHandler{
+		client: client,
+	}
 }
 
 type CreateRoleHandler struct {
+	client module.Client
 }
 
-func (c CreateRoleHandler) Exec(client client.RuntimeClient, req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
+func (c CreateRoleHandler) Exec(req statetransition.ExecutionRequest) (statetransition.ExecutionResponse, error) {
 	msg := req.Transition.(*v1alpha1.MsgCreateRole)
-	return statetransition.ExecutionResponse{}, client.Create(msg.NewRole)
+	return statetransition.ExecutionResponse{}, c.client.Create(msg.NewRole)
 }
 
 func NewCreateRoleAdmissionHandler(client module.Client) CreateRoleAdmissionHandler {

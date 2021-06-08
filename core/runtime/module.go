@@ -3,7 +3,6 @@ package runtime
 import (
 	"github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	client2 "github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
@@ -18,19 +17,19 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		Named(user.Runtime).
 		OwnsStateObject(&v1alpha1.StateObjectsList{}, v1alpha1.StateObjectsListSchema).
 		OwnsStateObject(&v1alpha1.StateTransitionsList{}, v1alpha1.StateTransitionsListSchema).
-		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsHandler(), false).
-		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsHandler(), false).Build()
+		HandlesStateTransition(&v1alpha1.CreateStateTransitionsList{}, newCreateStateTransitionsHandler(client), false).
+		HandlesStateTransition(&v1alpha1.CreateStateObjectsList{}, newCreateStateObjectsHandler(client), false).Build()
 }
 
-func newCreateStateObjectsHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func newCreateStateObjectsHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateObjectsList)
 		return resp, client.Create(&v1alpha1.StateObjectsList{StateObjects: msg.StateObjects})
 	}
 }
 
-func newCreateStateTransitionsHandler() statetransition.ExecutionHandlerFunc {
-	return func(client client2.RuntimeClient, req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
+func newCreateStateTransitionsHandler(client module.Client) statetransition.ExecutionHandlerFunc {
+	return func(req statetransition.ExecutionRequest) (resp statetransition.ExecutionResponse, err error) {
 		msg := req.Transition.(*v1alpha1.CreateStateTransitionsList)
 		return resp, client.Create(&v1alpha1.StateTransitionsList{
 			StateTransitions: msg.StateTransitions,

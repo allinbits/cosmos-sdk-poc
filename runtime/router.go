@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/fdymylja/tmos/core/meta"
+	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )

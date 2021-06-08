@@ -17,8 +17,8 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
 		Named("bank").
 		OwnsStateObject(&v1alpha1.Balance{}, v1alpha1.BalanceSchema).
-		HandlesStateTransition(&v1alpha1.MsgSendCoins{}, NewSendCoinsHandler(), true).
-		HandlesStateTransition(&v1alpha1.MsgSetBalance{}, NewSetCoinsHandler(), false).
+		HandlesStateTransition(&v1alpha1.MsgSendCoins{}, NewSendCoinsHandler(client), true).
+		HandlesStateTransition(&v1alpha1.MsgSetBalance{}, NewSetCoinsHandler(client), false).
 		NeedsStateTransition(&authnv1alpha1.MsgCreateAccount{}).
 		WithGenesis(newGenesisHandler()).Build()
 }

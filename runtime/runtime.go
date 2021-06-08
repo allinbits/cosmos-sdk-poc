@@ -6,7 +6,7 @@ import (
 
 	"github.com/fdymylja/tmos/runtime/client"
 
-	"github.com/fdymylja/tmos/core/meta"
+	meta "github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
@@ -169,7 +169,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		return err
 	}
 	// deliver the request
-	_, err = handler.Exec(client.New(newRuntimeAsServer(r)), statetransition.ExecutionRequest{
+	_, err = handler.Exec(statetransition.ExecutionRequest{
 		Users:      users,
 		Transition: stateTransition,
 	})
