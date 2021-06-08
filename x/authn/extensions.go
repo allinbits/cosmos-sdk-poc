@@ -3,8 +3,6 @@ package authn
 import (
 	"fmt"
 
-	"github.com/fdymylja/tmos/runtime/client"
-
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	abciv1alpha1 "github.com/fdymylja/tmos/core/abci/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -15,18 +13,20 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func newAccountExists() accountExists {
-	return accountExists{}
+func newAccountExists(c module.Client) accountExists {
+	return accountExists{
+		c: v1alpha12.NewClient(c),
+	}
 }
 
-type accountExists struct{}
+type accountExists struct {
+	c *v1alpha12.Client
+}
 
-func (a accountExists) Validate(client client.RuntimeClient, tx authentication.Tx) error {
-	c := v1alpha12.NewClient(client)
-
+func (a accountExists) Validate(tx authentication.Tx) error {
 	// assert that all signer accounts exist
 	for _, sig := range tx.Users().List() {
-		_, err := c.GetAccount(sig.GetName())
+		_, err := a.c.GetAccount(sig.GetName())
 		if err != nil {
 			return err
 		}
@@ -34,20 +34,20 @@ func (a accountExists) Validate(client client.RuntimeClient, tx authentication.T
 	return nil
 }
 
-func newTimeoutBlockExtension() timeoutBlockExtension {
-	return timeoutBlockExtension{}
+func newTimeoutBlockExtension(c module.Client) timeoutBlockExtension {
+	return timeoutBlockExtension{abci: abciv1alpha1.NewClientSet(c)}
 }
 
-type timeoutBlockExtension struct{}
+type timeoutBlockExtension struct {
+	abci abciv1alpha1.ClientSet
+}
 
-func (t timeoutBlockExtension) Validate(client client.RuntimeClient, reqTx authentication.Tx) error {
-	abciClient := abciv1alpha1.NewClientSet(client)
+func (t timeoutBlockExtension) Validate(reqTx authentication.Tx) error {
 	tx := reqTx.Raw().(*v1alpha12.Tx)
-	currentBlock, err := abciClient.CurrentBlock().Get()
+	currentBlock, err := t.abci.CurrentBlock().Get()
 	if err != nil {
 		return err
 	}
-
 	if tx.Body.TimeoutHeight != 0 && currentBlock.BlockNumber > tx.Body.TimeoutHeight {
 		return fmt.Errorf("invalid block height")
 	}
@@ -55,19 +55,19 @@ func (t timeoutBlockExtension) Validate(client client.RuntimeClient, reqTx authe
 	return nil
 }
 
-func newValidateMemoExtension() validateMemoExtension {
-	return validateMemoExtension{}
+func newValidateMemoExtension(c module.Client) validateMemoExtension {
+	return validateMemoExtension{c: v1alpha12.NewClient(c)}
 }
 
-type validateMemoExtension struct{}
+type validateMemoExtension struct {
+	c *v1alpha12.Client
+}
 
-func (e validateMemoExtension) Validate(client client.RuntimeClient, reqTx authentication.Tx) error {
-	c := v1alpha12.NewClient(client)
-
+func (e validateMemoExtension) Validate(reqTx authentication.Tx) error {
 	tx := reqTx.Raw().(*v1alpha12.Tx)
 	memo := tx.Body.Memo
 	memoLength := len(memo)
-	params, err := c.GetParams()
+	params, err := e.c.GetParams()
 	if err != nil {
 		return err
 	}
@@ -78,22 +78,24 @@ func (e validateMemoExtension) Validate(client client.RuntimeClient, reqTx authe
 }
 
 // mempoolFee is used to check if the transaction meets the minimum mempool requirements
-type mempoolFee struct{}
+type mempoolFee struct {
+}
 
-func (e mempoolFee) Validate(client client.RuntimeClient, tx authentication.Tx) error {
+func (e mempoolFee) Validate(tx authentication.Tx) error {
 	return nil
 }
 
-func newValidateSigCount() sigCount {
-	return sigCount{}
+func newValidateSigCount(c module.Client) sigCount {
+	return sigCount{c: v1alpha12.NewClient(c)}
 }
 
-type sigCount struct{}
+type sigCount struct {
+	c *v1alpha12.Client
+}
 
-func (s sigCount) Validate(client client.RuntimeClient, reqTx authentication.Tx) error {
-	c := v1alpha12.NewClient(client)
+func (s sigCount) Validate(reqTx authentication.Tx) error {
 	wrapper := reqTx.(*tx2.Wrapper) // TODO: should we return an error? or simply skip validation?
-	params, err := c.GetParams()
+	params, err := s.c.GetParams()
 	if err != nil {
 		return err
 	}
@@ -180,31 +182,33 @@ func (i increaseSequence) Exec(req authentication.PostAuthenticationRequest) (au
 			return authentication.PostAuthenticationResponse{}, err
 		}
 	}
-
 	return authentication.PostAuthenticationResponse{}, nil
 }
 
-func newSigVerifier() sigVerifier {
-	return sigVerifier{}
+func newSigVerifier(c module.Client) sigVerifier {
+	return sigVerifier{
+		abci: abciv1alpha1.NewClientSet(c),
+		auth: v1alpha12.NewClient(c),
+	}
 }
 
-type sigVerifier struct{}
+type sigVerifier struct {
+	abci abciv1alpha1.ClientSet
+	auth *v1alpha12.Client
+}
 
-func (a sigVerifier) Validate(client client.RuntimeClient, aTx authentication.Tx) error {
-	abciClient := abciv1alpha1.NewClientSet(client)
-	authClient := v1alpha12.NewClient(client)
-
+func (a sigVerifier) Validate(aTx authentication.Tx) error {
 	wrapper := aTx.(*tx2.Wrapper)
 	raw := wrapper.TxRaw()
 	sigs := wrapper.Signers()
 	// get chainInfo
-	chainInfo, err := abciClient.InitChainInfo().Get()
+	chainInfo, err := a.abci.InitChainInfo().Get()
 	if err != nil {
 		return err
 	}
 	for _, signer := range sigs {
 		// get account
-		acc, err := authClient.GetAccount(signer.Address)
+		acc, err := a.auth.GetAccount(signer.Address)
 		if err != nil {
 			return err
 		}

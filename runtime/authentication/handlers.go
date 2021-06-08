@@ -1,14 +1,12 @@
 package authentication
 
-import "github.com/fdymylja/tmos/runtime/client"
-
 // AdmissionHandler is a handler for Authentication requests
 // which does checks that MUST NOT change state but can read it
 // for example:
 //         was the minimum fee reached?
 //         do the accounts exist?
 type AdmissionHandler interface {
-	Validate(client client.RuntimeClient, tx Tx) error
+	Validate(tx Tx) error
 }
 
 type PostAuthenticationRequest struct {
