@@ -63,20 +63,70 @@ func (x *postClient) Update(post *Post, opts ...client.UpdateOption) error {
 	return x.client.Update(post, opts...)
 }
 
+func (x *Params) APIDefinition() *meta.APIDefinition {
+	return &meta.APIDefinition{
+		Group:   "testmodule.v1",
+		Kind:    "Params",
+		ApiType: meta.APIType_StateObject,
+	}
+}
+
+func (x *Params) NewStateObject() meta.StateObject {
+	return new(Params)
+}
+
+type ParamsClient interface {
+	Get(opts ...client.GetOption) (*Params, error)
+	Create(params *Params, opts ...client.CreateOption) error
+	Delete(params *Params, opts ...client.DeleteOption) error
+	Update(params *Params, opts ...client.UpdateOption) error
+}
+
+type paramsClient struct {
+	client client.RuntimeClient
+}
+
+func (x *paramsClient) Get(opts ...client.GetOption) (*Params, error) {
+	_spfGenO := new(Params)
+	_spfGenErr := x.client.Get(meta.SingletonID, _spfGenO, opts...)
+	if _spfGenErr != nil {
+		return nil, _spfGenErr
+	}
+	return _spfGenO, nil
+}
+
+func (x *paramsClient) Create(params *Params, opts ...client.CreateOption) error {
+	return x.client.Create(params, opts...)
+}
+
+func (x *paramsClient) Delete(params *Params, opts ...client.DeleteOption) error {
+	return x.client.Delete(params, opts...)
+}
+
+func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error {
+	return x.client.Update(params, opts...)
+}
+
 var PostSchema = schema.Definition{
 	PrimaryKey:    "id",
 	SecondaryKeys: []string{"creator"},
 }
 
+var ParamsSchema = schema.Definition{
+	Singleton: true,
+}
+
 type ClientSet interface {
 	Posts() PostClient
+	Params() ParamsClient
 	ExecMsgCreatePost(msg *MsgCreatePost) error
 }
 
 func NewClientSet(client client.RuntimeClient) ClientSet {
 	return &clientSet{
-		client:     client,
-		postClient: &postClient{client: client},
+		client:       client,
+		postClient:   &postClient{client: client},
+		paramsClient: &paramsClient{client: client},
 	}
 }
 
@@ -84,10 +134,16 @@ type clientSet struct {
 	client client.RuntimeClient
 	// postClient is the client used to interact with Post
 	postClient PostClient
+	// paramsClient is the client used to interact with Params
+	paramsClient ParamsClient
 }
 
 func (x *clientSet) Posts() PostClient {
 	return x.postClient
+}
+
+func (x *clientSet) Params() ParamsClient {
+	return x.paramsClient
 }
 
 func (x *clientSet) ExecMsgCreatePost(msg *MsgCreatePost) error {

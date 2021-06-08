@@ -27,3 +27,11 @@ message Post {
   string title = 3;
   string text = 4;
 }
+
+message Params {
+  option (tmos.core.modulegen.state_object) = {
+    singleton: true,
+  };
+
+  uint64 last_post_number = 1;
+}
