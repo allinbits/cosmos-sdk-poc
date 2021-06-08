@@ -30,5 +30,5 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		HandlesStateTransition(&v1alpha1.MsgSetDeliverTxState{}, deliverTxHandler(client), false).
 		HandlesStateTransition(&v1alpha1.MsgSetEndBlockState{}, endBlockHandler(client), false).
 		HandlesStateTransition(&v1alpha1.MsgSetValidatorUpdates{}, validatorUpdatesHandler(client), false).
-		WithGenesis(newGenesisHandler()).Build()
+		WithGenesis(newGenesisHandler(client)).Build()
 }

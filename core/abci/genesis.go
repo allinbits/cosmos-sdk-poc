@@ -7,47 +7,48 @@ import (
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
-func newGenesisHandler() module.GenesisHandler {
-	return genesis{}
+func newGenesisHandler(client module.Client) module.GenesisHandler {
+	return genesis{client}
 }
 
 type genesis struct {
+	client module.Client
 }
 
-func (g genesis) Default(client module.Client) error {
+func (g genesis) Default() error {
 	// set initial stage
-	err := client.Create(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_InitChain})
+	err := g.client.Create(&v1alpha1.Stage{Stage: v1alpha1.ABCIStage_InitChain})
 	if err != nil {
 		return err
 	}
 	// set empty begin block state
-	err = client.Create(&v1alpha1.BeginBlockState{})
+	err = g.client.Create(&v1alpha1.BeginBlockState{})
 	if err != nil {
 		return err
 	}
 	// set empty check tx state
-	err = client.Create(&v1alpha1.CheckTxState{})
+	err = g.client.Create(&v1alpha1.CheckTxState{})
 	if err != nil {
 		return err
 	}
 	// set empty deliver tx state
-	err = client.Create(&v1alpha1.DeliverTxState{})
+	err = g.client.Create(&v1alpha1.DeliverTxState{})
 	if err != nil {
 		return err
 	}
-	err = client.Create(&v1alpha1.CurrentBlock{})
+	err = g.client.Create(&v1alpha1.CurrentBlock{})
 	if err != nil {
 		return err
 	}
-	err = client.Create(&v1alpha1.InitChainInfo{})
+	err = g.client.Create(&v1alpha1.InitChainInfo{})
 	if err != nil {
 		return err
 	}
-	err = client.Create(&v1alpha1.ValidatorUpdates{})
+	err = g.client.Create(&v1alpha1.ValidatorUpdates{})
 	if err != nil {
 		return err
 	}
-	err = client.Create(&v1alpha1.EndBlockState{})
+	err = g.client.Create(&v1alpha1.EndBlockState{})
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func (m *Module) AddInitialRole(role *v1alpha1.Role, binding *v1alpha1.RoleBindi
 
 func (m *Module) Initialize(client module.Client) module.Descriptor {
 	m.authorizer = NewAuthorizer(client)
-	m.genesis = newGenesis()
+	m.genesis = newGenesis(client)
 
 	return module.NewDescriptorBuilder().
 		Named("rbac").
@@ -39,11 +39,13 @@ func (m *Module) Initialize(client module.Client) module.Descriptor {
 		WithGenesis(m.genesis).Build()
 }
 
-func newGenesis() *genesis {
-	return &genesis{}
+func newGenesis(client module.Client) *genesis {
+	return &genesis{c: client}
 }
 
 type genesis struct {
+	c module.Client
+
 	roles    []*v1alpha1.Role
 	bindings []*v1alpha1.RoleBinding
 }
@@ -53,13 +55,13 @@ func (g *genesis) addInitialRole(role *v1alpha1.Role, binding *v1alpha1.RoleBind
 	g.bindings = append(g.bindings, binding)
 }
 
-func (g *genesis) Default(client module.Client) error {
+func (g *genesis) Default() error {
 	// we create the initial roles and bindings of the associated roles
 	// they are core roles created at runtime.DescriptorBuilder.Build() level
 	// we do it via deliver because we want to make sure the creation
 	// goes through proper checks.
 	for i, r := range g.roles {
-		err := client.Deliver(&v1alpha1.MsgCreateRole{NewRole: r})
+		err := g.c.Deliver(&v1alpha1.MsgCreateRole{NewRole: r})
 		if err != nil {
 			return err
 		}
@@ -67,7 +69,7 @@ func (g *genesis) Default(client module.Client) error {
 		if binding == nil {
 			continue
 		}
-		err = client.Deliver(&v1alpha1.MsgBindRole{
+		err = g.c.Deliver(&v1alpha1.MsgBindRole{
 			RoleId:  binding.RoleRef,
 			Subject: binding.Subject,
 		})

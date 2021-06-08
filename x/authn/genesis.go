@@ -8,10 +8,11 @@ import (
 )
 
 type genesis struct {
+	c module.Client
 }
 
-func (g genesis) Default(client module.Client) error {
-	err := client.Create(&v1alpha12.Params{
+func (g genesis) Default() error {
+	err := g.c.Create(&v1alpha12.Params{
 		MaxMemoCharacters:      1000000,
 		TxSigLimit:             1000000,
 		TxSizeCostPerByte:      0,
@@ -22,7 +23,7 @@ func (g genesis) Default(client module.Client) error {
 		return err
 	}
 
-	err = client.Create(&v1alpha12.CurrentAccountNumber{Number: 0})
+	err = g.c.Create(&v1alpha12.CurrentAccountNumber{Number: 0})
 	if err != nil {
 		return err
 	}

@@ -27,7 +27,7 @@ func (m *Module) Initialize(c module.Client) module.Descriptor {
 		OwnsStateObject(&v1alpha1.Account{}, v1alpha1.AccountSchema).
 		OwnsStateObject(&v1alpha1.Params{}, v1alpha1.ParamsSchema).
 		OwnsStateObject(&v1alpha1.CurrentAccountNumber{}, v1alpha1.CurrentAccountNumberSchema).
-		WithGenesis(genesis{}).
+		WithGenesis(genesis{c: c}).
 		NeedsStateTransition(&rbacv1alpha1.MsgBindRole{})
 
 	// add admission handlers, they will only read state
