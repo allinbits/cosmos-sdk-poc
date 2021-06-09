@@ -36,7 +36,7 @@ func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	}
 }
 
-func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
+func (x *Role) appendResourceToVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
 	name := meta.Name(resource)
 	switch verb {
 	case runtimev1alpha1.Verb_Get:
@@ -63,16 +63,26 @@ func (x *Role) appendToVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) 
 }
 
 func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
-	res := x.GetResourcesForVerb(verb)
-	set := strset.New(res...)
-	if len(res) != 0 && set.Has(meta.Name(resource)) {
+	if x.hasResourceForVerb(verb, resource) {
 		return fmt.Errorf("role %s has already resource %s", x, meta.Name(resource))
 	}
-	err := x.appendToVerb(verb, resource)
+
+	err := x.appendResourceToVerb(verb, resource)
 	if err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func (x *Role) hasResourceForVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) bool {
+	res := x.GetResourcesForVerb(verb)
+	set := strset.New(res...)
+	if len(res) != 0 && set.Has(meta.Name(resource)) {
+		return true
+	}
+
+	return false
 }
 
 func roleNameForModule(name string) string {

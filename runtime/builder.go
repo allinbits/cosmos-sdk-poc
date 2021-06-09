@@ -323,9 +323,9 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 }
 
 func (b *Builder) installDependencies() error {
-	for _, m := range b.moduleDescriptors {
-		role := b.moduleRoles[m.Name]
-		for _, st := range m.Needs {
+	for _, md := range b.moduleDescriptors {
+		role := b.moduleRoles[md.Name]
+		for _, st := range md.Needs {
 			err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
 			if err != nil {
 				return fmt.Errorf("error while registering core dependency %s: %w", meta.Name(st), err)

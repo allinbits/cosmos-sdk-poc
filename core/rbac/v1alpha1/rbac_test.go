@@ -20,3 +20,16 @@ func TestRole_Extend(t *testing.T) {
 	resources = role.GetResourcesForVerb(v1alpha1.Verb_Get)
 	require.Len(t, resources, 1)
 }
+
+func TestRole_Extend_FailsWhenAlreadyExtendedWithSameResource(t *testing.T) {
+	role := NewEmptyRole("bank")
+
+	resources := role.GetResourcesForVerb(v1alpha1.Verb_Get)
+	require.Len(t, resources, 0)
+
+	err := role.Extend(v1alpha1.Verb_Get, &testpb.SimpleMessage{})
+	require.NoError(t, err)
+
+	err = role.Extend(v1alpha1.Verb_Get, &testpb.SimpleMessage{})
+	require.Error(t, err)
+}
