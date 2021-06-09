@@ -36,6 +36,29 @@ func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	}
 }
 
+func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
+	if x.hasResourceForVerb(verb, resource) {
+		return fmt.Errorf("role %s has already resource %s", x, meta.Name(resource))
+	}
+
+	err := x.appendResourceToVerb(verb, resource)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (x *Role) hasResourceForVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) bool {
+	res := x.GetResourcesForVerb(verb)
+	set := strset.New(res...)
+	if len(res) != 0 && set.Has(meta.Name(resource)) {
+		return true
+	}
+
+	return false
+}
+
 func (x *Role) appendResourceToVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
 	name := meta.Name(resource)
 	switch verb {
@@ -60,29 +83,6 @@ func (x *Role) appendResourceToVerb(verb runtimev1alpha1.Verb, resource meta.API
 	default:
 		return fmt.Errorf("unknown verb %s", verb)
 	}
-}
-
-func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
-	if x.hasResourceForVerb(verb, resource) {
-		return fmt.Errorf("role %s has already resource %s", x, meta.Name(resource))
-	}
-
-	err := x.appendResourceToVerb(verb, resource)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (x *Role) hasResourceForVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) bool {
-	res := x.GetResourcesForVerb(verb)
-	set := strset.New(res...)
-	if len(res) != 0 && set.Has(meta.Name(resource)) {
-		return true
-	}
-
-	return false
 }
 
 func roleNameForModule(name string) string {
