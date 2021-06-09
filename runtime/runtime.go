@@ -37,7 +37,7 @@ type Runtime struct {
 
 	txDecoder authentication.TxDecoder
 
-	rbac        authorization.Authorizer
+	authorizer  authorization.Authorizer
 	rbacEnabled bool
 
 	router *Router
@@ -119,21 +119,27 @@ func (r *Runtime) List() {
 }
 
 func (r *Runtime) Create(users user.Users, object meta.StateObject) error {
-	if err := r.authorized(runtimev1alpha1.Verb_Create, object, users); err != nil {
+	if err := r.authorized(
+		authorization.NewAttributes(runtimev1alpha1.Verb_Create, object, users),
+	); err != nil {
 		return err
 	}
 	return convertStoreError(r.store.Create(object))
 }
 
 func (r *Runtime) Update(users user.Users, object meta.StateObject) error {
-	if err := r.authorized(runtimev1alpha1.Verb_Update, object, users); err != nil {
+	if err := r.authorized(
+		authorization.NewAttributes(runtimev1alpha1.Verb_Update, object, users),
+	); err != nil {
 		return err
 	}
 	return convertStoreError(r.store.Update(object))
 }
 
 func (r *Runtime) Delete(users user.Users, object meta.StateObject) error {
-	if err := r.authorized(runtimev1alpha1.Verb_Delete, object, users); err != nil {
+	if err := r.authorized(
+		authorization.NewAttributes(runtimev1alpha1.Verb_Delete, object, users),
+	); err != nil {
 		return err
 	}
 	return convertStoreError(r.store.Delete(object))
@@ -158,7 +164,7 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 	}
 	// identity here should be used for authorization checks
 	// ex: identity is module/user then can it call the state transition?
-	if err = r.authorized(runtimev1alpha1.Verb_Deliver, stateTransition, users); err != nil {
+	if err = r.authorized(authorization.NewAttributes(runtimev1alpha1.Verb_Deliver, stateTransition, users)); err != nil {
 		return err
 	}
 	// get the handler
@@ -220,15 +226,11 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 	return nil
 }
 
-func (r *Runtime) authorized(verb runtimev1alpha1.Verb, resource meta.APIObject, users user.Users) error {
+func (r *Runtime) authorized(attributes authorization.Attributes) error {
 	if !r.rbacEnabled {
 		return nil
 	}
-	decision, err := r.rbac.Authorize(authorization.Attributes{
-		Verb:     verb,
-		Resource: resource,
-		Users:    users,
-	})
+	decision, err := r.authorizer.Authorize(attributes)
 	if err == nil && decision == authorization.DecisionAllow {
 		return nil
 	}

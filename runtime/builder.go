@@ -98,7 +98,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.modules = b.moduleDescriptors
-	b.rt.rbac = b.rbac.AsAuthorizer()
+	b.rt.authorizer = b.rbac.AsAuthorizer()
 	b.rt.user = user.NewUsersFromString(user.Runtime)
 	switch b.decoder {
 	case nil:

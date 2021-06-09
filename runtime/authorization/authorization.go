@@ -24,6 +24,10 @@ type Attributes struct {
 	Users user.Users
 }
 
+func NewAttributes(verb runtimev1alpha1.Verb, resource meta.APIObject, users user.Users) Attributes {
+	return Attributes{Verb: verb, Resource: resource, Users: users}
+}
+
 // Authorizer makes an authorization decision by inspecting the Attributes
 type Authorizer interface {
 	Authorize(attributes Attributes) (decision Decision, err error)
