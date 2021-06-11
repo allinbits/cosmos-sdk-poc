@@ -1,41 +1,68 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
+	"log"
 
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/pkg/protoutils/oas3schema"
-	"github.com/getkin/kin-openapi/openapi3"
+	v3 "github.com/googleapis/gnostic/openapiv3"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 type openAPI struct {
-	document *openapi3.T
+	gen *oas3schema.OpenAPIv3Generator
 }
 
 func NewOpenAPIBuilder() *openAPI {
-	document := new(openapi3.T)
-	document.Info = &openapi3.Info{
-		Title:          "Starport Framework API Server",
-		Description:    "",
-		TermsOfService: "",
-		Contact:        nil,
-		License:        nil,
-		Version:        "0.0.0", // TODO: version should be fetched automatically from commit
+	return &openAPI{
+		gen: oas3schema.NewOpenAPIv3Generator(),
 	}
-	document.OpenAPI = "3.0.0"
-	return &openAPI{document: document}
 }
 
-func (o openAPI) AddSingleton(obj meta.StateObject) error {
-	op := openapi3.NewOperation()
-	objSchema, err := oas3schema.FromMessageDescriptor(obj.ProtoReflect().Descriptor())
+func (o openAPI) AddSingleton(obj meta.StateObject, path string) error {
+	opID := fmt.Sprintf("singleton.%s", meta.Name(obj))
+	comment := fmt.Sprintf("Returns the unique instance of the %s object if it exists.", meta.Name(obj))
+	err := o.gen.AddRawOperation("GET", opID, comment, path, "", obj)
 	if err != nil {
 		return err
 	}
-	resp := openapi3.NewResponse()
-	resp.Content = openapi3.NewContentWithJSONSchema(objSchema)
-	op.AddResponse(http.StatusOK, resp)
-	o.document.AddOperation("/path", http.MethodGet, op)
+
+	err = o.gen.AddRequiredMessage(obj)
+	if err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func (o openAPI) AddObject(obj meta.StateObject, singlePath string, listPath string) error {
+
+	opID := fmt.Sprintf("singleton.%s", meta.Name(obj))
+	comment := fmt.Sprintf("Returns an instance of %s", meta.Name(obj))
+	err := o.gen.AddRawOperation("GET", opID, comment, singlePath, "", obj)
+	if err != nil {
+		return err
+	}
+	// TODO listPath
+
+	err = o.gen.AddRequiredMessage(obj)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o openAPI) Build() (*v3.Document, error) {
+	protoregistry.GlobalFiles.RangeFiles(func(descriptor protoreflect.FileDescriptor) bool {
+		log.Printf("%s", descriptor.Path())
+		return true
+	})
+	doc, err := o.gen.Build()
+	if err != nil {
+		return nil, err
+	}
+	return doc, nil
 }

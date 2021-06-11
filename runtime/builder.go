@@ -67,7 +67,7 @@ type Builder struct {
 	store  orm.Store
 	rt     *Runtime
 
-	apiServer *api.Server
+	apiServer *api.Builder
 }
 
 // AddModule adds a new module.Module to the list of modules to install

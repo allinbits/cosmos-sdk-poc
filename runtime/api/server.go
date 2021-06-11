@@ -15,25 +15,27 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func NewServer(store orm.Store) *Server {
-	return &Server{
+func NewServer(store orm.Store) *Builder {
+	return &Builder{
 		server:  nil,
 		store:   store,
 		mux:     mux.NewRouter(),
 		modules: map[string]module.Descriptor{},
+		openAPI: NewOpenAPIBuilder(),
 	}
 }
 
-type Server struct {
+type Builder struct {
 	server     *http.Server
 	store      orm.Store
 	mux        *mux.Router
 	modules    map[string]module.Descriptor
 	knownPaths map[string]string // maps known paths of objects
+	openAPI    *openAPI
 }
 
 // RegisterModuleAPI registers the API for the server
-func (s *Server) RegisterModuleAPI(module module.Descriptor) error {
+func (s *Builder) RegisterModuleAPI(module module.Descriptor) error {
 	_, exists := s.modules[module.Name]
 	if exists {
 		return fmt.Errorf("api: module already registered: %s", module.Name)
@@ -48,8 +50,19 @@ func (s *Server) RegisterModuleAPI(module module.Descriptor) error {
 	return nil
 }
 
-func (s *Server) Start() {
+func (s *Builder) Start() {
 	klog.Infof("starting api server...")
+	doc, err := s.openAPI.Build()
+	if err != nil {
+		panic(err)
+	}
+	b, err := doc.YAMLValue("test")
+	if err != nil {
+		panic(err)
+	}
+	s.mux.HandleFunc("/spec", func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = writer.Write(b)
+	})
 	go func() {
 		s.server = &http.Server{
 			Addr:    ":8080", // TODO configurable
@@ -59,7 +72,7 @@ func (s *Server) Start() {
 	}()
 }
 
-func (s *Server) loadStore(writer http.ResponseWriter, request *http.Request) (orm.Store, bool) {
+func (s *Builder) loadStore(writer http.ResponseWriter, request *http.Request) (orm.Store, bool) {
 	height, err := getHeight(request)
 	if err != nil {
 		badRequest(writer, "bad height value %d: %s", height, err)
@@ -79,7 +92,7 @@ func (s *Server) loadStore(writer http.ResponseWriter, request *http.Request) (o
 	}
 }
 
-func (s *Server) registerStateObjectHandlers(descriptor module.Descriptor, obj module.StateObject) error {
+func (s *Builder) registerStateObjectHandlers(descriptor module.Descriptor, obj module.StateObject) error {
 	// get schema for the object
 	sch, err := s.store.SchemaRegistry().GetByAPIDefinition(obj.StateObject.APIDefinition())
 	if err != nil {
@@ -96,24 +109,35 @@ func (s *Server) registerStateObjectHandlers(descriptor module.Descriptor, obj m
 			Methods(http.MethodGet).
 			Path(path).
 			HandlerFunc(newSingletonGetHandler(sch, s.loadStore))
+
+		// add to open API spec.
+		err = s.openAPI.AddSingleton(obj.StateObject, path)
+		if err != nil {
+			return err
+		}
 	case false:
 		// create get
 		def := obj.StateObject.APIDefinition()
+		singleInstancePath := strings.ToLower(
+			fmt.Sprintf("/%s/%s/{%s}", def.Group, def.Kind, obj.Options.PrimaryKey),
+		)
+		listInstancePath := strings.ToLower(
+			fmt.Sprintf("/%s/%ss", def.Group, def.Kind), // TODO the plural name should be in the state object schema options
+		)
 		s.mux.
 			Methods(http.MethodGet).
-			Path(
-				strings.ToLower(
-					fmt.Sprintf("/%s/%s/{%s}", def.Group, def.Kind, obj.Options.PrimaryKey),
-				)).
+			Path(singleInstancePath).
 			HandlerFunc(newGetHandler(sch, obj.Options, s.loadStore))
 		// create list
 		s.mux.Methods(http.MethodGet).
-			Path(
-				strings.ToLower(
-					fmt.Sprintf("/%s/%ss", def.Group, def.Kind), // TODO the plural name should be in the state object schema options
-				),
-			).
+			Path(listInstancePath).
 			HandlerFunc(newListHandler(sch, obj.Options, s.loadStore))
+
+		// add to open API spec.
+		err = s.openAPI.AddObject(obj.StateObject, singleInstancePath, listInstancePath)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
