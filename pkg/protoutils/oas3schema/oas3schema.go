@@ -45,7 +45,8 @@ type OpenAPIv3Generator struct {
 	registry *protoregistry.Files
 	plugin   *protogen.Plugin
 
-	requiredObjects []proto.Message
+	requiredObjects    []protoreflect.MessageDescriptor
+	requiredObjectsSet map[protoreflect.FullName]struct{}
 
 	requiredSchemas  []string // Names of schemas that need to be generated.
 	generatedSchemas []string // Names of schemas that have already been generated.
@@ -59,22 +60,34 @@ type OpenAPIv3Generator struct {
 // NewOpenAPIv3Generator creates a new generator for a protoc plugin invocation.
 func NewOpenAPIv3Generator() *OpenAPIv3Generator {
 	return &OpenAPIv3Generator{
-		registry:          protoregistry.GlobalFiles,
-		requiredSchemas:   make([]string, 0),
-		generatedSchemas:  make([]string, 0),
-		linterRulePattern: regexp.MustCompile(`\(-- .* --\)`),
-		namePattern:       regexp.MustCompile("{(.*)=(.*)}"),
+		registry:           protoregistry.GlobalFiles,
+		requiredObjectsSet: map[protoreflect.FullName]struct{}{},
+		requiredSchemas:    make([]string, 0),
+		generatedSchemas:   make([]string, 0),
+		linterRulePattern:  regexp.MustCompile(`\(-- .* --\)`),
+		namePattern:        regexp.MustCompile("{(.*)=(.*)}"),
 	}
 }
 
-func (g *OpenAPIv3Generator) AddRequiredMessage(message proto.Message) error {
-	// check if it exists
-	for _, obj := range g.requiredObjects {
-		if obj.ProtoReflect().Descriptor().FullName() == message.ProtoReflect().Descriptor().FullName() {
-			return fmt.Errorf("%s already required", message.ProtoReflect().Descriptor().FullName())
+func (g *OpenAPIv3Generator) AddRequiredMessage(message protoreflect.MessageDescriptor) error {
+	// if it exists skip
+	if _, exists := g.requiredObjectsSet[message.FullName()]; exists {
+		return nil
+	}
+	// check if it has msg field
+	for i := 0; i < message.Fields().Len(); i++ {
+		fd := message.Fields().Get(i)
+		if fd.Kind() == protoreflect.MessageKind || fd.Kind() == protoreflect.GroupKind {
+			log.Printf("message %s has dependency on %s", message.FullName(), fd.Message().FullName())
+			err := g.AddRequiredMessage(fd.Message())
+			if err != nil {
+				return err
+			}
 		}
 	}
+	g.requiredObjectsSet[message.FullName()] = struct{}{}
 	g.requiredObjects = append(g.requiredObjects, message)
+	g.requiredSchemas = append(g.requiredSchemas, fullMessageTypeName(message))
 	return nil
 }
 
@@ -447,12 +460,12 @@ func itemsItemForReference(xref string) *v3.ItemsItem {
 }
 
 // fullMessageTypeName builds the full type name of a message.
-func fullMessageTypeName(message *protogen.Message) string {
-	return "." + string(message.Desc.ParentFile().Package()) + "." + string(message.Desc.Name())
+func fullMessageTypeName(md protoreflect.MessageDescriptor) string {
+	return "." + string(md.ParentFile().Package()) + "." + string(md.Name())
 }
 
 func (g *OpenAPIv3Generator) responseContentForMessage(outputMessage *protogen.Message) *v3.MediaTypes {
-	typeName := fullMessageTypeName(outputMessage)
+	typeName := fullMessageTypeName(outputMessage.Desc)
 
 	if typeName == ".google.protobuf.Empty" {
 		return &v3.MediaTypes{}
@@ -477,7 +490,7 @@ func (g *OpenAPIv3Generator) responseContentForMessage(outputMessage *protogen.M
 					Schema: &v3.SchemaOrReference{
 						Oneof: &v3.SchemaOrReference_Reference{
 							Reference: &v3.Reference{
-								XRef: g.schemaReferenceForTypeName(fullMessageTypeName(outputMessage)),
+								XRef: g.schemaReferenceForTypeName(fullMessageTypeName(outputMessage.Desc)),
 							},
 						},
 					},
@@ -491,7 +504,7 @@ func (g *OpenAPIv3Generator) responseContentForMessage(outputMessage *protogen.M
 func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protogen.File) {
 	// For each message, generate a definition.
 	for _, message := range file.Messages {
-		typeName := fullMessageTypeName(message)
+		typeName := fullMessageTypeName(message.Desc)
 		// Only generate this if we need it and haven't already generated it.
 		if !contains(g.requiredSchemas, typeName) ||
 			contains(g.generatedSchemas, typeName) {
@@ -536,7 +549,7 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 				case protoreflect.MessageKind:
 					fieldSchema.Items = itemsItemForReference(
 						g.schemaReferenceForTypeName(
-							fullMessageTypeName(field.Message)))
+							fullMessageTypeName(field.Message.Desc)))
 				case protoreflect.StringKind:
 					fieldSchema.Items = itemsItemForTypeName("string")
 				case protoreflect.Int32Kind,
@@ -559,7 +572,7 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 				case protoreflect.BytesKind:
 					fieldSchema.Items = itemsItemForTypeName("string")
 				default:
-					log.Printf("(TODO) Unsupported array type: %+v", fullMessageTypeName(field.Message))
+					log.Printf("(TODO) Unsupported array type: %+v", fullMessageTypeName(field.Message.Desc))
 				}
 			} else if field.Desc.IsMap() &&
 				field.Desc.MapKey().Kind() == protoreflect.StringKind &&
@@ -569,7 +582,7 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 				k := field.Desc.Kind()
 				switch k {
 				case protoreflect.MessageKind:
-					typeName := fullMessageTypeName(field.Message)
+					typeName := fullMessageTypeName(field.Message.Desc)
 					switch typeName {
 					case ".google.protobuf.Timestamp":
 						// Timestamps are serialized as strings
@@ -613,7 +626,7 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 					fieldSchema.Type = "string"
 					fieldSchema.Format = "bytes"
 				default:
-					log.Printf("(TODO) Unsupported field type: %+v", fullMessageTypeName(field.Message))
+					log.Printf("(TODO) Unsupported field type: %+v", fullMessageTypeName(field.Message.Desc))
 				}
 			}
 			var value *v3.SchemaOrReference
@@ -658,22 +671,20 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 }
 
 func (g *OpenAPIv3Generator) pluginFromRegistry() error {
-	dpb := make(map[string]*descriptorpb.FileDescriptorProto, g.registry.NumFiles())
-
+	reg := &recursiveRegistryBuilder{
+		dpb:         nil,
+		parsedFiles: map[string]struct{}{},
+	}
 	for _, obj := range g.requiredObjects {
-		fd := obj.ProtoReflect().Descriptor().ParentFile()
-		addRecursive(dpb, fd)
+		fd := obj.ParentFile()
+		reg.addDep(fd)
 	}
 
 	opts := protogen.Options{}
-	files := make([]*descriptorpb.FileDescriptorProto, 0, len(dpb))
-	for _, v := range dpb {
-		files = append(files, v)
-	}
 	plugin, err := opts.New(&pluginpb.CodeGeneratorRequest{
 		FileToGenerate:  nil,
 		Parameter:       nil,
-		ProtoFile:       files,
+		ProtoFile:       reg.dpb,
 		CompilerVersion: nil,
 	})
 
@@ -684,23 +695,23 @@ func (g *OpenAPIv3Generator) pluginFromRegistry() error {
 	return nil
 }
 
-func addRecursive(dpb map[string]*descriptorpb.FileDescriptorProto, fd protoreflect.FileDescriptor) {
-	for i := 0; i < fd.Imports().Len(); i++ {
-		addRecursive(dpb, fd.Imports().Get(i))
-	}
-	fdp := protodesc.ToFileDescriptorProto(fd)
-	dpb[fd.Path()] = fdp
-	if opt := fdp.Options; opt != nil {
-		switch opt.GoPackage {
-		case nil:
-			log.Printf("empty go package for %s", fd.Path())
-		default:
-			log.Printf("go packg %s %s", fd.Path(), *opt.GoPackage)
-		}
-	} else {
-		log.Printf("empty file options for %s", fd.Path())
-	}
+type recursiveRegistryBuilder struct {
+	dpb         []*descriptorpb.FileDescriptorProto
+	parsedFiles map[string]struct{}
+}
 
+func (b *recursiveRegistryBuilder) addDep(fd protoreflect.FileDescriptor) {
+	// check if file was parsed
+	if _, exists := b.parsedFiles[fd.Path()]; exists {
+		return
+	}
+	// parse the imports
+	for i := 0; i < fd.Imports().Len(); i++ {
+		imp := fd.Imports().Get(i)
+		b.addDep(imp)
+	}
+	b.parsedFiles[fd.Path()] = struct{}{}
+	b.dpb = append(b.dpb, protodesc.ToFileDescriptorProto(fd))
 }
 
 // contains returns true if an array contains a specified string.

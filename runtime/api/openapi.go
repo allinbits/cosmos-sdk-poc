@@ -2,13 +2,10 @@ package api
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/pkg/protoutils/oas3schema"
 	v3 "github.com/googleapis/gnostic/openapiv3"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 type openAPI struct {
@@ -29,7 +26,7 @@ func (o openAPI) AddSingleton(obj meta.StateObject, path string) error {
 		return err
 	}
 
-	err = o.gen.AddRequiredMessage(obj)
+	err = o.gen.AddRequiredMessage(obj.ProtoReflect().Descriptor())
 	if err != nil {
 		return err
 	}
@@ -47,7 +44,7 @@ func (o openAPI) AddObject(obj meta.StateObject, singlePath string, listPath str
 	}
 	// TODO listPath
 
-	err = o.gen.AddRequiredMessage(obj)
+	err = o.gen.AddRequiredMessage(obj.ProtoReflect().Descriptor())
 	if err != nil {
 		return err
 	}
@@ -56,10 +53,6 @@ func (o openAPI) AddObject(obj meta.StateObject, singlePath string, listPath str
 }
 
 func (o openAPI) Build() (*v3.Document, error) {
-	protoregistry.GlobalFiles.RangeFiles(func(descriptor protoreflect.FileDescriptor) bool {
-		log.Printf("%s", descriptor.Path())
-		return true
-	})
 	doc, err := o.gen.Build()
 	if err != nil {
 		return nil, err

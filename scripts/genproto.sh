@@ -7,7 +7,7 @@ build() {
     proto_files=$(find "$1" -name "*.proto")
     for file in $proto_files; do
       echo "building proto file $file"
-      protoc -I=. -I=./third_party/proto -I=./core/abci --plugin /usr/bin/protoc-gen-starport --starport_out=. --go_out=. "$file"
+      protoc -I=. -I=./third_party/proto --plugin /usr/bin/protoc-gen-starport --starport_out=. --go_out=. "$file"
     done
 }
 

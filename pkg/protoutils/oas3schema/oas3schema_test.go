@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoregistry"
-	"google.golang.org/protobuf/types/dynamicpb"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -17,7 +16,7 @@ func TestNewOpenAPIv3Generator(t *testing.T) {
 	require.NoError(t, err)
 
 	oas3 := NewOpenAPIv3Generator()
-	require.NoError(t, oas3.AddRequiredMessage(dynamicpb.NewMessage(md)))
+	require.NoError(t, oas3.AddRequiredMessage(md))
 	require.NoError(t, oas3.AddRawOperation("GET", "uniqueID", "some comment", "/hello/cookies", "", &anypb.Any{}))
 	_, err = oas3.Build()
 	require.NoError(t, err)
