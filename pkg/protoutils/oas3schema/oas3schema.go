@@ -38,12 +38,14 @@ const infoURL = "https://github.com/googleapis/gnostic/tree/master/apps/protoc-g
 type rawOperation struct {
 	operationID, comment, path, body, method string
 	responseMessage                          proto.Message
+	params                                   []*v3.Parameter
 }
 
 // OpenAPIv3Generator holds internal state needed to generate an OpenAPIv3 document for a transcoded Protocol Buffer service.
 type OpenAPIv3Generator struct {
-	registry *protoregistry.Files
-	plugin   *protogen.Plugin
+	useFieldNames bool // useFieldNames uses field names in place of json names of fields
+	registry      *protoregistry.Files
+	plugin        *protogen.Plugin
 
 	requiredObjects    []protoreflect.MessageDescriptor
 	requiredObjectsSet map[protoreflect.FullName]struct{}
@@ -207,15 +209,10 @@ func (g *OpenAPIv3Generator) addPathsToDocumentV3(d *v3.Document, file *protogen
 
 	for _, raw := range g.rawOperations {
 		op, path := g.buildOperationV3(raw.operationID, raw.comment, raw.path, raw.body, &protogen.Message{
-			Desc:       raw.responseMessage.ProtoReflect().Descriptor(),
-			GoIdent:    protogen.GoIdent{},
-			Fields:     nil,
-			Oneofs:     nil,
-			Enums:      nil,
-			Messages:   nil,
-			Extensions: nil,
-			Location:   protogen.Location{},
-			Comments:   protogen.CommentSet{},
+			Desc:     raw.responseMessage.ProtoReflect().Descriptor(),
+			GoIdent:  protogen.GoIdent{},
+			Location: protogen.Location{},
+			Comments: protogen.CommentSet{},
 		})
 		g.addOperationV3(d, op, path, raw.method)
 	}
@@ -438,9 +435,7 @@ func (g *OpenAPIv3Generator) schemaReferenceForTypeName(typeName string) string 
 	if !contains(g.requiredSchemas, typeName) {
 		g.requiredSchemas = append(g.requiredSchemas, typeName)
 	}
-	parts := strings.Split(typeName, ".")
-	lastPart := parts[len(parts)-1]
-	return "#/components/schemas/" + lastPart
+	return "#/components/schemas/" + typeName[1:]
 }
 
 // itemsItemForTypeName is a helper constructor.
@@ -645,10 +640,14 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 					},
 				}
 			}
+			fieldName := field.Desc.JSONName()
+			if g.useFieldNames {
+				fieldName = (string)(field.Desc.Name())
+			}
 			definitionProperties.AdditionalProperties = append(
 				definitionProperties.AdditionalProperties,
 				&v3.NamedSchemaOrReference{
-					Name:  string(field.Desc.Name()),
+					Name:  fieldName,
 					Value: value,
 				},
 			)
@@ -656,7 +655,7 @@ func (g *OpenAPIv3Generator) addSchemasToDocumentV3(d *v3.Document, file *protog
 		// Add the schema to the components.schema list.
 		d.Components.Schemas.AdditionalProperties = append(d.Components.Schemas.AdditionalProperties,
 			&v3.NamedSchemaOrReference{
-				Name: string(message.Desc.Name()),
+				Name: string(message.Desc.FullName()),
 				Value: &v3.SchemaOrReference{
 					Oneof: &v3.SchemaOrReference_Schema{
 						Schema: &v3.Schema{
