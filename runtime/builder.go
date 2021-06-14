@@ -32,12 +32,12 @@ func NewBuilder() *Builder {
 		moduleDescriptors: nil,
 		moduleRoles:       map[string]*rbacv1alpha1.Role{},
 		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
-		rbac:              nil,
+		rbac:              rbac.NewModule(),
 		decoder:           nil,
 		rt: &Runtime{
 			router: NewRouter(),
 		},
-		apiServer:         nil,
+		apiServer: nil,
 	}
 
 	// we already add the core modules in order
@@ -103,6 +103,7 @@ func (b *Builder) Build() (*Runtime, error) {
 
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
+	b.rt.store = b.store
 	b.rt.modules = b.moduleDescriptors
 	b.rt.authorizer = b.rbac.AsAuthorizer()
 	b.rt.user = user.NewUsersFromString(user.Runtime)
@@ -165,7 +166,7 @@ func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 
 func (b *Builder) registerStateObjects(md module.Descriptor) error {
 	for _, so := range md.StateObjects {
-		err := b.rt.store.RegisterObject(so.StateObject, so.Options)
+		err := b.store.RegisterObject(so.StateObject, so.Options)
 		if err != nil {
 			return err
 		}
@@ -356,7 +357,7 @@ func (b *Builder) initStore() error {
 	idxKv := kv.NewBadger()
 	idx := indexes.NewStore(idxKv)
 
-	b.rt.store = orm.NewStore(obj, idx)
+	b.store = orm.NewStore(obj, idx)
 
 	return nil
 }
