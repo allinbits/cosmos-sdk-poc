@@ -15,13 +15,13 @@ type Descriptor struct {
 	StateTransitionPreExecHandlers       []stateTransitionPreExecutionHandler
 	StateTransitionExecutionHandlers     []stateTransitionExecutionHandler
 	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
-	StateObjects                         []stateObject
+	StateObjects                         []StateObject
 	Needs                                []meta.StateTransition
 	AuthAdmissionHandlers                []authAdmissionHandler
 	PostAuthenticationHandler            []postAuthenticationHandler
 }
 
-type stateObject struct {
+type StateObject struct {
 	StateObject meta.StateObject
 	Options     schema.Definition
 }
@@ -76,7 +76,7 @@ func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ct
 }
 
 func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject, options schema.Definition) *DescriptorBuilder {
-	b.descriptor.StateObjects = append(b.descriptor.StateObjects, stateObject{
+	b.descriptor.StateObjects = append(b.descriptor.StateObjects, StateObject{
 		StateObject: object,
 		Options:     options,
 	})

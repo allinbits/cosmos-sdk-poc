@@ -9,6 +9,7 @@ import (
 	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/core/runtime"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
+	"github.com/fdymylja/tmos/runtime/api"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
@@ -22,7 +23,7 @@ import (
 )
 
 var (
-	errEmptyModuleName = errors.New("runtime: empty core name")
+	errEmptyModuleName = errors.New("runtime: empty module name")
 )
 
 // NewBuilder creates a new Builder for the Runtime
@@ -30,12 +31,13 @@ func NewBuilder() *Builder {
 	b := &Builder{
 		moduleDescriptors: nil,
 		moduleRoles:       map[string]*rbacv1alpha1.Role{},
-		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID}, // we add the initial external role, with basically no authorization towards no resource.
-		rbac:              rbac.NewModule(),                                           // we set the rbac core inside so that we can prepare initial genesis with rbac
+		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
+		rbac:              nil,
 		decoder:           nil,
 		rt: &Runtime{
 			router: NewRouter(),
 		},
+		apiServer:         nil,
 	}
 
 	// we already add the core modules in order
@@ -57,7 +59,11 @@ type Builder struct {
 	rbac         *rbac.Module
 	decoder      authentication.TxDecoder
 
-	rt *Runtime
+	router *Router
+	store  orm.Store
+	rt     *Runtime
+
+	apiServer *api.Builder
 }
 
 // AddModule adds a new module.Module to the list of modules to install
@@ -106,7 +112,16 @@ func (b *Builder) Build() (*Runtime, error) {
 	default:
 		b.rt.txDecoder = b.decoder
 	}
-
+	// populate api server
+	b.apiServer = api.NewServer(b.store)
+	for _, m := range b.moduleDescriptors {
+		err = b.apiServer.RegisterModuleAPI(m)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// start api server
+	b.apiServer.Start()
 	return b.rt, nil
 }
 

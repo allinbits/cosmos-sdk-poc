@@ -4,10 +4,10 @@ package tendermint.abci;
 option go_package = "github.com/fdymylja/tmos/core/abci/tendermint/abci";
 
 
-import "tendermint/crypto/proof.proto";
-import "tendermint/types/types.proto";
-import "tendermint/crypto/keys.proto";
-import "tendermint/types/params.proto";
+import "core/abci/tendermint/crypto/proof.proto";
+import "core/abci/tendermint/types/types.proto";
+import "core/abci/tendermint/crypto/keys.proto";
+import "core/abci/tendermint/types/params.proto";
 import "google/protobuf/timestamp.proto";
 
 

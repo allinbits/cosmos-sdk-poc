@@ -22,5 +22,5 @@ func TestNewBuilder_ModuleWithoutName(t *testing.T) {
 
 	_, err := builder.Build()
 	require.NotNil(t, err)
-	require.Contains(t, err.Error(), "empty core name")
+	require.Contains(t, err.Error(), "empty module name")
 }
