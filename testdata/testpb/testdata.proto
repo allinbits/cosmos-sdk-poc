@@ -9,3 +9,7 @@ message SimpleMessage {
   int64  b = 2;
   repeated bytes c = 3;
 }
+
+message SimpleMessageList {
+  repeated SimpleMessage list = 1;
+}

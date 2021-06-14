@@ -56,5 +56,6 @@ func (o openAPI) Build() (*v3.Document, error) {
 	if err != nil {
 		return nil, err
 	}
+	// after building the document we need to
 	return doc, nil
 }

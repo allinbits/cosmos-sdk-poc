@@ -9,6 +9,7 @@ require (
 	github.com/gogo/protobuf v1.3.3
 	github.com/googleapis/gnostic v0.5.5
 	github.com/gorilla/mux v1.8.0
+	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/scylladb/go-set v1.0.2
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
