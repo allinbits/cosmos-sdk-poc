@@ -4,8 +4,11 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/pkg/protoutils/forge"
 	"github.com/fdymylja/tmos/pkg/protoutils/oas3schema"
 	v3 "github.com/googleapis/gnostic/openapiv3"
+	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 type openAPI struct {
@@ -41,13 +44,25 @@ func (o openAPI) AddObject(obj meta.StateObject, singlePath string, listPath str
 	if err != nil {
 		return err
 	}
-	// TODO listPath
-
 	err = o.gen.AddRequiredMessage(obj.ProtoReflect().Descriptor())
 	if err != nil {
 		return err
 	}
-
+	// forge list object
+	listObject, err := forge.List(obj, protoregistry.GlobalFiles)
+	if err != nil {
+		return err
+	}
+	listOPID := fmt.Sprintf("list.%s", meta.Name(obj))
+	listComment := fmt.Sprintf("Returns a list of %s", meta.Name(obj))
+	err = o.gen.AddRawOperation("GET", listOPID, listComment, listPath, "", dynamicpb.NewMessage(listObject.Descriptor()))
+	if err != nil {
+		return err
+	}
+	err = o.gen.AddRequiredMessage(listObject.Descriptor())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

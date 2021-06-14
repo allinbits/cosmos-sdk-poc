@@ -13,7 +13,9 @@ import (
 )
 
 func TestList(t *testing.T) {
-	forgedListType := List(&testpb.SimpleMessage{}, protoregistry.GlobalFiles)
+	forgedListType, err := List(&testpb.SimpleMessage{}, protoregistry.GlobalFiles)
+	require.NoError(t, err)
+
 	fd := forgedListType.Descriptor().Fields().Get(0)
 	require.Equal(t, protoreflect.FullName("dynamic.testdata.SimpleMessageList"), forgedListType.Descriptor().FullName())
 	require.Equal(t, protoreflect.FullName("dynamic.testdata.SimpleMessageList.list"), fd.FullName())

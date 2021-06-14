@@ -17,7 +17,7 @@ const PackagePrefix = "dynamic"
 // no changes to the type registry or file registry are made. This type should be only
 // used for marshalling and unmarshalling to and from proto or json bytes.
 // It shouldn't be used for reflection or introspection as results are not guaranteed to be consistent.
-func List(message proto.Message, resolver protodesc.Resolver) protoreflect.MessageType {
+func List(message proto.Message, resolver protodesc.Resolver) (protoreflect.MessageType, error) {
 	fd := message.ProtoReflect().Descriptor().ParentFile()
 	md := message.ProtoReflect().Descriptor()
 	forgedFdp := &descriptorpb.FileDescriptorProto{
@@ -44,12 +44,15 @@ func List(message proto.Message, resolver protodesc.Resolver) protoreflect.Messa
 				},
 			},
 		},
+		Options: &descriptorpb.FileOptions{
+			GoPackage: ptrprim.String(fmt.Sprintf("%s/dynamic", *fd.Options().(*descriptorpb.FileOptions).GoPackage)), // TODO(fdymylja): remove me when the oas3schema rework is done
+		},
 	}
 	fd, err := protodesc.NewFile(forgedFdp, resolver)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	newMessageMD := fd.Messages().Get(0)
-	return dynamicpb.NewMessageType(newMessageMD)
+	return dynamicpb.NewMessageType(newMessageMD), nil
 }
