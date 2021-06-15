@@ -1,6 +1,6 @@
 .PHONY: proto testapp
 
-DIRECTORIES_TO_BUILD := "./x ./core ./testdata/testpb"
+DIRECTORIES_TO_BUILD := "./x ./core ./testdata/testpb ./testdata/testmodule/v1"
 
 spfcli:
 	go build -o build/spfcli.exe ./cmd/spfcli

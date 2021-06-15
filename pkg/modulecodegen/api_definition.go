@@ -12,6 +12,9 @@ import (
 const metaPkg = protogen.GoImportPath("github.com/fdymylja/tmos/core/meta")
 
 func genAPIDefinition(g *protogen.GeneratedFile, message *protogen.Message) error {
+	if message.Desc.ParentFile().Package() == "" {
+		return fmt.Errorf("empty package names are not allowed, file: %s", message.Location.SourceFile)
+	}
 	apiDefinitionIdent := metaPkg.Ident("APIDefinition")
 	apiTypeStateObject := metaPkg.Ident("APIType_StateObject")
 	apiTypeStateTransition := metaPkg.Ident("APIType_StateTransition")

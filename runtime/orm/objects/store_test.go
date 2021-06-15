@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	meta "github.com/fdymylja/tmos/core/meta"
-	"github.com/fdymylja/tmos/pkg/prototest"
+	prototest2 "github.com/fdymylja/tmos/pkg/protoutils/prototest"
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
@@ -25,7 +25,7 @@ func TestStore(t *testing.T) {
 	// test get
 	got := &testpb.SimpleMessage{}
 	require.NoError(t, store.Get(sch, meta.NewStringID(o1.A), got))
-	prototest.Equal(t, o1, got)
+	prototest2.Equal(t, o1, got)
 
 	// test create same object
 	require.ErrorIs(t, store.Create(sch, o1), orm.ErrAlreadyExists)
@@ -38,7 +38,7 @@ func TestStore(t *testing.T) {
 	require.NoError(t, store.Update(sch, o2))
 	got.Reset()
 	require.NoError(t, store.Get(sch, meta.NewStringID(o1.A), got))
-	prototest.Equal(t, o2, got)
+	prototest2.Equal(t, o2, got)
 
 	// test update non existing object
 	require.ErrorIs(t, store.Update(sch, &testpb.SimpleMessage{A: "not exists"}), orm.ErrNotFound)
