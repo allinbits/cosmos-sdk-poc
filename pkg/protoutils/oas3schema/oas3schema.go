@@ -201,14 +201,14 @@ func (g *OpenAPIv3Generator) addPathsToDocumentV3(d *v3.Document, file *protogen
 				}
 			}
 			if methodName != "" {
-				op, path2 := g.buildOperationV3(operationID, comment, path, body, outputMessage)
+				op, path2 := g.buildOperationV3(operationID, comment, path, body, nil, outputMessage)
 				g.addOperationV3(d, op, path2, methodName)
 			}
 		}
 	}
 
 	for _, raw := range g.rawOperations {
-		op, path := g.buildOperationV3(raw.operationID, raw.comment, raw.path, raw.body, &protogen.Message{
+		op, path := g.buildOperationV3(raw.operationID, raw.comment, raw.path, raw.body, raw.params, &protogen.Message{
 			Desc:     raw.responseMessage.ProtoReflect().Descriptor(),
 			GoIdent:  protogen.GoIdent{},
 			Location: protogen.Location{},
@@ -218,7 +218,7 @@ func (g *OpenAPIv3Generator) addPathsToDocumentV3(d *v3.Document, file *protogen
 	}
 }
 
-func (g *OpenAPIv3Generator) AddRawOperation(method, operationID, comment, path, body string, responseMessage proto.Message) error {
+func (g *OpenAPIv3Generator) AddRawOperation(method, operationID, comment, path, body string, params []*v3.Parameter, responseMessage proto.Message) error {
 	// TODO check if already used by path maybe?
 	g.rawOperations = append(g.rawOperations, rawOperation{
 		operationID:     operationID,
@@ -227,6 +227,7 @@ func (g *OpenAPIv3Generator) AddRawOperation(method, operationID, comment, path,
 		body:            body,
 		method:          method,
 		responseMessage: responseMessage,
+		params:          params,
 	})
 
 	return nil
@@ -238,12 +239,16 @@ func (g *OpenAPIv3Generator) buildOperationV3(
 	description string,
 	path string,
 	bodyField string,
+	rawParams []*v3.Parameter,
 	outputMessage *protogen.Message,
 ) (*v3.Operation, string) {
 	// coveredParameters tracks the parameters that have been used in the body or path.
 	coveredParameters := make([]string, 0)
 	// Initialize the list of operation parameters.
 	var parameters []*v3.ParameterOrReference
+	for _, rawParam := range rawParams {
+		parameters = append(parameters, &v3.ParameterOrReference{Oneof: &v3.ParameterOrReference_Parameter{Parameter: rawParam}})
+	}
 	// Build a list of path parameters.
 	pathParameters := make([]string, 0)
 	if matches := g.namePattern.FindStringSubmatch(path); matches != nil {

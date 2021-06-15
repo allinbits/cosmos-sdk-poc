@@ -21,10 +21,62 @@ func NewOpenAPIBuilder() *openAPI {
 	}
 }
 
+func newGetParams() []*v3.Parameter {
+	return nil
+}
+
+func newSingletonParams() []*v3.Parameter {
+	return nil
+}
+
+func newListParameters() []*v3.Parameter {
+	return []*v3.Parameter{
+		{
+			Name:            QueryParamSelectField,
+			In:              "query",
+			Description:     "Select a field to match in the object",
+			AllowEmptyValue: true,
+			Schema: &v3.SchemaOrReference{Oneof: &v3.SchemaOrReference_Schema{
+				Schema: &v3.Schema{
+					Type: "string",
+				},
+			}},
+			Example:  nil,
+			Examples: nil,
+		},
+		{
+			Name:            QueryParamStart,
+			In:              "query",
+			Description:     "The start point for the object iteration (default: 0)",
+			AllowEmptyValue: true,
+			Schema: &v3.SchemaOrReference{Oneof: &v3.SchemaOrReference_Schema{
+				Schema: &v3.Schema{
+					Type: "integer",
+				},
+			}},
+			Example:  nil,
+			Examples: nil,
+		},
+		{
+			Name:            QueryParamEnd,
+			In:              "query",
+			Description:     "The end point for the object iteration (default: 100)",
+			AllowEmptyValue: true,
+			Schema: &v3.SchemaOrReference{Oneof: &v3.SchemaOrReference_Schema{
+				Schema: &v3.Schema{
+					Type: "integer",
+				},
+			}},
+			Example:  nil,
+			Examples: nil,
+		},
+	}
+}
+
 func (o openAPI) AddSingleton(obj meta.StateObject, path string) error {
 	opID := fmt.Sprintf("singleton.%s", meta.Name(obj))
 	comment := fmt.Sprintf("Returns the unique instance of the %s object if it exists.", meta.Name(obj))
-	err := o.gen.AddRawOperation("GET", opID, comment, path, "", obj)
+	err := o.gen.AddRawOperation("GET", opID, comment, path, "", newSingletonParams(), obj)
 	if err != nil {
 		return err
 	}
@@ -40,7 +92,7 @@ func (o openAPI) AddSingleton(obj meta.StateObject, path string) error {
 func (o openAPI) AddObject(obj meta.StateObject, singlePath string, listPath string) error {
 	opID := fmt.Sprintf("get.%s", meta.Name(obj))
 	comment := fmt.Sprintf("Returns an instance of %s", meta.Name(obj))
-	err := o.gen.AddRawOperation("GET", opID, comment, singlePath, "", obj)
+	err := o.gen.AddRawOperation("GET", opID, comment, singlePath, "", newGetParams(), obj)
 	if err != nil {
 		return err
 	}
@@ -55,7 +107,7 @@ func (o openAPI) AddObject(obj meta.StateObject, singlePath string, listPath str
 	}
 	listOPID := fmt.Sprintf("list.%s", meta.Name(obj))
 	listComment := fmt.Sprintf("Returns a list of %s", meta.Name(obj))
-	err = o.gen.AddRawOperation("GET", listOPID, listComment, listPath, "", dynamicpb.NewMessage(listObject.Descriptor()))
+	err = o.gen.AddRawOperation("GET", listOPID, listComment, listPath, "", newListParameters(), dynamicpb.NewMessage(listObject.Descriptor()))
 	if err != nil {
 		return err
 	}
