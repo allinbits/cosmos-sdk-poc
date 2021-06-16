@@ -38,10 +38,11 @@ type Router struct {
 
 func (r *Router) AddStateTransitionAdmissionHandler(transition meta.StateTransition, handler statetransition.AdmissionHandler) error {
 	name := meta.Name(transition)
-	// check if state transition exists
-	if _, exists := r.stateTransitionAdmissionHandlers[name]; !exists {
+
+	if !r.stateTransitionAdmissionHandlerExists(transition) {
 		r.stateTransitionAdmissionHandlers[name] = nil
 	}
+
 	r.stateTransitionAdmissionHandlers[name] = append(r.stateTransitionAdmissionHandlers[name], handler)
 	return nil
 }
@@ -64,7 +65,6 @@ func (r *Router) GetStateTransitionAdmissionHandlers(transition meta.StateTransi
 // Pre execution handlers
 
 func (r *Router) AddStateTransitionPreExecutionHandler(transition meta.StateTransition, handler statetransition.PreExecutionHandler) error {
-	// check if it was already registered
 	if !r.knownStateTransition(transition) {
 		return fmt.Errorf("%w: unable to register state transition pre execution handler for unknown state transition %s", ErrTransitionNotFound, meta.Name(transition))
 	}
@@ -161,6 +161,12 @@ func (r *Router) ListStateTransitions() []string {
 func (r *Router) knownStateTransition(transition meta.StateTransition) bool {
 	_, known := r.stateTransitionExecutionHandlers[meta.Name(transition)]
 	return known
+}
+
+func (r *Router) stateTransitionAdmissionHandlerExists(transition meta.StateTransition) bool {
+	name := meta.Name(transition)
+	_, exists := r.stateTransitionAdmissionHandlers[name]
+	return exists
 }
 
 func (r *Router) name(transition meta.StateTransition) string {
