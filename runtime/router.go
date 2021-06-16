@@ -52,7 +52,7 @@ func (r *Router) GetStateTransitionAdmissionHandlers(transition meta.StateTransi
 		return nil, fmt.Errorf(
 			"%w: unable to provide state transition admission handlers for unknown state transition %s",
 			ErrTransitionNotFound,
-			r.name(transition),
+			meta.Name(transition),
 		)
 	}
 	ctrls, exists := r.stateTransitionAdmissionHandlers[meta.Name(transition)]
@@ -68,7 +68,7 @@ func (r *Router) AddStateTransitionPreExecutionHandler(transition meta.StateTran
 	if !r.knownStateTransition(transition) {
 		return fmt.Errorf("%w: unable to register state transition pre execution handler for unknown state transition %s", ErrTransitionNotFound, meta.Name(transition))
 	}
-	name := r.name(transition)
+	name := meta.Name(transition)
 	// initialize slice if it does not exist
 	if _, exists := r.stateTransitionPreExecutionHandlers[name]; !exists {
 		r.stateTransitionPreExecutionHandlers[name] = nil
@@ -79,10 +79,11 @@ func (r *Router) AddStateTransitionPreExecutionHandler(transition meta.StateTran
 }
 
 func (r *Router) GetStateTransitionPreExecutionHandlers(transition meta.StateTransition) ([]statetransition.PreExecutionHandler, error) {
+	name := meta.Name(transition)
 	if !r.knownStateTransition(transition) {
-		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, r.name(transition))
+		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, name)
 	}
-	preExecHandlers, exists := r.stateTransitionPreExecutionHandlers[r.name(transition)]
+	preExecHandlers, exists := r.stateTransitionPreExecutionHandlers[name]
 	if !exists {
 		return nil, nil
 	}
@@ -92,7 +93,7 @@ func (r *Router) GetStateTransitionPreExecutionHandlers(transition meta.StateTra
 // Execution Handlers
 
 func (r *Router) AddStateTransitionExecutionHandler(transition meta.StateTransition, handler statetransition.ExecutionHandler) error {
-	name := r.name(transition)
+	name := meta.Name(transition)
 	if r.knownStateTransition(transition) {
 		return fmt.Errorf("%w: %s", ErrTransitionAlreadyRegistered, name)
 	}
@@ -112,7 +113,7 @@ func (r *Router) GetStateTransitionExecutionHandler(transition meta.StateTransit
 // Post Execution handlers
 
 func (r *Router) AddStateTransitionPostExecutionHandler(transition meta.StateTransition, handler statetransition.PostExecutionHandler) error {
-	name := r.name(transition)
+	name := meta.Name(transition)
 	if !r.knownStateTransition(transition) {
 		return fmt.Errorf("%w: unable to register state transition post execution handler for unknown state transition %s", ErrTransitionNotFound, name)
 	}
@@ -124,10 +125,11 @@ func (r *Router) AddStateTransitionPostExecutionHandler(transition meta.StateTra
 }
 
 func (r *Router) GetStateTransitionPostExecutionHandlers(transition meta.StateTransition) ([]statetransition.PostExecutionHandler, error) {
+	name := meta.Name(transition)
 	if !r.knownStateTransition(transition) {
-		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, r.name(transition))
+		return nil, fmt.Errorf("%w: %s", ErrTransitionNotFound, name)
 	}
-	postExecHandlers, exists := r.stateTransitionPostExecutionHandlers[r.name(transition)]
+	postExecHandlers, exists := r.stateTransitionPostExecutionHandlers[name]
 	if !exists {
 		return nil, nil
 	}
@@ -167,8 +169,4 @@ func (r *Router) stateTransitionAdmissionHandlerExists(transition meta.StateTran
 	name := meta.Name(transition)
 	_, exists := r.stateTransitionAdmissionHandlers[name]
 	return exists
-}
-
-func (r *Router) name(transition meta.StateTransition) string {
-	return meta.Name(transition)
 }
