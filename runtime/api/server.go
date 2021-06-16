@@ -217,11 +217,12 @@ func newListHandler(schema *schema.Schema, loadStore loadStoreFunc) http.Handler
 		if !ok {
 			return
 		}
-		var opts []orm.ListOption
-		opts = append(opts, orm.ListRange{
-			Start: listOptions.Start,
-			End:   listOptions.End,
-		})
+		opts := orm.ListOptions{
+			MatchFieldInterface: nil,
+			MatchFieldString:    nil,
+			Start:               listOptions.Start,
+			End:                 listOptions.End,
+		}
 
 		for _, selection := range listOptions.SelectFields {
 			sp := strings.SplitN(selection, "=", 2)
@@ -235,13 +236,13 @@ func newListHandler(schema *schema.Schema, loadStore loadStoreFunc) http.Handler
 				badRequest(w, "bad fieldSelection in query: %s", err)
 				return
 			}
-			opts = append(opts, orm.ListMatchFieldString{
+			opts.MatchFieldString = append(opts.MatchFieldString, orm.ListMatchFieldString{
 				Field: sp[0],
 				Value: sp[1],
 			})
 		}
 
-		iter, err := store.List(schema.NewStateObject(), opts...)
+		iter, err := store.List(schema.NewStateObject(), opts)
 		if err != nil {
 			badRequest(w, "unable to list any object: %s", err)
 			return

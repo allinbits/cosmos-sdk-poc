@@ -80,7 +80,6 @@ func (g *OpenAPIv3Generator) AddRequiredMessage(message protoreflect.MessageDesc
 	for i := 0; i < message.Fields().Len(); i++ {
 		fd := message.Fields().Get(i)
 		if fd.Kind() == protoreflect.MessageKind || fd.Kind() == protoreflect.GroupKind {
-			log.Printf("message %s has dependency on %s", message.FullName(), fd.Message().FullName())
 			err := g.AddRequiredMessage(fd.Message())
 			if err != nil {
 				return err

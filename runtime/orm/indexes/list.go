@@ -8,7 +8,7 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 )
 
-func (s Store) List(sch *schema.Schema, options orm.ListOptionsRaw) (kv.Iterator, error) {
+func (s Store) List(sch *schema.Schema, options orm.ListOptions) (kv.Iterator, error) {
 	prefixes, err := prefixesToScan(sch, options)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (s Store) List(sch *schema.Schema, options orm.ListOptionsRaw) (kv.Iterator
 
 // prefixesToScan returns the list of prefixes that need to be scanned to fetch primary keys
 // associated with the provided fields
-func prefixesToScan(schema *schema.Schema, opt orm.ListOptionsRaw) ([]indexObjectWithSecondaryKey, error) {
+func prefixesToScan(schema *schema.Schema, opt orm.ListOptions) ([]indexObjectWithSecondaryKey, error) {
 	prefixes := make([]indexObjectWithSecondaryKey, 0, len(opt.MatchFieldString)+len(opt.MatchFieldString))
 	for _, o := range opt.MatchFieldInterface {
 		idx, err := schema.Indexer(o.Field)
