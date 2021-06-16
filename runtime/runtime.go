@@ -114,8 +114,9 @@ func (r *Runtime) Get(id meta.ID, object meta.StateObject) error {
 	return convertStoreError(r.store.Get(id, object))
 }
 
-func (r *Runtime) List() {
-	panic("implement me")
+func (r *Runtime) List(object meta.StateObject, options orm.ListOptions) (orm.Iterator, error) {
+	iter, err := r.store.List(object, options)
+	return iter, convertStoreError(err)
 }
 
 func (r *Runtime) Create(users user.Users, object meta.StateObject) error {

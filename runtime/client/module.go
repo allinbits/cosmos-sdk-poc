@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 )
@@ -46,6 +48,18 @@ func (c *ModuleClient) Deliver(transition meta.StateTransition, opts ...DeliverO
 	users := user.NewUsersUnion(c.users, o.impersonate)
 
 	return c.runtime.Deliver(users, transition)
+}
+
+func (c *ModuleClient) List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error) {
+	opt := new(ListOptions)
+	for _, o := range opts {
+		o(opt)
+	}
+	// assert height is zero
+	if opt.Height != 0 {
+		return ObjectIterator{}, fmt.Errorf("client: heighted list is not allowed for module clients")
+	}
+	return c.runtime.List(object, opt.ORMOptions)
 }
 
 func (c *ModuleClient) SetUser(u user.Users) {

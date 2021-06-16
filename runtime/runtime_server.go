@@ -4,6 +4,7 @@ import (
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
+	"github.com/fdymylja/tmos/runtime/orm"
 )
 
 var _ client.RuntimeServer = server{}
@@ -37,4 +38,8 @@ func (s server) Delete(users user.Users, object meta.StateObject) error {
 
 func (s server) Deliver(users user.Users, transition meta.StateTransition) error {
 	return s.rt.deliver(users, transition)
+}
+
+func (s server) List(object meta.StateObject, options orm.ListOptions) (orm.Iterator, error) {
+	return s.rt.List(object, options)
 }
