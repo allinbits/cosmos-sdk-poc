@@ -84,8 +84,13 @@ func (s *Builder) loadStore(writer http.ResponseWriter, request *http.Request) (
 	}
 	switch height {
 	case 0:
-		store := s.store.LatestVersion()
-		return store, true
+		version := s.store.LatestVersion()
+		latest, err := s.store.LoadVersion(version)
+		// NOTE: this should never fail.
+		if err != nil {
+			panic(err)
+		}
+		return latest, true
 	default:
 		store, err := s.store.LoadVersion(height)
 		if err != nil {

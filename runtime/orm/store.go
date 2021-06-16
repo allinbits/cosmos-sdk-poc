@@ -173,8 +173,8 @@ func (s Store) SchemaRegistry() *schema.Registry {
 	return s.schemas
 }
 
-func (s Store) LatestVersion() Store {
-	return s
+func (s Store) LatestVersion() uint64 {
+	return 0
 }
 
 // LoadVersion returns an instance of the Store at the given height

@@ -51,7 +51,7 @@ func (c *ModuleClient) Deliver(transition meta.StateTransition, opts ...DeliverO
 }
 
 func (c *ModuleClient) List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error) {
-	opt := new(ListOptions)
+	opt := new(listOptions)
 	for _, o := range opts {
 		o(opt)
 	}

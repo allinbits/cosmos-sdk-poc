@@ -24,9 +24,15 @@ type ObjectIterator = orm.Iterator
 // with the RuntimeServer and talk with the store and other modules.
 type RuntimeClient interface {
 	Get(id meta.ID, object meta.StateObject, opts ...GetOption) error
+	List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error)
 	Create(object meta.StateObject, opts ...CreateOption) error
 	Update(object meta.StateObject, opts ...UpdateOption) error
 	Delete(object meta.StateObject, opts ...DeleteOption) error
 	Deliver(transition meta.StateTransition, opts ...DeliverOption) error
+}
+
+// ReadOnlyClient offers a readonly subset of operations that can be done on runtime.Runtime
+type ReadOnlyClient interface {
+	Get(id meta.ID, object meta.StateObject, opts ...GetOption) error
 	List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error)
 }
