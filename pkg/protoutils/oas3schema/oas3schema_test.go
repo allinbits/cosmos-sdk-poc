@@ -17,7 +17,7 @@ func TestNewOpenAPIv3Generator(t *testing.T) {
 
 	oas3 := NewOpenAPIv3Generator()
 	require.NoError(t, oas3.AddRequiredMessage(md))
-	require.NoError(t, oas3.AddRawOperation("GET", "uniqueID", "some comment", "/hello/cookies", "", &anypb.Any{}))
+	require.NoError(t, oas3.AddRawOperation("GET", "uniqueID", "some comment", "/hello/cookies", "", nil, &anypb.Any{}))
 	_, err = oas3.Build()
 	require.NoError(t, err)
 }

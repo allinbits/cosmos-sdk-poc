@@ -1,15 +1,13 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/pkg/protoutils/forge"
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/indexes"
@@ -18,6 +16,7 @@ import (
 	v1 "github.com/fdymylja/tmos/testdata/testmodule/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 func TestServer(t *testing.T) {
@@ -89,13 +88,13 @@ func TestServer(t *testing.T) {
 		require.NoError(t, err)
 		t.Logf("%s", b)
 
-		var items struct {
-			Items []*v1.Post `json:"items"`
-		}
+		listType, err := forge.List(&v1.Post{}, protoregistry.GlobalFiles)
+		require.NoError(t, err)
+		listMsg := listType.New()
+		require.NoError(t, protojson.Unmarshal(b, listMsg.Interface()))
 
-		require.NoError(t, json.Unmarshal(b, &items)) // FIXME(fdymylja): when we implement dynamic proto array creation
-
-		require.NotEmpty(t, items.Items)
+		listValue := listMsg.Get(listType.Descriptor().Fields().Get(0)).List()
+		require.Equal(t, 2, listValue.Len())
 	})
 
 }
@@ -120,24 +119,4 @@ func createBoilerplateState(t *testing.T, store orm.Store) {
 		Text:    "dear diary I reached Apex Predator Rank again on Apex Legends, I must be built different",
 	}))
 	require.NoError(t, store.Create(&v1.Params{LastPostNumber: 1}))
-}
-
-func Test_writers(t *testing.T) {
-	p := &v1.Post{
-		Id:      "1",
-		Creator: "me",
-		Title:   "you",
-		Text:    "hello",
-	}
-
-	p2 := &v1.Post{
-		Id:      "2",
-		Creator: "you",
-		Title:   "hello",
-		Text:    "no",
-	}
-	b := new(bytes.Buffer)
-	writeObjectList(b, []meta.StateObject{p, p2})
-	// TODO proper matching which can't be done with expected outputs due to protobuf detrand on json
-	t.Logf("%s", b)
 }

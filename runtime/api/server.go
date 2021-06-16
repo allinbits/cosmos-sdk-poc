@@ -7,11 +7,15 @@ import (
 	"strings"
 
 	"github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/pkg/protoutils/forge"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"k8s.io/klog/v2"
 )
 
@@ -131,7 +135,7 @@ func (s *Builder) registerStateObjectHandlers(descriptor module.Descriptor, obj 
 		// create list
 		s.mux.Methods(http.MethodGet).
 			Path(listInstancePath).
-			HandlerFunc(newListHandler(sch, obj.Options, s.loadStore))
+			HandlerFunc(newListHandler(sch, s.loadStore))
 
 		// add to open API spec.
 		err = s.openAPI.AddObject(obj.StateObject, singleInstancePath, listInstancePath)
@@ -143,105 +147,9 @@ func (s *Builder) registerStateObjectHandlers(descriptor module.Descriptor, obj 
 	return nil
 }
 
-func writeObject(w io.Writer, obj meta.StateObject) bool {
-	b, err := protojson.Marshal(obj)
-	if err != nil {
-		panic(err)
-	}
-	_, err = w.Write(b)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
-func notFound(writer http.ResponseWriter, format string, values ...interface{}) {
-	writer.WriteHeader(http.StatusNotFound)
-	_, _ = writer.Write([]byte(fmt.Sprintf(format, values...)))
-}
-
-func badRequest(writer http.ResponseWriter, format string, values ...interface{}) {
-	writer.WriteHeader(http.StatusBadRequest)
-	_, _ = writer.Write([]byte(fmt.Sprintf(format, values...)))
-}
-
 // loadStoreFunc returns the versioned store given an http request and returns if the loading succeeded or not
 // if the loading fails loadStoreFunc will write the error to the http.ResponseWriter
 type loadStoreFunc func(w http.ResponseWriter, r *http.Request) (store orm.Store, failed bool)
-
-// newListHandler creates an http.HandlerFunc that can be used to fetch a list of state objects of the same kind
-func newListHandler(schema *schema.Schema, definition schema.Definition, loadStore loadStoreFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query()
-		listOptions := new(ListQueryParams)
-		err := listOptions.UnmarshalURLValues(q)
-		if err != nil {
-			badRequest(w, "bad query: %s", err)
-			return
-		}
-		store, ok := loadStore(w, r)
-		if !ok {
-			return
-		}
-		var opts []orm.ListOption
-		opts = append(opts, orm.ListRange{
-			Start: listOptions.Start,
-			End:   listOptions.End,
-		})
-
-		for _, selection := range listOptions.SelectFields {
-			sp := strings.SplitN(selection, "=", 2)
-			if len(sp) != 2 {
-				badRequest(w, "bad fieldSelection in query %s", selection)
-				return
-			}
-			// check that index exists
-			_, err := schema.Indexer(sp[0])
-			if err != nil {
-				badRequest(w, "bad fieldSelection in query: %s", err)
-				return
-			}
-			opts = append(opts, orm.ListMatchFieldString{
-				Field: sp[0],
-				Value: sp[1],
-			})
-		}
-
-		iter, err := store.List(schema.NewStateObject(), opts...)
-		if err != nil {
-			badRequest(w, "unable to list any object: %s", err)
-			return
-		}
-		defer iter.Close()
-
-		var objects []meta.StateObject
-
-		for iter.Valid() {
-			obj := schema.NewStateObject()
-			err := iter.Get(obj)
-			if err != nil {
-				badRequest(w, "unable to list object: %s", err)
-				return
-			}
-			objects = append(objects, obj)
-			iter.Next()
-		}
-
-		writeObjectList(w, objects)
-	}
-}
-
-func writeObjectList(w io.Writer, objects []meta.StateObject) {
-	_, _ = w.Write([]byte("{\"items\":["))
-	max := len(objects)
-	for i, o := range objects {
-		writeObject(w, o)
-		if i != max-1 {
-			_, _ = w.Write([]byte(","))
-		}
-	}
-	_, _ = w.Write([]byte("]}"))
-}
 
 func newSingletonGetHandler(schema *schema.Schema, loadStore loadStoreFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -288,4 +196,94 @@ func newGetHandler(schema *schema.Schema, definition schema.Definition, loadStor
 		}
 		writeObject(w, newObj)
 	}
+}
+
+// newListHandler creates an http.HandlerFunc that can be used to fetch a list of state objects of the same kind
+func newListHandler(schema *schema.Schema, loadStore loadStoreFunc) http.HandlerFunc {
+	listObject, err := forge.List(schema.NewStateObject(), protoregistry.GlobalFiles)
+	if err != nil {
+		panic(err)
+	}
+	listFd := listObject.Descriptor().Fields().Get(0)
+	return func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		listOptions := new(ListQueryParams)
+		err := listOptions.UnmarshalURLValues(q)
+		if err != nil {
+			badRequest(w, "bad query: %s", err)
+			return
+		}
+		store, ok := loadStore(w, r)
+		if !ok {
+			return
+		}
+		var opts []orm.ListOption
+		opts = append(opts, orm.ListRange{
+			Start: listOptions.Start,
+			End:   listOptions.End,
+		})
+
+		for _, selection := range listOptions.SelectFields {
+			sp := strings.SplitN(selection, "=", 2)
+			if len(sp) != 2 {
+				badRequest(w, "bad fieldSelection in query %s", selection)
+				return
+			}
+			// check that index exists
+			_, err := schema.Indexer(sp[0])
+			if err != nil {
+				badRequest(w, "bad fieldSelection in query: %s", err)
+				return
+			}
+			opts = append(opts, orm.ListMatchFieldString{
+				Field: sp[0],
+				Value: sp[1],
+			})
+		}
+
+		iter, err := store.List(schema.NewStateObject(), opts...)
+		if err != nil {
+			badRequest(w, "unable to list any object: %s", err)
+			return
+		}
+		defer iter.Close()
+
+		list := listObject.New()
+		listValue := list.NewField(listFd).List()
+
+		for iter.Valid() {
+			obj := schema.NewStateObject()
+			err := iter.Get(obj)
+			if err != nil {
+				badRequest(w, "unable to list object: %s", err)
+				return
+			}
+			listValue.Append(protoreflect.ValueOfMessage(obj.ProtoReflect()))
+			iter.Next()
+		}
+		list.Set(listFd, protoreflect.ValueOfList(listValue))
+		writeObject(w, list.Interface())
+	}
+}
+
+func writeObject(w io.Writer, obj proto.Message) bool {
+	b, err := protojson.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(b)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func notFound(writer http.ResponseWriter, format string, values ...interface{}) {
+	writer.WriteHeader(http.StatusNotFound)
+	_, _ = writer.Write([]byte(fmt.Sprintf(format, values...)))
+}
+
+func badRequest(writer http.ResponseWriter, format string, values ...interface{}) {
+	writer.WriteHeader(http.StatusBadRequest)
+	_, _ = writer.Write([]byte(fmt.Sprintf(format, values...)))
 }
