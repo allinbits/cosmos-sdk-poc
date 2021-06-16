@@ -76,7 +76,7 @@ func (b *Builder) AddModule(m module.Module) {
 		SetUser(users user.Users)
 	}
 
-	mc := client.New(newRuntimeAsServer(b.rt))
+	mc := client.NewModuleClient(newRuntimeAsServer(b.rt))
 	descriptor := m.Initialize(mc)
 	mc.(userSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the core TODO: we should do this a lil better
 	b.moduleDescriptors = append(b.moduleDescriptors, descriptor)
