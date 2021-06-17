@@ -117,13 +117,12 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 		return errors.ToABCIResponse(0, 0, err)
 	}
 	// TODO cache the store
-	// todo run authentication chain
 	err = a.rt.runTxPostAuthenticationChain(tx)
 	if err != nil {
 		return errors.ToABCIResponse(0, 0, err)
 	}
-	// write the cache
-	// cache again
+	// TODO write the cache
+	// TODO cache again
 	// start delivering transitions
 	for _, transition := range tx.StateTransitions() {
 		err = a.rt.Deliver(tx.Users(), transition, DeliverSkipAdmissionHandlers())
@@ -131,7 +130,7 @@ func (a ABCIApplication) DeliverTx(tmTx types.RequestDeliverTx) types.ResponseDe
 			return errors.ToABCIResponse(0, 0, err)
 		}
 	}
-	// write cache
+	// TODO write cache
 	// success!
 	return types.ResponseDeliverTx{}
 }
