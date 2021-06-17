@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/fdymylja/tmos/core/meta"
+	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/pkg/protoutils/forge"
 	"github.com/fdymylja/tmos/runtime/module"
 	"github.com/fdymylja/tmos/runtime/orm"
@@ -46,7 +47,11 @@ func (s *Builder) RegisterModuleAPI(module module.Descriptor) error {
 	}
 	// register object handler
 	for _, obj := range module.StateObjects {
-		err := s.registerStateObjectHandlers(obj)
+		err := s.registerStateObjectHandlers(obj.StateObject, &runtimev1alpha1.SchemaDefinition{
+			Singleton:     obj.Options.Singleton,
+			PrimaryKey:    obj.Options.PrimaryKey,
+			SecondaryKeys: obj.Options.SecondaryKeys,
+		})
 		if err != nil {
 			return fmt.Errorf("api: unable to register %s for module %s", meta.Name(obj.StateObject), module.Name)
 		}
@@ -101,16 +106,20 @@ func (s *Builder) loadStore(writer http.ResponseWriter, request *http.Request) (
 	}
 }
 
-func (s *Builder) registerStateObjectHandlers(obj module.StateObject) error {
+func (s *Builder) registerStateObjectHandlers(object meta.StateObject, definition *runtimev1alpha1.SchemaDefinition) error {
 	// get schema for the object
-	sch, err := s.store.SchemaRegistry().GetByAPIDefinition(obj.StateObject.APIDefinition())
+	sch, err := schema.NewSchema(object, schema.Definition{
+		Singleton:     definition.Singleton,
+		PrimaryKey:    definition.PrimaryKey,
+		SecondaryKeys: definition.SecondaryKeys,
+	})
 	if err != nil {
 		return err
 	}
 	// create handler based to, if singleton or not
-	switch obj.Options.Singleton {
+	switch definition.Singleton {
 	case true:
-		def := obj.StateObject.APIDefinition()
+		def := object.APIDefinition()
 		path := strings.ToLower(
 			fmt.Sprintf("/%s/%s", def.Group, def.Kind),
 		)
@@ -120,15 +129,15 @@ func (s *Builder) registerStateObjectHandlers(obj module.StateObject) error {
 			HandlerFunc(newSingletonGetHandler(sch, s.loadStore))
 
 		// add to open API spec.
-		err = s.openAPI.AddSingleton(obj.StateObject, path)
+		err = s.openAPI.AddSingleton(object, path)
 		if err != nil {
 			return err
 		}
 	case false:
 		// create get
-		def := obj.StateObject.APIDefinition()
+		def := object.APIDefinition()
 		singleInstancePath := strings.ToLower(
-			fmt.Sprintf("/%s/%s/{%s}", def.Group, def.Kind, obj.Options.PrimaryKey),
+			fmt.Sprintf("/%s/%s/{%s}", def.Group, def.Kind, definition.PrimaryKey),
 		)
 		listInstancePath := strings.ToLower(
 			fmt.Sprintf("/%s/%ss", def.Group, def.Kind), // TODO the plural name should be in the state object schema options
@@ -136,14 +145,14 @@ func (s *Builder) registerStateObjectHandlers(obj module.StateObject) error {
 		s.mux.
 			Methods(http.MethodGet).
 			Path(singleInstancePath).
-			HandlerFunc(newGetHandler(sch, obj.Options, s.loadStore))
+			HandlerFunc(newGetHandler(sch, definition, s.loadStore))
 		// create list
 		s.mux.Methods(http.MethodGet).
 			Path(listInstancePath).
 			HandlerFunc(newListHandler(sch, s.loadStore))
 
 		// add to open API spec.
-		err = s.openAPI.AddObject(obj.StateObject, singleInstancePath, listInstancePath)
+		err = s.openAPI.AddObject(object, singleInstancePath, listInstancePath)
 		if err != nil {
 			return err
 		}
@@ -173,7 +182,7 @@ func newSingletonGetHandler(schema *schema.Schema, loadStore loadStoreFunc) http
 }
 
 // newGetHandler creates an http.HandlerFunc that can be used to fetch a state object
-func newGetHandler(schema *schema.Schema, definition schema.Definition, loadStore loadStoreFunc) http.HandlerFunc {
+func newGetHandler(schema *schema.Schema, definition *runtimev1alpha1.SchemaDefinition, loadStore loadStoreFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		primaryKeyValue, exists := vars[definition.PrimaryKey]

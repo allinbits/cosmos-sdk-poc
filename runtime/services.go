@@ -3,7 +3,9 @@ package runtime
 import (
 	"fmt"
 
+	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/module"
+	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/hashicorp/go-multierror"
 	"k8s.io/klog/v2"
 )
@@ -37,9 +39,13 @@ func (s *ServiceGroup) AddServices(moduleName string, xts ...module.ExtensionSer
 	}
 }
 
-func (s *ServiceGroup) Start() error {
+// Start starts the service group given the store
+// TODO: store should be readonly.
+func (s *ServiceGroup) Start(store orm.Store) error {
 	for _, svc := range s.services {
 		klog.Infof("starting service %s", svc.Name())
+		svcClient := client.NewORMClient(store, fmt.Sprintf("%s", svc.Name()))
+		svc.SetClient(svcClient)
 		err := svc.Start()
 		if err != nil {
 			return fmt.Errorf("unable to start service %s: %w", svc.Name(), err)

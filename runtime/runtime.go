@@ -112,7 +112,7 @@ func (r *Runtime) InitGenesis() error {
 	r.initialized = true
 	klog.Infof("initializing extensions...")
 
-	err = r.services.Start()
+	err = r.services.Start(r.store) // TODO(fdymylja): Runtime should be aware when to start services even on node re-start.
 	if err != nil {
 		return err
 	}

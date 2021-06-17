@@ -8,7 +8,7 @@ type ExtensionService interface {
 	Name() string
 	// SetClient is called to set the client used to interact
 	// with runtime.
-	SetClient(client client.ReadOnlyClient)
+	SetClient(client client.RuntimeClient)
 	// Start is called when the service starts
 	Start() error
 	// Stop is called when the runtime is stopping
@@ -19,11 +19,11 @@ var _ ExtensionService = (*BaseService)(nil)
 
 // BaseService defines a runtime ExtensionService
 type BaseService struct {
-	client.ReadOnlyClient
+	client.RuntimeClient
 }
 
-func (b *BaseService) SetClient(client client.ReadOnlyClient) {
-	b.ReadOnlyClient = client
+func (b *BaseService) SetClient(client client.RuntimeClient) {
+	b.RuntimeClient = client
 }
 
 func (b *BaseService) Start() error {

@@ -1,25 +1,47 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/orm"
 )
 
-var _ ReadOnlyClient = &ORMClient{}
+var _ RuntimeClient = &ORMClient{}
 
 // NewORMClient instantiates a new ReadOnlyClient from an orm.Store
-func NewORMClient(store orm.Store) ReadOnlyClient {
-	return &ORMClient{store: store}
+func NewORMClient(store orm.Store, identifier string) RuntimeClient {
+	return &ORMClient{
+		identifier: identifier,
+		store:      store,
+	}
 }
 
 // ORMClient is a ReadOnlyClient that can be created from an orm.Store
 // it is meant to be used internally, but by extension services that
 // have no write interaction with the store
 type ORMClient struct {
-	store orm.Store // TODO(fdymylja): this should be a read only store.
+	identifier string
+	store      orm.Store // TODO(fdymylja): this should be a read only store.
 }
 
-// Get implements ReadOnlyClient
+func (o *ORMClient) Create(_ meta.StateObject, _ ...CreateOption) error {
+	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+}
+
+func (o *ORMClient) Update(_ meta.StateObject, _ ...UpdateOption) error {
+	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+}
+
+func (o *ORMClient) Delete(_ meta.StateObject, _ ...DeleteOption) error {
+	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+}
+
+func (o *ORMClient) Deliver(_ meta.StateTransition, _ ...DeliverOption) error {
+	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+}
+
+// Get implements RuntimeClient
 func (o *ORMClient) Get(id meta.ID, object meta.StateObject, opts ...GetOption) error {
 	opt := new(getOptions)
 	for _, o := range opts {
@@ -39,7 +61,7 @@ func (o *ORMClient) Get(id meta.ID, object meta.StateObject, opts ...GetOption) 
 	return store.Get(id, object)
 }
 
-// List implements ReadOnlyClient
+// List implements RuntimeClient
 func (o *ORMClient) List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error) {
 	opt := new(listOptions)
 	for _, o := range opts {

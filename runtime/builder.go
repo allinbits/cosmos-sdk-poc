@@ -5,7 +5,7 @@ import (
 
 	"github.com/fdymylja/tmos/core/abci"
 	server2 "github.com/fdymylja/tmos/core/apiserver/server"
-	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac"
 	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/core/runtime"
