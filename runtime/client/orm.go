@@ -30,15 +30,15 @@ func (o *ORMClient) Create(_ meta.StateObject, _ ...CreateOption) error {
 }
 
 func (o *ORMClient) Update(_ meta.StateObject, _ ...UpdateOption) error {
-	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+	return fmt.Errorf("%s is not allowed to Update", o.identifier)
 }
 
 func (o *ORMClient) Delete(_ meta.StateObject, _ ...DeleteOption) error {
-	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+	return fmt.Errorf("%s is not allowed to Delete", o.identifier)
 }
 
 func (o *ORMClient) Deliver(_ meta.StateTransition, _ ...DeliverOption) error {
-	return fmt.Errorf("%s is not allowed to Create", o.identifier)
+	return fmt.Errorf("%s is not allowed to Deliver", o.identifier)
 }
 
 // Get implements RuntimeClient
