@@ -32,25 +32,21 @@ func NewBuilder() *Builder {
 		moduleDescriptors: nil,
 		moduleRoles:       map[string]*rbacv1alpha1.Role{},
 		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
-		rbac:              nil,
+		rbac:              rbac.NewModule(),
 		decoder:           nil,
-		router:            NewRouter(),
-		rt:                &Runtime{},
-		apiServer:         nil,
+		rt: &Runtime{
+			router: NewRouter(),
+		},
+		apiServer: nil,
 	}
 
 	// we already add the core modules in order
 	// in theory we could add a dependency system
 	// for genesis initialization, but for now lets keep it simple.
 	b.AddModule(runtime.NewModule()) // needs to be first as it has state transitions/state object info
-	b.rbac = rbac.NewModule()        // we set the rbac core inside so that we can prepare initial genesis with rbac
 	b.AddModule(b.rbac)              // needs to be second as it provides the authorization layer
 	b.AddModule(abci.NewModule())    // abci third so other modules can have access to this information
 
-	// we add the initial external role, with basically no authorization towards no resource.
-	b.externalRole = &rbacv1alpha1.Role{
-		Id: rbacv1alpha1.ExternalAccountRoleID,
-	}
 	return b
 }
 
@@ -92,6 +88,7 @@ func (b *Builder) Build() (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	err = b.installModules()
 	if err != nil {
 		return nil, fmt.Errorf("unable to install modules: %w", err)
@@ -107,9 +104,8 @@ func (b *Builder) Build() (*Runtime, error) {
 	// add external role to rbac with no binding
 	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
-	b.rt.router = b.router
 	b.rt.modules = b.moduleDescriptors
-	b.rt.rbac = b.rbac.AsAuthorizer()
+	b.rt.authorizer = b.rbac.AsAuthorizer()
 	b.rt.user = user.NewUsersFromString(user.Runtime)
 	switch b.decoder {
 	case nil:
@@ -130,21 +126,18 @@ func (b *Builder) Build() (*Runtime, error) {
 	return b.rt, nil
 }
 
-func (b *Builder) registerStateTransitionHandlers(m module.Descriptor, role *rbacv1alpha1.Role) error {
+func (b *Builder) registerStateTransitionHandlers(m module.Descriptor) error {
 	for _, handler := range m.StateTransitionExecutionHandlers {
-		// add state transition handler to the router
-		err := b.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
+		err := b.rt.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
 		if err != nil {
 			return err
 		}
 
-		// add deliver rights for the state transition
-		err = role.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
+		err = b.moduleRoles[m.Name].Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
 		if err != nil {
 			return err
 		}
 
-		// if the state transition is marked as external we extend the external_account role
 		if handler.External {
 			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
 			if err != nil {
@@ -160,65 +153,76 @@ func (b *Builder) registerStateTransitionHandlers(m module.Descriptor, role *rba
 
 func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 	for _, handler := range m.StateTransitionAdmissionHandlers {
-		err := b.router.AddStateTransitionAdmissionHandler(handler.StateTransition, handler.AdmissionHandler)
+		err := b.rt.router.AddStateTransitionAdmissionHandler(handler.StateTransition, handler.AdmissionHandler)
 		if err != nil {
 			return err
 		}
+
 		klog.Infof("registered admission handler %s for core %s", meta.Name(handler.StateTransition), m.Name)
 	}
 
 	return nil
 }
 
-func (b *Builder) registerStateObjects(m module.Descriptor, role *rbacv1alpha1.Role) error {
-	for _, so := range m.StateObjects {
+func (b *Builder) registerStateObjects(md module.Descriptor) error {
+	for _, so := range md.StateObjects {
 		err := b.store.RegisterObject(so.StateObject, so.Options)
 		if err != nil {
 			return err
 		}
-		err = extendRoleForStateObject(role, so.StateObject)
+
+		err = extendRoleForStateObject(b.moduleRoles[md.Name], so.StateObject)
 		if err != nil {
 			return err
 		}
-		klog.Infof("registered state object %s for core %s", meta.Name(so.StateObject), m.Name)
+
+		klog.Infof("registered state object %s for core %s", meta.Name(so.StateObject), md.Name)
 	}
 
 	return nil
 }
 
 func (b *Builder) installStateObjects() error {
-	for _, m := range b.moduleDescriptors {
-		moduleRole := b.moduleRoles[m.Name]
-		err := b.registerStateObjects(m, moduleRole)
+	for _, md := range b.moduleDescriptors {
+		err := b.registerStateObjects(md)
 		if err != nil {
-			return fmt.Errorf("unable to install state objects for core %s: %w", m.Name, err)
+			return fmt.Errorf("unable to install state objects for core %s: %w", md.Name, err)
 		}
 	}
+
 	return nil
 }
 
+// initEmptyRoles creates an empty role by every module descriptor.
 func (b *Builder) initEmptyRoles() error {
 	for _, m := range b.moduleDescriptors {
 		if isModuleNameEmpty(m.Name) {
 			return errEmptyModuleName
 		}
-		// check if core role exists already
-		if _, exists := b.moduleRoles[m.Name]; exists {
+
+		if b.roleExists(m.Name) {
 			return fmt.Errorf("core already registered %s", m.Name)
 		}
-		b.moduleRoles[m.Name] = &rbacv1alpha1.Role{Id: roleNameForModule(m.Name)}
+
+		b.moduleRoles[m.Name] = rbacv1alpha1.NewEmptyRole(m.Name)
 	}
+
 	return nil
+}
+
+func (b *Builder) roleExists(name string) bool {
+	_, exists := b.moduleRoles[name]
+	return exists
 }
 
 func (b *Builder) installStateTransitions() error {
 	for _, m := range b.moduleDescriptors {
-		role := b.moduleRoles[m.Name]
-		err := b.registerStateTransitionHandlers(m, role)
+		err := b.registerStateTransitionHandlers(m)
 		if err != nil {
 			return fmt.Errorf("unable to install state transitions for core %s: %w", m.Name, err)
 		}
 	}
+
 	return nil
 }
 
@@ -229,13 +233,14 @@ func (b *Builder) installStateTransitionAdmissionHandlers() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (b *Builder) installStateTransitionPreExecHandlers() error {
 	for _, m := range b.moduleDescriptors {
 		for _, h := range m.StateTransitionPreExecHandlers {
-			err := b.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
+			err := b.rt.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
 				return fmt.Errorf("unable to install state transition pre execution handler for core %s: %w", m.Name, err)
 			}
@@ -246,13 +251,14 @@ func (b *Builder) installStateTransitionPreExecHandlers() error {
 				m.Name)
 		}
 	}
+
 	return nil
 }
 
 func (b *Builder) installStateTransitionPostExecHandlers() error {
 	for _, m := range b.moduleDescriptors {
 		for _, h := range m.StateTransitionPostExecutionHandlers {
-			err := b.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
+			err := b.rt.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
 				return fmt.Errorf("unable to install state transition post execution handler for core %s: %w", m.Name, err)
 			}
@@ -312,8 +318,8 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 			continue
 		}
 		for _, h := range m.AuthAdmissionHandlers {
-			b.router.AddTransactionAdmissionHandler(h.Handler)
-			klog.Infof("registered transaction admission handler %T for core %s", h.Handler, m.Name)
+			b.rt.router.AddAuthAdmissionHandler(h)
+			klog.Infof("registered transaction admission handler %T for core %s", h, m.Name)
 		}
 	}
 	return nil
@@ -325,17 +331,17 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 			continue
 		}
 		for _, h := range m.PostAuthenticationHandler {
-			b.router.AddTransactionPostAuthenticationHandler(h.Handler)
-			klog.Infof("registered transaction post authentication handler %T for core %s", h.Handler, m.Name)
+			b.rt.router.AddTransactionPostAuthenticationHandler(h)
+			klog.Infof("registered transaction post authentication handler %T for core %s", h, m.Name)
 		}
 	}
 	return nil
 }
 
 func (b *Builder) installDependencies() error {
-	for _, m := range b.moduleDescriptors {
-		role := b.moduleRoles[m.Name]
-		for _, st := range m.Needs {
+	for _, md := range b.moduleDescriptors {
+		role := b.moduleRoles[md.Name]
+		for _, st := range md.Needs {
 			err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
 			if err != nil {
 				return fmt.Errorf("error while registering core dependency %s: %w", meta.Name(st), err)
@@ -350,19 +356,14 @@ func (b *Builder) initStore() error {
 	obj := objects.NewStore(okv)
 	idxKv := kv.NewBadger()
 	idx := indexes.NewStore(idxKv)
-	store := orm.NewStore(obj, idx)
-	b.store = store
+
+	b.store = orm.NewStore(obj, idx)
 
 	return nil
 }
 
 func isModuleNameEmpty(name string) bool {
 	return name == ""
-}
-
-func roleNameForModule(name string) string {
-	const moduleRoleSuffix = "role"
-	return fmt.Sprintf("%s-%s", name, moduleRoleSuffix)
 }
 
 func extendRoleForStateObject(role *rbacv1alpha1.Role, so meta.StateObject) (err error) {
