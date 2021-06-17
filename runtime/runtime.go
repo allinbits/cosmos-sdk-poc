@@ -205,7 +205,7 @@ func (r *Runtime) runAdmissionChain(users user.Users, transition meta.StateTrans
 
 // runTxAdmissionChain runs the authentication.AdmissionHandler handlers
 func (r *Runtime) runTxAdmissionChain(tx authentication.Tx) error {
-	ctrls := r.router.GetTransactionAdmissionHandlers()
+	ctrls := r.router.GetAuthAdmissionHandlers()
 	for _, ctrl := range ctrls {
 		err := ctrl.Validate(tx)
 		if err != nil {

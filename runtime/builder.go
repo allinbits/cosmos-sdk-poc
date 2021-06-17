@@ -318,7 +318,7 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 			continue
 		}
 		for _, h := range m.AuthAdmissionHandlers {
-			b.rt.router.AddTransactionAdmissionHandler(h.Handler)
+			b.rt.router.AddAuthAdmissionHandler(h.Handler)
 			klog.Infof("registered transaction admission handler %T for core %s", h.Handler, m.Name)
 		}
 	}

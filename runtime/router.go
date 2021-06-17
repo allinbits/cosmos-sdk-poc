@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
@@ -14,7 +14,7 @@ var ErrTransitionNotFound = errors.New("router: state transition not found")
 
 func NewRouter() *Router {
 	return &Router{
-		transactionAdmissionHandlers:          nil,
+		authAdmissionHandlers:                 nil,
 		transactionPostAuthenticationHandlers: nil,
 
 		stateTransitionAdmissionHandlers:     map[string][]statetransition.AdmissionHandler{},
@@ -25,7 +25,7 @@ func NewRouter() *Router {
 }
 
 type Router struct {
-	transactionAdmissionHandlers          []authentication.AdmissionHandler
+	authAdmissionHandlers                 []authentication.AdmissionHandler
 	transactionPostAuthenticationHandlers []authentication.PostAuthenticationHandler
 
 	stateTransitionAdmissionHandlers     map[string][]statetransition.AdmissionHandler
@@ -136,12 +136,12 @@ func (r *Router) GetStateTransitionPostExecutionHandlers(transition meta.StateTr
 	return postExecHandlers, nil
 }
 
-func (r *Router) GetTransactionAdmissionHandlers() []authentication.AdmissionHandler {
-	return r.transactionAdmissionHandlers
+func (r *Router) GetAuthAdmissionHandlers() []authentication.AdmissionHandler {
+	return r.authAdmissionHandlers
 }
 
-func (r *Router) AddTransactionAdmissionHandler(ctrl authentication.AdmissionHandler) {
-	r.transactionAdmissionHandlers = append(r.transactionAdmissionHandlers, ctrl)
+func (r *Router) AddAuthAdmissionHandler(ctrl authentication.AdmissionHandler) {
+	r.authAdmissionHandlers = append(r.authAdmissionHandlers, ctrl)
 }
 
 func (r *Router) GetTransactionPostAuthenticationHandlers() []authentication.PostAuthenticationHandler {
