@@ -16,7 +16,6 @@
 package oas3schema
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"sort"
@@ -100,11 +99,6 @@ func (g *OpenAPIv3Generator) Build() (*v3.Document, error) {
 	}
 
 	d := g.buildDocumentV3()
-	bytes, err := d.YAMLValue("Generated with protoc-gen-openapi\n" + infoURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal yaml: %s", err.Error())
-	}
-	log.Printf("%s", bytes)
 	return d, nil
 }
 

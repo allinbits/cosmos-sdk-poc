@@ -19,6 +19,7 @@ type Descriptor struct {
 	Needs                                []meta.StateTransition
 	AuthAdmissionHandlers                []authentication.AdmissionHandler
 	PostAuthenticationHandler            []authentication.PostAuthenticationHandler
+	Services                             []ExtensionService
 }
 
 type StateObject struct {
@@ -101,6 +102,11 @@ func (b *DescriptorBuilder) WithAuthAdmissionHandler(ctrl authentication.Admissi
 
 func (b *DescriptorBuilder) WithPostAuthenticationHandler(ctrl authentication.PostAuthenticationHandler) *DescriptorBuilder {
 	b.descriptor.PostAuthenticationHandler = append(b.descriptor.PostAuthenticationHandler, ctrl)
+	return b
+}
+
+func (b *DescriptorBuilder) WithExtensionService(xt ExtensionService) *DescriptorBuilder {
+	b.descriptor.Services = append(b.descriptor.Services, xt)
 	return b
 }
 
