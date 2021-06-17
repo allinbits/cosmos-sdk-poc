@@ -59,9 +59,8 @@ type Builder struct {
 	rbac         *rbac.Module
 	decoder      authentication.TxDecoder
 
-	router *Router
-	store  orm.Store
-	rt     *Runtime
+	store orm.Store
+	rt    *Runtime
 
 	apiServer *api.Builder
 }
@@ -342,7 +341,12 @@ func (b *Builder) installDependencies() error {
 	for _, md := range b.moduleDescriptors {
 		role := b.moduleRoles[md.Name]
 		for _, st := range md.Needs {
-			err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
+			_, err := b.rt.router.GetStateTransitionExecutionHandler(st)
+			if err != nil {
+				return fmt.Errorf("dependency cannot be accomplished: %w", err)
+			}
+
+			err = role.Extend(runtimev1alpha1.Verb_Deliver, st)
 			if err != nil {
 				return fmt.Errorf("error while registering core dependency %s: %w", meta.Name(st), err)
 			}
