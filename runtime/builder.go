@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/core/abci"
+	server2 "github.com/fdymylja/tmos/core/apiserver/server"
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac"
 	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/core/runtime"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/api"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/client"
@@ -67,7 +67,7 @@ type Builder struct {
 	store  orm.Store
 	rt     *Runtime
 
-	apiServer *api.Builder
+	apiServer *server2.Builder
 }
 
 // AddModule adds a new module.Module to the list of modules to install
@@ -118,7 +118,7 @@ func (b *Builder) Build() (*Runtime, error) {
 		b.rt.txDecoder = b.decoder
 	}
 	// populate api server
-	b.apiServer = api.NewServer(b.store)
+	b.apiServer = server2.NewServer(b.store)
 	for _, m := range b.moduleDescriptors {
 		err = b.apiServer.RegisterModuleAPI(m)
 		if err != nil {

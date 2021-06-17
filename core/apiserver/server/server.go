@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ func (s *Builder) RegisterModuleAPI(module module.Descriptor) error {
 	}
 	// register object handler
 	for _, obj := range module.StateObjects {
-		err := s.registerStateObjectHandlers(module, obj)
+		err := s.registerStateObjectHandlers(obj)
 		if err != nil {
 			return fmt.Errorf("api: unable to register %s for module %s", meta.Name(obj.StateObject), module.Name)
 		}
@@ -101,7 +101,7 @@ func (s *Builder) loadStore(writer http.ResponseWriter, request *http.Request) (
 	}
 }
 
-func (s *Builder) registerStateObjectHandlers(descriptor module.Descriptor, obj module.StateObject) error {
+func (s *Builder) registerStateObjectHandlers(obj module.StateObject) error {
 	// get schema for the object
 	sch, err := s.store.SchemaRegistry().GetByAPIDefinition(obj.StateObject.APIDefinition())
 	if err != nil {

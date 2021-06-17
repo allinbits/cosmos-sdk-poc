@@ -22,8 +22,3 @@ func (b BytesID) Bytes() []byte { return b }
 type ID interface {
 	Bytes() []byte
 }
-
-// Name returns the unique name for the Type
-func Name(t APIObject) string {
-	return (string)(t.ProtoReflect().Descriptor().FullName())
-}
