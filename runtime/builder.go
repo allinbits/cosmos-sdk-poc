@@ -318,8 +318,8 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 			continue
 		}
 		for _, h := range m.AuthAdmissionHandlers {
-			b.rt.router.AddAuthAdmissionHandler(h.Handler)
-			klog.Infof("registered transaction admission handler %T for core %s", h.Handler, m.Name)
+			b.rt.router.AddAuthAdmissionHandler(h)
+			klog.Infof("registered transaction admission handler %T for core %s", h, m.Name)
 		}
 	}
 	return nil
@@ -331,8 +331,8 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 			continue
 		}
 		for _, h := range m.PostAuthenticationHandler {
-			b.rt.router.AddTransactionPostAuthenticationHandler(h.Handler)
-			klog.Infof("registered transaction post authentication handler %T for core %s", h.Handler, m.Name)
+			b.rt.router.AddTransactionPostAuthenticationHandler(h)
+			klog.Infof("registered transaction post authentication handler %T for core %s", h, m.Name)
 		}
 	}
 	return nil

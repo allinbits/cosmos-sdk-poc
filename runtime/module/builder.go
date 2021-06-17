@@ -17,8 +17,8 @@ type Descriptor struct {
 	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
 	StateObjects                         []StateObject
 	Needs                                []meta.StateTransition
-	AuthAdmissionHandlers                []authAdmissionHandler
-	PostAuthenticationHandler            []postAuthenticationHandler
+	AuthAdmissionHandlers                []authentication.AdmissionHandler
+	PostAuthenticationHandler            []authentication.PostAuthenticationHandler
 }
 
 type StateObject struct {
@@ -95,12 +95,12 @@ func (b *DescriptorBuilder) NeedsStateTransition(transition meta.StateTransition
 }
 
 func (b *DescriptorBuilder) WithAuthAdmissionHandler(ctrl authentication.AdmissionHandler) *DescriptorBuilder {
-	b.descriptor.AuthAdmissionHandlers = append(b.descriptor.AuthAdmissionHandlers, authAdmissionHandler{Handler: ctrl})
+	b.descriptor.AuthAdmissionHandlers = append(b.descriptor.AuthAdmissionHandlers, ctrl)
 	return b
 }
 
 func (b *DescriptorBuilder) WithPostAuthenticationHandler(ctrl authentication.PostAuthenticationHandler) *DescriptorBuilder {
-	b.descriptor.PostAuthenticationHandler = append(b.descriptor.PostAuthenticationHandler, postAuthenticationHandler{Handler: ctrl})
+	b.descriptor.PostAuthenticationHandler = append(b.descriptor.PostAuthenticationHandler, ctrl)
 	return b
 }
 
