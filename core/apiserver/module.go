@@ -35,6 +35,7 @@ type apiServer struct {
 
 func (a *apiServer) SetClient(client client.RuntimeClient) {
 	a.runtime = runtimev1alpha1.NewClientSet(client)
+	a.RuntimeClient = client
 }
 
 func (a *apiServer) Name() string {

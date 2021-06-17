@@ -131,8 +131,17 @@ func (s *Builder) Build() (*mux.Router, error) {
 
 func newSingletonGetHandler(c client.RuntimeClient, schema *schema.Schema) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		height, err := getHeight(r)
+		if err != nil {
+			badRequest(w, "invalid height: %s", err)
+			return
+		}
+		var opts []client.GetOption
+		if height != 0 {
+			opts = append(opts, client.GetAtHeight(height))
+		}
 		newObj := schema.NewStateObject()
-		err := c.Get(meta.SingletonID, newObj)
+		err = c.Get(meta.SingletonID, newObj, opts...)
 		if err != nil {
 			notFound(w, "not found")
 			return
@@ -144,6 +153,15 @@ func newSingletonGetHandler(c client.RuntimeClient, schema *schema.Schema) http.
 // newGetHandler creates an http.HandlerFunc that can be used to fetch a state object
 func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *runtimev1alpha1.SchemaDefinition) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		height, err := getHeight(req)
+		if err != nil {
+			badRequest(w, "invalid height: %s", err)
+			return
+		}
+		var opts []client.GetOption
+		if height != 0 {
+			opts = append(opts, client.GetAtHeight(height))
+		}
 		vars := mux.Vars(req)
 		primaryKeyValue, exists := vars[definition.PrimaryKey]
 		// if the user didn't set the primary key in the url variables
@@ -158,7 +176,7 @@ func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *ru
 			return
 		}
 		newObj := schema.NewStateObject()
-		err = c.Get(meta.NewBytesID(pkBytes), newObj)
+		err = c.Get(meta.NewBytesID(pkBytes), newObj, opts...)
 		if err != nil {
 			notFound(w, err.Error())
 			return
@@ -175,15 +193,25 @@ func newListHandler(c client.RuntimeClient, schema *schema.Schema) http.HandlerF
 	}
 	listFd := listObject.Descriptor().Fields().Get(0)
 	return func(w http.ResponseWriter, r *http.Request) {
+		height, err := getHeight(r)
+		if err != nil {
+			badRequest(w, "bad height: %s", err)
+			return
+		}
+
 		q := r.URL.Query()
 		listOptions := new(ListQueryParams)
-		err := listOptions.UnmarshalURLValues(q)
+		err = listOptions.UnmarshalURLValues(q)
 		if err != nil {
 			badRequest(w, "bad query: %s", err)
 			return
 		}
 		opts := []client.ListOption{
 			client.ListRange(listOptions.Start, listOptions.End),
+		}
+
+		if height != 0 {
+			opts = append(opts, client.ListAtHeight(height))
 		}
 
 		for _, selection := range listOptions.SelectFields {
