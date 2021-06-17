@@ -42,6 +42,8 @@ type Runtime struct {
 
 	router *Router
 	store  orm.Store
+
+	services *ServiceGroup
 }
 
 func (r *Runtime) EnableRBAC() {
@@ -108,6 +110,12 @@ func (r *Runtime) InitGenesis() error {
 	klog.Infof("default genesis initialization completed")
 
 	r.initialized = true
+	klog.Infof("initializing extensions...")
+
+	err = r.services.Start()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

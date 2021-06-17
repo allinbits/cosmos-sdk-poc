@@ -34,8 +34,10 @@ func NewBuilder() *Builder {
 		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
 		rbac:              rbac.NewModule(),
 		decoder:           nil,
+		store:             orm.Store{},
 		rt: &Runtime{
-			router: NewRouter(),
+			router:   NewRouter(),
+			services: NewServiceOrchestrator(),
 		},
 		apiServer: nil,
 	}
@@ -74,7 +76,7 @@ func (b *Builder) AddModule(m module.Module) {
 
 	mc := client.NewModuleClient(newRuntimeAsServer(b.rt))
 	descriptor := m.Initialize(mc)
-	mc.(userSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the core TODO: we should do this a lil better
+	mc.(userSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
 	b.moduleDescriptors = append(b.moduleDescriptors, descriptor)
 }
 
@@ -145,7 +147,7 @@ func (b *Builder) registerStateTransitionHandlers(m module.Descriptor) error {
 			}
 		}
 
-		klog.Infof("registered state transition %s for core %s", meta.Name(handler.StateTransition), m.Name)
+		klog.Infof("registered state transition %s for module %s", meta.Name(handler.StateTransition), m.Name)
 	}
 
 	return nil
@@ -158,7 +160,7 @@ func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 			return err
 		}
 
-		klog.Infof("registered admission handler %s for core %s", meta.Name(handler.StateTransition), m.Name)
+		klog.Infof("registered admission handler %s for module %s", meta.Name(handler.StateTransition), m.Name)
 	}
 
 	return nil
@@ -176,7 +178,7 @@ func (b *Builder) registerStateObjects(md module.Descriptor) error {
 			return err
 		}
 
-		klog.Infof("registered state object %s for core %s", meta.Name(so.StateObject), md.Name)
+		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), md.Name)
 	}
 
 	return nil
@@ -186,7 +188,7 @@ func (b *Builder) installStateObjects() error {
 	for _, md := range b.moduleDescriptors {
 		err := b.registerStateObjects(md)
 		if err != nil {
-			return fmt.Errorf("unable to install state objects for core %s: %w", md.Name, err)
+			return fmt.Errorf("unable to install state objects for module %s: %w", md.Name, err)
 		}
 	}
 
@@ -201,7 +203,7 @@ func (b *Builder) initEmptyRoles() error {
 		}
 
 		if b.roleExists(m.Name) {
-			return fmt.Errorf("core already registered %s", m.Name)
+			return fmt.Errorf("module already registered %s", m.Name)
 		}
 
 		b.moduleRoles[m.Name] = rbacv1alpha1.NewEmptyRole(m.Name)
@@ -219,7 +221,7 @@ func (b *Builder) installStateTransitions() error {
 	for _, m := range b.moduleDescriptors {
 		err := b.registerStateTransitionHandlers(m)
 		if err != nil {
-			return fmt.Errorf("unable to install state transitions for core %s: %w", m.Name, err)
+			return fmt.Errorf("unable to install state transitions for module %s: %w", m.Name, err)
 		}
 	}
 
@@ -242,10 +244,10 @@ func (b *Builder) installStateTransitionPreExecHandlers() error {
 		for _, h := range m.StateTransitionPreExecHandlers {
 			err := b.rt.router.AddStateTransitionPreExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
-				return fmt.Errorf("unable to install state transition pre execution handler for core %s: %w", m.Name, err)
+				return fmt.Errorf("unable to install state transition pre execution handler for module %s: %w", m.Name, err)
 			}
 			klog.Infof(
-				"registered state transition pre execution handler %T for state transition %s by core %s",
+				"registered state transition pre execution handler %T for state transition %s by module %s",
 				h.Handler,
 				meta.Name(h.StateTransition),
 				m.Name)
@@ -260,10 +262,10 @@ func (b *Builder) installStateTransitionPostExecHandlers() error {
 		for _, h := range m.StateTransitionPostExecutionHandlers {
 			err := b.rt.router.AddStateTransitionPostExecutionHandler(h.StateTransition, h.Handler)
 			if err != nil {
-				return fmt.Errorf("unable to install state transition post execution handler for core %s: %w", m.Name, err)
+				return fmt.Errorf("unable to install state transition post execution handler for module %s: %w", m.Name, err)
 			}
 			klog.Infof(
-				"registered state transition post execution handler %T for state transition %s by core %s",
+				"registered state transition post execution handler %T for state transition %s by module %s",
 				h.Handler,
 				meta.Name(h.StateTransition),
 				m.Name)
@@ -274,7 +276,7 @@ func (b *Builder) installStateTransitionPostExecHandlers() error {
 
 func (b *Builder) installModules() error {
 	if err := b.initEmptyRoles(); err != nil {
-		return fmt.Errorf("unable to initialize core roles: %w", err)
+		return fmt.Errorf("unable to initialize module roles: %w", err)
 	}
 
 	if err := b.installStateObjects(); err != nil {
@@ -306,7 +308,11 @@ func (b *Builder) installModules() error {
 	}
 
 	if err := b.installDependencies(); err != nil {
-		return fmt.Errorf("unable to install core dependencies: %w", err)
+		return fmt.Errorf("unable to install module dependencies: %w", err)
+	}
+
+	if err := b.installExtensions(); err != nil {
+		return fmt.Errorf("unable to install module extensions: %w", err)
 	}
 
 	return nil
@@ -319,7 +325,7 @@ func (b *Builder) installAuthenticationAdmissionHandlers() error {
 		}
 		for _, h := range m.AuthAdmissionHandlers {
 			b.rt.router.AddAuthAdmissionHandler(h)
-			klog.Infof("registered transaction admission handler %T for core %s", h, m.Name)
+			klog.Infof("registered transaction admission handler %T for module %s", h, m.Name)
 		}
 	}
 	return nil
@@ -332,7 +338,7 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 		}
 		for _, h := range m.PostAuthenticationHandler {
 			b.rt.router.AddTransactionPostAuthenticationHandler(h)
-			klog.Infof("registered transaction post authentication handler %T for core %s", h, m.Name)
+			klog.Infof("registered transaction post authentication handler %T for module %s", h, m.Name)
 		}
 	}
 	return nil
@@ -344,7 +350,7 @@ func (b *Builder) installDependencies() error {
 		for _, st := range md.Needs {
 			err := role.Extend(runtimev1alpha1.Verb_Deliver, st)
 			if err != nil {
-				return fmt.Errorf("error while registering core dependency %s: %w", meta.Name(st), err)
+				return fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
 			}
 		}
 	}
@@ -359,6 +365,13 @@ func (b *Builder) initStore() error {
 
 	b.store = orm.NewStore(obj, idx)
 
+	return nil
+}
+
+func (b *Builder) installExtensions() error {
+	for _, m := range b.moduleDescriptors {
+		b.rt.services.AddServices(m.Name, m.Services...)
+	}
 	return nil
 }
 

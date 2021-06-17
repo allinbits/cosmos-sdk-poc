@@ -18,3 +18,7 @@ func NewService() module.ExtensionService {
 type apiServer struct {
 	module.BaseService
 }
+
+func (a apiServer) Name() string {
+	return "apiserver"
+}
