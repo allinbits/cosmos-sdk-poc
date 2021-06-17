@@ -3,7 +3,7 @@ package rbac_test
 import (
 	"testing"
 
-	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
+	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	rterr "github.com/fdymylja/tmos/runtime/errors"
@@ -19,8 +19,13 @@ func TestCreateRole(t *testing.T) {
 
 	t.Run("unauthorized", func(t *testing.T) {
 		id := user.NewUsersFromString("no-authorizations")
-		err = rt.Deliver(id, &runtimev1alpha1.CreateModuleDescriptors{})
+		err = rt.Deliver(id, &rbacv1alpha1.MsgCreateRole{NewRole: &rbacv1alpha1.Role{Id: "a-role"}})
 		require.ErrorIs(t, err, rterr.ErrUnauthorized)
 	})
 
+	t.Run("authorized", func(t *testing.T) {
+		id := user.NewUsersFromString("rbac")
+		err = rt.Deliver(id, &rbacv1alpha1.MsgCreateRole{NewRole: &rbacv1alpha1.Role{Id: "a-role"}})
+		require.NoError(t, err)
+	})
 }
