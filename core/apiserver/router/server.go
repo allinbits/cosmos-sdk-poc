@@ -1,4 +1,4 @@
-package server
+package router
 
 import (
 	"fmt"
@@ -9,45 +9,43 @@ import (
 	"github.com/fdymylja/tmos/core/meta"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/pkg/protoutils/forge"
+	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/module"
-	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
-	"k8s.io/klog/v2"
 )
 
-func NewServer(store orm.Store) *Builder {
+func NewBuilder(c client.RuntimeClient) *Builder {
 	return &Builder{
-		server:  nil,
-		store:   store,
-		mux:     mux.NewRouter(),
-		modules: map[string]module.Descriptor{},
-		openAPI: NewOpenAPIBuilder(),
+		client:     c,
+		mux:        mux.NewRouter(),
+		modules:    map[string]module.Descriptor{},
+		knownPaths: nil,
+		openAPI:    NewOpenAPIBuilder(),
 	}
 }
 
 type Builder struct {
-	server     *http.Server
-	store      orm.Store
+	client     client.RuntimeClient
 	mux        *mux.Router
 	modules    map[string]module.Descriptor
 	knownPaths map[string]string // maps known paths of objects
 	openAPI    *openAPI
 }
 
-// RegisterModuleAPI registers the API for the server
-func (s *Builder) RegisterModuleAPI(module module.Descriptor) error {
+// CreateModuleHandlers creates the handler given a module.Descriptor
+func (s *Builder) CreateModuleHandlers(module module.Descriptor) error {
 	_, exists := s.modules[module.Name]
 	if exists {
 		return fmt.Errorf("api: module already registered: %s", module.Name)
 	}
 	// register object handler
 	for _, obj := range module.StateObjects {
-		err := s.registerStateObjectHandlers(obj.StateObject, &runtimev1alpha1.SchemaDefinition{
+		err := s.CreateStateObjectHandler(obj.StateObject, &runtimev1alpha1.SchemaDefinition{
 			Singleton:     obj.Options.Singleton,
 			PrimaryKey:    obj.Options.PrimaryKey,
 			SecondaryKeys: obj.Options.SecondaryKeys,
@@ -59,54 +57,8 @@ func (s *Builder) RegisterModuleAPI(module module.Descriptor) error {
 	return nil
 }
 
-func (s *Builder) Start() {
-	klog.Infof("starting api server...")
-	doc, err := s.openAPI.Build()
-	if err != nil {
-		panic(err)
-	}
-	b, err := doc.YAMLValue("test")
-	if err != nil {
-		panic(err)
-	}
-	s.mux.HandleFunc("/spec", func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = writer.Write(b)
-	})
-	go func() {
-		s.server = &http.Server{
-			Addr:    ":8080", // TODO configurable
-			Handler: s.mux,
-		}
-		panic(s.server.ListenAndServe()) // TODO me better
-	}()
-}
-
-func (s *Builder) loadStore(writer http.ResponseWriter, request *http.Request) (orm.Store, bool) {
-	height, err := getHeight(request)
-	if err != nil {
-		badRequest(writer, "bad height value %d: %s", height, err)
-		return orm.Store{}, false
-	}
-	switch height {
-	case 0:
-		version := s.store.LatestVersion()
-		latest, err := s.store.LoadVersion(version)
-		// NOTE: this should never fail.
-		if err != nil {
-			panic(err)
-		}
-		return latest, true
-	default:
-		store, err := s.store.LoadVersion(height)
-		if err != nil {
-			notFound(writer, "store version %d not found", height)
-			return orm.Store{}, false
-		}
-		return store, true
-	}
-}
-
-func (s *Builder) registerStateObjectHandlers(object meta.StateObject, definition *runtimev1alpha1.SchemaDefinition) error {
+// CreateStateObjectHandler creates a state object handler given the state object and its definition
+func (s *Builder) CreateStateObjectHandler(object meta.StateObject, definition *runtimev1alpha1.SchemaDefinition) error {
 	// get schema for the object
 	sch, err := schema.NewSchema(object, schema.Definition{
 		Singleton:     definition.Singleton,
@@ -126,7 +78,7 @@ func (s *Builder) registerStateObjectHandlers(object meta.StateObject, definitio
 		s.mux.
 			Methods(http.MethodGet).
 			Path(path).
-			HandlerFunc(newSingletonGetHandler(sch, s.loadStore))
+			HandlerFunc(newSingletonGetHandler(s.client, sch))
 
 		// add to open API spec.
 		err = s.openAPI.AddSingleton(object, path)
@@ -145,11 +97,11 @@ func (s *Builder) registerStateObjectHandlers(object meta.StateObject, definitio
 		s.mux.
 			Methods(http.MethodGet).
 			Path(singleInstancePath).
-			HandlerFunc(newGetHandler(sch, definition, s.loadStore))
+			HandlerFunc(newGetHandler(s.client, sch, definition))
 		// create list
 		s.mux.Methods(http.MethodGet).
 			Path(listInstancePath).
-			HandlerFunc(newListHandler(sch, s.loadStore))
+			HandlerFunc(newListHandler(s.client, sch))
 
 		// add to open API spec.
 		err = s.openAPI.AddObject(object, singleInstancePath, listInstancePath)
@@ -161,18 +113,26 @@ func (s *Builder) registerStateObjectHandlers(object meta.StateObject, definitio
 	return nil
 }
 
-// loadStoreFunc returns the versioned store given an http request and returns if the loading succeeded or not
-// if the loading fails loadStoreFunc will write the error to the http.ResponseWriter
-type loadStoreFunc func(w http.ResponseWriter, r *http.Request) (store orm.Store, failed bool)
+func (s *Builder) Build() (*mux.Router, error) {
+	doc, err := s.openAPI.Build()
+	if err != nil {
+		return nil, err
+	}
+	b, err := doc.YAMLValue("test")
+	if err != nil {
+		return nil, err
+	}
+	s.mux.HandleFunc("/spec", func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = writer.Write(b)
+	})
 
-func newSingletonGetHandler(schema *schema.Schema, loadStore loadStoreFunc) http.HandlerFunc {
+	return s.mux, nil
+}
+
+func newSingletonGetHandler(c client.RuntimeClient, schema *schema.Schema) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		store, ok := loadStore(w, r)
-		if !ok {
-			return
-		}
 		newObj := schema.NewStateObject()
-		err := store.Get(meta.SingletonID, newObj)
+		err := c.Get(meta.SingletonID, newObj)
 		if err != nil {
 			notFound(w, "not found")
 			return
@@ -182,7 +142,7 @@ func newSingletonGetHandler(schema *schema.Schema, loadStore loadStoreFunc) http
 }
 
 // newGetHandler creates an http.HandlerFunc that can be used to fetch a state object
-func newGetHandler(schema *schema.Schema, definition *runtimev1alpha1.SchemaDefinition, loadStore loadStoreFunc) http.HandlerFunc {
+func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *runtimev1alpha1.SchemaDefinition) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		primaryKeyValue, exists := vars[definition.PrimaryKey]
@@ -197,13 +157,8 @@ func newGetHandler(schema *schema.Schema, definition *runtimev1alpha1.SchemaDefi
 			badRequest(w, "bad primary key format in url path: %s", err)
 			return
 		}
-		// load store
-		store, ok := loadStore(w, req)
-		if !ok {
-			return
-		}
 		newObj := schema.NewStateObject()
-		err = store.Get(meta.NewBytesID(pkBytes), newObj)
+		err = c.Get(meta.NewBytesID(pkBytes), newObj)
 		if err != nil {
 			notFound(w, err.Error())
 			return
@@ -213,7 +168,7 @@ func newGetHandler(schema *schema.Schema, definition *runtimev1alpha1.SchemaDefi
 }
 
 // newListHandler creates an http.HandlerFunc that can be used to fetch a list of state objects of the same kind
-func newListHandler(schema *schema.Schema, loadStore loadStoreFunc) http.HandlerFunc {
+func newListHandler(c client.RuntimeClient, schema *schema.Schema) http.HandlerFunc {
 	listObject, err := forge.List(schema.NewStateObject(), protoregistry.GlobalFiles)
 	if err != nil {
 		panic(err)
@@ -227,15 +182,8 @@ func newListHandler(schema *schema.Schema, loadStore loadStoreFunc) http.Handler
 			badRequest(w, "bad query: %s", err)
 			return
 		}
-		store, ok := loadStore(w, r)
-		if !ok {
-			return
-		}
-		opts := orm.ListOptions{
-			MatchFieldInterface: nil,
-			MatchFieldString:    nil,
-			Start:               listOptions.Start,
-			End:                 listOptions.End,
+		opts := []client.ListOption{
+			client.ListRange(listOptions.Start, listOptions.End),
 		}
 
 		for _, selection := range listOptions.SelectFields {
@@ -250,13 +198,10 @@ func newListHandler(schema *schema.Schema, loadStore loadStoreFunc) http.Handler
 				badRequest(w, "bad fieldSelection in query: %s", err)
 				return
 			}
-			opts.MatchFieldString = append(opts.MatchFieldString, orm.ListMatchFieldString{
-				Field: sp[0],
-				Value: sp[1],
-			})
+			opts = append(opts, client.ListMatchFieldString(sp[0], sp[1]))
 		}
 
-		iter, err := store.List(schema.NewStateObject(), opts)
+		iter, err := c.List(schema.NewStateObject(), opts...)
 		if err != nil {
 			badRequest(w, "unable to list any object: %s", err)
 			return

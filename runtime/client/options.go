@@ -101,3 +101,11 @@ func ListMatchFieldString(field string, value string) ListOption {
 		})
 	}
 }
+
+// ListRange instructs the store to provide objects only from start to end range.
+func ListRange(start, end uint64) ListOption {
+	return func(opt *listOptions) {
+		opt.ORMOptions.Start = start
+		opt.ORMOptions.End = end
+	}
+}

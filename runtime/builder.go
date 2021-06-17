@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/fdymylja/tmos/core/abci"
-	server2 "github.com/fdymylja/tmos/core/apiserver/server"
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac"
 	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
@@ -39,7 +38,6 @@ func NewBuilder() *Builder {
 			router:   NewRouter(),
 			services: NewServiceOrchestrator(),
 		},
-		apiServer: nil,
 	}
 
 	// we already add the core modules in order
@@ -64,8 +62,6 @@ type Builder struct {
 	router *Router
 	store  orm.Store
 	rt     *Runtime
-
-	apiServer *server2.Builder
 }
 
 // AddModule adds a new module.Module to the list of modules to install
@@ -115,16 +111,6 @@ func (b *Builder) Build() (*Runtime, error) {
 	default:
 		b.rt.txDecoder = b.decoder
 	}
-	// populate api server
-	b.apiServer = server2.NewServer(b.store)
-	for _, m := range b.moduleDescriptors {
-		err = b.apiServer.RegisterModuleAPI(m)
-		if err != nil {
-			return nil, err
-		}
-	}
-	// start api server
-	b.apiServer.Start()
 	return b.rt, nil
 }
 
