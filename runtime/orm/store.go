@@ -50,6 +50,7 @@ func (s Store) RegisterObject(object meta.StateObject, options schema.Definition
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
