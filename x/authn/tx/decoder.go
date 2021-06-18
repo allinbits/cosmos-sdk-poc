@@ -2,6 +2,7 @@ package tx
 
 import (
 	"fmt"
+	"github.com/fdymylja/tmos/x/authn/crypto/secp256k1"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -14,7 +15,7 @@ import (
 // with a default crypto.PubKey set
 func NewDecoder(bech32Prefix string) *Decoder {
 	return &Decoder{
-		pubKeyResolver: crypto2.NewDefaultPubKeyResolver(),
+		pubKeyResolver: crypto2.NewDefaultPubKeyResolver([]crypto2.PubKey{&secp256k1.PubKey{}}),
 		bech32pfx:      bech32Prefix,
 	}
 }
