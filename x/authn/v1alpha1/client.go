@@ -3,7 +3,7 @@ package v1alpha1
 import (
 	"fmt"
 
-	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/module"
 	crypto2 "github.com/fdymylja/tmos/x/authn/crypto"
 	gogoproto "github.com/gogo/protobuf/proto"
