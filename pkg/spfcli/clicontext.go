@@ -2,6 +2,7 @@ package spfcli
 
 import (
 	"context"
+	"io"
 	"sync"
 
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
@@ -14,8 +15,9 @@ type CLIContext interface {
 	Context() context.Context
 }
 
-func NewCLIContext() CLIContext {
+func NewCLIContext(input io.Reader) CLIContext {
 	return &cliContext{
+		userInput:     input,
 		getConfigOnce: new(sync.Once),
 		client:        nil,
 	}
@@ -24,6 +26,7 @@ func NewCLIContext() CLIContext {
 type cliContext struct {
 	getConfigOnce *sync.Once
 	client        client.Client
+	userInput     io.Reader
 }
 
 func (c *cliContext) init() {

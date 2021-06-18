@@ -1,0 +1,23 @@
+syntax="proto3";
+
+package tmos.cli.v1alpha1;
+
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/fdymylja/tmos/core/spfcli";
+
+// Config defines the starport framework CLI configuration
+message Config {
+  // name is the name of the configuration
+  // which maps with the context in use
+  string name = 1;
+  // tendermint_rpc is the RPC endpoint used to talk with tendermint
+  string tendermint_rpc = 2;
+  // api_server_addr is the address of the API server
+  string api_server_addr = 3;
+  // current_user is used to map the current user
+  string current_user = 4;
+  // auth_credentials is used to map the credentials
+  // understood by the transaction encoder and the transaction signer
+  google.protobuf.Any auth_credentials = 5;
+}

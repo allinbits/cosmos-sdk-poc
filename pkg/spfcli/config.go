@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -17,12 +18,23 @@ const (
 )
 
 type Config struct {
-	TendermintRPC string `json:"tendermintRPC" yaml:"tendermintRPC"`
+	// Name is the name of the configuration
+	Name string `json:"name" yaml:"name"`
+	// TendermintRPC is the RPC to use when talking with tendermint
+	TendermintRPC string `json:"tendermint_rpc" yaml:"tendermintRPC"`
+	// APIServerAddr is the connection address towards the APIServer
+	APIServerAddr    string `json:"api_server_addr" yaml:"apiServerAddr"`
+	KeyringDirectory string `json:"keyring_directory" yaml:"keyringDirectory"`
+	KeyringBackend   string `json:"keyring_backend" yaml:"keyringBackend"`
+	DefaultAccount   string `json:"default_account" yaml:"defaultAccount"`
 }
 
 func (c *Config) Validate() error {
-	if c.TendermintRPC == "" {
-		return fmt.Errorf("missing tendermint RPC")
+	if c.TendermintRPC == "" || c.APIServerAddr == "" {
+		return fmt.Errorf("missing tendermint and apiserver addresses (one at least required)")
+	}
+	if c.KeyringDirectory == "" {
+		klog.Warningf("missing keyring directory in config")
 	}
 	return nil
 }
