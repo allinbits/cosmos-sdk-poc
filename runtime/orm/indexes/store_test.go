@@ -31,7 +31,7 @@ func TestStore(t *testing.T) {
 	err = store.Index(sch, obj)
 	require.NoError(t, err)
 	// test list by matching fields
-	x, err := store.List(sch, orm.ListOptionsRaw{MatchFieldInterface: []orm.ListMatchFieldInterface{
+	x, err := store.List(sch, orm.ListOptions{MatchFieldInterface: []orm.ListMatchFieldInterface{
 		{
 			Field: "module",
 			Value: "bank",
@@ -43,7 +43,7 @@ func TestStore(t *testing.T) {
 	err = store.ClearIndexes(sch, obj)
 	require.NoError(t, err)
 	// test list is invalid
-	x, err = store.List(sch, orm.ListOptionsRaw{MatchFieldInterface: []orm.ListMatchFieldInterface{
+	x, err = store.List(sch, orm.ListOptions{MatchFieldInterface: []orm.ListMatchFieldInterface{
 		{
 			Field: "module",
 			Value: "bank",

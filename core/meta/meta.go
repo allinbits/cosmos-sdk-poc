@@ -1,6 +1,14 @@
 package meta
 
-import "google.golang.org/protobuf/proto"
+import (
+	"fmt"
+
+	"google.golang.org/protobuf/proto"
+)
+
+func (x *APIDefinition) Name() string {
+	return fmt.Sprintf("%s.%s", x.Group, x.Kind)
+}
 
 // APIObject defines a golang object that can be processed and understood by the runtime
 type APIObject interface {
@@ -19,4 +27,9 @@ type StateObject interface {
 type StateTransition interface {
 	APIObject
 	NewStateTransition() StateTransition
+}
+
+// Name returns the unique name for the Type
+func Name(t APIObject) string {
+	return t.APIDefinition().Name()
 }

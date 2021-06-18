@@ -28,7 +28,7 @@ type Indexer interface {
 	ClearIndexes(schema *schema.Schema, o meta.StateObject) error
 	// List provides an iterator which returns the primary keys
 	// of the object (not-prefixed)
-	List(schema *schema.Schema, options ListOptionsRaw) (iter kv.Iterator, err error)
+	List(schema *schema.Schema, options ListOptions) (iter kv.Iterator, err error)
 }
 
 func NewStore(objects ObjectsStore, indexer Indexer) Store {
@@ -122,54 +122,38 @@ func (s Store) Delete(object meta.StateObject) error {
 	return nil
 }
 
-type ListOptionsRaw struct {
+type ListOptions struct {
 	MatchFieldInterface []ListMatchFieldInterface
 	MatchFieldString    []ListMatchFieldString
-	ListRange
+	Start, End          uint64
 }
 
-func (l ListOptionsRaw) String() string {
+func (l ListOptions) String() string {
 	return fmt.Sprintf("%#v", l)
 }
 
+// ListMatchFieldInterface can be used to match a field
+// with an interface{} value which is converted to the field's
+// concrete value.
 type ListMatchFieldInterface struct {
 	Field string
 	Value interface{}
 }
 
-func (l ListMatchFieldInterface) apply(opt *ListOptionsRaw) {
-	opt.MatchFieldInterface = append(opt.MatchFieldInterface, l)
-}
-
-type ListRange struct {
-	Start, End uint64
-}
-
-func (l ListRange) apply(opt *ListOptionsRaw) {
-	opt.ListRange = l
-}
-
+// ListMatchFieldString can be used to match a field
+// with a string value which is converted to the field's
+// concrete value.
 type ListMatchFieldString struct {
 	Field string
 	Value string
 }
 
-func (l ListMatchFieldString) apply(opt *ListOptionsRaw) {
-	opt.MatchFieldString = append(opt.MatchFieldString, l)
-}
-
-type ListOption interface{ apply(opt *ListOptionsRaw) }
-
-func (s Store) List(object meta.StateObject, options ...ListOption) (Iterator, error) {
-	opt := new(ListOptionsRaw)
-	for _, o := range options {
-		o.apply(opt)
-	}
+func (s Store) List(object meta.StateObject, listOptions ListOptions) (Iterator, error) {
 	sch, err := s.schemas.Get(object)
 	if err != nil {
 		return Iterator{}, err
 	}
-	iter, err := s.indexes.List(sch, *opt)
+	iter, err := s.indexes.List(sch, listOptions)
 	if err != nil {
 		return Iterator{}, err
 	}
@@ -190,8 +174,8 @@ func (s Store) SchemaRegistry() *schema.Registry {
 	return s.schemas
 }
 
-func (s Store) LatestVersion() Store {
-	return s
+func (s Store) LatestVersion() uint64 {
+	return 0
 }
 
 // LoadVersion returns an instance of the Store at the given height

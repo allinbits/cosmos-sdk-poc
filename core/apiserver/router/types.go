@@ -1,6 +1,7 @@
-package api
+package router
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -66,6 +67,9 @@ func getHeight(r *http.Request) (uint64, error) {
 	height, err := strconv.ParseUint(heightStr, 10, 64)
 	if err != nil {
 		return 0, err
+	}
+	if height == 0 {
+		return 0, fmt.Errorf("invalid 0 height request, please query for genesis state")
 	}
 	return height, nil
 }

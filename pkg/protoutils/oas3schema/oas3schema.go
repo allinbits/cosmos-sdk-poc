@@ -16,7 +16,6 @@
 package oas3schema
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"sort"
@@ -80,7 +79,6 @@ func (g *OpenAPIv3Generator) AddRequiredMessage(message protoreflect.MessageDesc
 	for i := 0; i < message.Fields().Len(); i++ {
 		fd := message.Fields().Get(i)
 		if fd.Kind() == protoreflect.MessageKind || fd.Kind() == protoreflect.GroupKind {
-			log.Printf("message %s has dependency on %s", message.FullName(), fd.Message().FullName())
 			err := g.AddRequiredMessage(fd.Message())
 			if err != nil {
 				return err
@@ -101,11 +99,6 @@ func (g *OpenAPIv3Generator) Build() (*v3.Document, error) {
 	}
 
 	d := g.buildDocumentV3()
-	bytes, err := d.YAMLValue("Generated with protoc-gen-openapi\n" + infoURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal yaml: %s", err.Error())
-	}
-	log.Printf("%s", bytes)
 	return d, nil
 }
 

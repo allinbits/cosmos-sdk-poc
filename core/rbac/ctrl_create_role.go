@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	rterr "github.com/fdymylja/tmos/runtime/errors"
@@ -51,13 +51,37 @@ func (c CreateRoleAdmissionHandler) Validate(req statetransition.AdmissionReques
 	if role.Id == "" {
 		return fmt.Errorf("no role id defined")
 	}
+
 	if err := c.roleNotExist(msg.NewRole.Id); err != nil {
 		return err
 	}
-	if err := c.verifyStateObjects(msg.NewRole); err != nil {
+
+	desc, err := c.rtClient.ModuleDescriptors().Get()
+	if err != nil {
 		return err
 	}
-	if err := c.verifyStateTransitions(msg.NewRole); err != nil {
+
+	// get known transitions and objects
+	transitions := make([]string, 0)
+	objects := make([]string, 0)
+	for _, m := range desc.Modules {
+		moduleTransitions := make([]string, len(m.StateTransitions))
+		for i, st := range m.StateTransitions {
+			moduleTransitions[i] = st.ApiDefinition.Name()
+		}
+		transitions = append(transitions, moduleTransitions...)
+
+		moduleObjects := make([]string, len(m.StateObjects))
+		for i, so := range m.StateObjects {
+			moduleObjects[i] = so.ApiDefinition.Name()
+		}
+		objects = append(objects, moduleObjects...)
+	}
+
+	if err := c.verifyStateObjects(msg.NewRole, objects); err != nil {
+		return err
+	}
+	if err := c.verifyStateTransitions(msg.NewRole, transitions); err != nil {
 		return err
 	}
 	// pass
@@ -76,12 +100,8 @@ func (c CreateRoleAdmissionHandler) roleNotExist(id string) error {
 	}
 }
 
-func (c CreateRoleAdmissionHandler) verifyStateObjects(role *v1alpha1.Role) error {
-	stateObjects, err := c.rtClient.StateObjectsList().Get()
-	if err != nil {
-		return err
-	}
-	set := strset.New(stateObjects.StateObjects...)
+func (c CreateRoleAdmissionHandler) verifyStateObjects(role *v1alpha1.Role, stateObjects []string) error {
+	set := strset.New(stateObjects...)
 	if len(role.Gets) != 0 && !set.Has(role.Gets...) {
 		return fmt.Errorf("unknown state object in get types %#v", role.Gets)
 	}
@@ -100,12 +120,8 @@ func (c CreateRoleAdmissionHandler) verifyStateObjects(role *v1alpha1.Role) erro
 	return nil
 }
 
-func (c CreateRoleAdmissionHandler) verifyStateTransitions(role *v1alpha1.Role) error {
-	stateTransitions, err := c.rtClient.StateTransitionsList().Get()
-	if err != nil {
-		return err
-	}
-	set := strset.New(stateTransitions.StateTransitions...)
+func (c CreateRoleAdmissionHandler) verifyStateTransitions(role *v1alpha1.Role, stateTransitions []string) error {
+	set := strset.New(stateTransitions...)
 	if len(role.Delivers) != 0 && !set.Has(role.Delivers...) {
 		return fmt.Errorf("unknown state transition types %#v", role.Delivers)
 	}

@@ -43,10 +43,12 @@ func TestIterator(t *testing.T) {
 	require.NoError(t, store.Create(obj2))
 	require.NoError(t, store.Create(obj3))
 
-	iter, err := store.List(&crisis.InvariantHandler{}, orm.ListMatchFieldInterface{
-		Field: "module",
-		Value: "bank",
-	})
+	iter, err := store.List(&crisis.InvariantHandler{}, orm.ListOptions{
+		MatchFieldInterface: []orm.ListMatchFieldInterface{
+			{
+				Field: "module",
+				Value: "bank",
+			}}})
 	require.NoError(t, err)
 
 	o := new(crisis.InvariantHandler)
@@ -63,10 +65,12 @@ func TestIterator(t *testing.T) {
 	require.False(t, iter.Valid())
 	iter.Close()
 
-	iter, err = store.List(&crisis.InvariantHandler{}, orm.ListMatchFieldInterface{
-		Field: "module",
-		Value: "staking",
-	})
+	iter, err = store.List(&crisis.InvariantHandler{}, orm.ListOptions{
+		MatchFieldInterface: []orm.ListMatchFieldInterface{
+			{
+				Field: "module",
+				Value: "staking",
+			}}})
 	require.NoError(t, err)
 	require.NoError(t, iter.Get(o))
 	require.True(t, proto.Equal(o, obj3))

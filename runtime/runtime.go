@@ -42,6 +42,8 @@ type Runtime struct {
 
 	router *Router
 	store  orm.Store
+
+	services *ServiceGroup
 }
 
 func (r *Runtime) EnableRBAC() {
@@ -61,16 +63,40 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as Authorizer can have access to it.
 	klog.Infof("initializing runtime handler default state")
-	err := r.deliver(r.user, &runtimev1alpha1.CreateStateObjectsList{StateObjects: r.store.ListRegisteredStateObjects()})
-	if err != nil {
-		return err
-	}
-	err = r.deliver(r.user, &runtimev1alpha1.CreateStateTransitionsList{StateTransitions: r.router.ListStateTransitions()})
-	if err != nil {
-		return err
-	}
-	klog.Infof("initializing default genesis state for modules")
+	var modules []*runtimev1alpha1.ModuleDescriptor
+	for _, m := range r.modules {
+		stateObjects := make([]*runtimev1alpha1.StateObject, len(m.StateObjects))
+		for i, so := range m.StateObjects {
+			stateObjects[i] = &runtimev1alpha1.StateObject{
+				ApiDefinition:    so.StateObject.APIDefinition(),
+				ProtobufFullname: (string)(so.StateObject.ProtoReflect().Descriptor().FullName()),
+				SchemaDefinition: &runtimev1alpha1.SchemaDefinition{
+					Singleton:     so.Options.Singleton,
+					PrimaryKey:    so.Options.PrimaryKey,
+					SecondaryKeys: so.Options.SecondaryKeys,
+				},
+			}
+		}
+		stateTransitions := make([]*runtimev1alpha1.StateTransition, len(m.StateTransitionExecutionHandlers))
+		for i, st := range m.StateTransitionExecutionHandlers {
+			stateTransitions[i] = &runtimev1alpha1.StateTransition{
+				ApiDefinition:    st.StateTransition.APIDefinition(),
+				ProtobufFullname: (string)(st.StateTransition.ProtoReflect().Descriptor().FullName()),
+			}
+		}
 
+		modules = append(modules, &runtimev1alpha1.ModuleDescriptor{
+			Name:             m.Name,
+			StateObjects:     stateObjects,
+			StateTransitions: stateTransitions,
+		})
+	}
+
+	klog.Infof("initializing default genesis state for modules")
+	err := r.deliver(r.user, &runtimev1alpha1.CreateModuleDescriptors{Modules: modules})
+	if err != nil {
+		return err
+	}
 	// iterate through modules and call the genesis
 	for _, m := range r.modules {
 		if m.GenesisHandler == nil {
@@ -78,12 +104,18 @@ func (r *Runtime) InitGenesis() error {
 		}
 		klog.Infof("initializing genesis state for %s", m.Name)
 		if err := m.GenesisHandler.Default(); err != nil {
-			return fmt.Errorf("runtime: failed genesis initalization for core %s: %w", m.Name, err)
+			return fmt.Errorf("runtime: failed genesis initalization for module %s: %w", m.Name, err)
 		}
 	}
 	klog.Infof("default genesis initialization completed")
 
 	r.initialized = true
+	klog.Infof("initializing extensions...")
+
+	err = r.services.Start(r.store) // TODO(fdymylja): Runtime should be aware when to start services even on node re-start.
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -114,8 +146,9 @@ func (r *Runtime) Get(id meta.ID, object meta.StateObject) error {
 	return convertStoreError(r.store.Get(id, object))
 }
 
-func (r *Runtime) List() {
-	panic("implement me")
+func (r *Runtime) List(object meta.StateObject, options orm.ListOptions) (orm.Iterator, error) {
+	iter, err := r.store.List(object, options)
+	return iter, convertStoreError(err)
 }
 
 func (r *Runtime) Create(users user.Users, object meta.StateObject) error {

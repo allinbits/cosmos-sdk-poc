@@ -28,6 +28,7 @@ type Module struct {
 func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
 		Named("testing").
+		NeedsStateTransition(&authnv1alpha1.MsgCreateAccount{}).
 		WithGenesis(newGenesisController(client)).Build()
 }
 

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/fdymylja/tmos/core/apiserver"
 	"github.com/fdymylja/tmos/runtime"
 	testmodule "github.com/fdymylja/tmos/testapp/module"
 	"github.com/fdymylja/tmos/x/authn"
@@ -37,6 +38,7 @@ func NewApp() abci.Application {
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(distribution.NewModule())
 	rtb.AddModule(testmodule.NewModule())
+	rtb.AddModule(apiserver.Module{})
 	rt, err := rtb.Build()
 	if err != nil {
 		panic(err)

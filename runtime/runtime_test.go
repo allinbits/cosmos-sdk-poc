@@ -41,5 +41,5 @@ func TestNeedsDependencyFails(t *testing.T) {
 	builder.AddModule(dependentModule{})
 	_, err := builder.Build()
 	require.Error(t, err)
-	require.EqualError(t, err, "unable to install modules: unable to install core dependencies: dependency cannot be accomplished: router: state transition not found: tmos.x.authn.v1alpha1.MsgCreateAccount")
+	require.EqualError(t, err, "unable to install modules: unable to install module dependencies: dependency cannot be accomplished: router: state transition not found: tmos.x.authn.v1alpha1.MsgCreateAccount")
 }

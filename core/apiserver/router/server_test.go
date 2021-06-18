@@ -1,4 +1,4 @@
-package api
+package router
 
 import (
 	"io"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/fdymylja/tmos/pkg/protoutils/forge"
+	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/orm"
 	"github.com/fdymylja/tmos/runtime/orm/indexes"
@@ -30,13 +31,16 @@ func TestServer(t *testing.T) {
 		require.NoError(t, store.RegisterObject(stateObject.StateObject, stateObject.Options))
 	}
 
-	srvBuilder := NewServer(store)
-	err := srvBuilder.RegisterModuleAPI(desc) // TODO replace nil with an always failing client implementation
+	srvBuilder := NewBuilder(client.NewORMClient(store, "test"))
+	err := srvBuilder.CreateModuleHandlers(desc)
 	require.NoError(t, err)
 
 	createBoilerplateState(t, store)
 
-	srv := httptest.NewServer(srvBuilder.mux)
+	mux, err := srvBuilder.Build()
+	require.NoError(t, err)
+
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 	c := srv.Client()
 	u, err := url.Parse(srv.URL)
