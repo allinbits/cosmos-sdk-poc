@@ -20,6 +20,7 @@ func (x *InvariantHandler) NewStateObject() meta.StateObject {
 
 type InvariantHandlerClient interface {
 	Get(stateTransition string, opts ...client.GetOption) (*InvariantHandler, error)
+	List(opts ...client.ListOption) (InvariantHandlerIterator, error)
 	Create(invariantHandler *InvariantHandler, opts ...client.CreateOption) error
 	Delete(invariantHandler *InvariantHandler, opts ...client.DeleteOption) error
 	Update(invariantHandler *InvariantHandler, opts ...client.UpdateOption) error
@@ -39,6 +40,14 @@ func (x *invariantHandlerClient) Get(stateTransition string, opts ...client.GetO
 	return _spfGenO, nil
 }
 
+func (x *invariantHandlerClient) List(opts ...client.ListOption) (InvariantHandlerIterator, error) {
+	iter, err := x.client.List(new(InvariantHandler), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &invariantHandlerIterator{iter: iter}, nil
+}
+
 func (x *invariantHandlerClient) Create(invariantHandler *InvariantHandler, opts ...client.CreateOption) error {
 	return x.client.Create(invariantHandler, opts...)
 }
@@ -49,6 +58,34 @@ func (x *invariantHandlerClient) Delete(invariantHandler *InvariantHandler, opts
 
 func (x *invariantHandlerClient) Update(invariantHandler *InvariantHandler, opts ...client.UpdateOption) error {
 	return x.client.Update(invariantHandler, opts...)
+}
+
+type InvariantHandlerIterator interface {
+	Get() (*InvariantHandler, error)
+	Delete() error
+	Valid() bool
+	Next()
+}
+
+type invariantHandlerIterator struct {
+	iter client.ObjectIterator
+}
+
+func (x *invariantHandlerIterator) Get() (*InvariantHandler, error) {
+	obj := new(InvariantHandler)
+	err := x.iter.Get(obj)
+	return obj, err
+}
+func (x *invariantHandlerIterator) Delete() error {
+	return x.iter.Delete()
+}
+
+func (x *invariantHandlerIterator) Valid() bool {
+	return x.iter.Valid()
+}
+
+func (x *invariantHandlerIterator) Next() {
+	x.iter.Next()
 }
 
 var InvariantHandlerSchema = schema.Definition{

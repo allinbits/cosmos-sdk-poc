@@ -44,6 +44,7 @@ func (x *Balance) NewStateObject() meta.StateObject {
 
 type BalanceClient interface {
 	Get(address string, opts ...client.GetOption) (*Balance, error)
+	List(opts ...client.ListOption) (BalanceIterator, error)
 	Create(balance *Balance, opts ...client.CreateOption) error
 	Delete(balance *Balance, opts ...client.DeleteOption) error
 	Update(balance *Balance, opts ...client.UpdateOption) error
@@ -63,6 +64,14 @@ func (x *balanceClient) Get(address string, opts ...client.GetOption) (*Balance,
 	return _spfGenO, nil
 }
 
+func (x *balanceClient) List(opts ...client.ListOption) (BalanceIterator, error) {
+	iter, err := x.client.List(new(Balance), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &balanceIterator{iter: iter}, nil
+}
+
 func (x *balanceClient) Create(balance *Balance, opts ...client.CreateOption) error {
 	return x.client.Create(balance, opts...)
 }
@@ -73,6 +82,34 @@ func (x *balanceClient) Delete(balance *Balance, opts ...client.DeleteOption) er
 
 func (x *balanceClient) Update(balance *Balance, opts ...client.UpdateOption) error {
 	return x.client.Update(balance, opts...)
+}
+
+type BalanceIterator interface {
+	Get() (*Balance, error)
+	Delete() error
+	Valid() bool
+	Next()
+}
+
+type balanceIterator struct {
+	iter client.ObjectIterator
+}
+
+func (x *balanceIterator) Get() (*Balance, error) {
+	obj := new(Balance)
+	err := x.iter.Get(obj)
+	return obj, err
+}
+func (x *balanceIterator) Delete() error {
+	return x.iter.Delete()
+}
+
+func (x *balanceIterator) Valid() bool {
+	return x.iter.Valid()
+}
+
+func (x *balanceIterator) Next() {
+	x.iter.Next()
 }
 
 var BalanceSchema = schema.Definition{

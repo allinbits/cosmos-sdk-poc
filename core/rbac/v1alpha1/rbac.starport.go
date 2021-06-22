@@ -64,6 +64,7 @@ func (x *Role) NewStateObject() meta.StateObject {
 
 type RoleClient interface {
 	Get(id string, opts ...client.GetOption) (*Role, error)
+	List(opts ...client.ListOption) (RoleIterator, error)
 	Create(role *Role, opts ...client.CreateOption) error
 	Delete(role *Role, opts ...client.DeleteOption) error
 	Update(role *Role, opts ...client.UpdateOption) error
@@ -83,6 +84,14 @@ func (x *roleClient) Get(id string, opts ...client.GetOption) (*Role, error) {
 	return _spfGenO, nil
 }
 
+func (x *roleClient) List(opts ...client.ListOption) (RoleIterator, error) {
+	iter, err := x.client.List(new(Role), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &roleIterator{iter: iter}, nil
+}
+
 func (x *roleClient) Create(role *Role, opts ...client.CreateOption) error {
 	return x.client.Create(role, opts...)
 }
@@ -93,6 +102,34 @@ func (x *roleClient) Delete(role *Role, opts ...client.DeleteOption) error {
 
 func (x *roleClient) Update(role *Role, opts ...client.UpdateOption) error {
 	return x.client.Update(role, opts...)
+}
+
+type RoleIterator interface {
+	Get() (*Role, error)
+	Delete() error
+	Valid() bool
+	Next()
+}
+
+type roleIterator struct {
+	iter client.ObjectIterator
+}
+
+func (x *roleIterator) Get() (*Role, error) {
+	obj := new(Role)
+	err := x.iter.Get(obj)
+	return obj, err
+}
+func (x *roleIterator) Delete() error {
+	return x.iter.Delete()
+}
+
+func (x *roleIterator) Valid() bool {
+	return x.iter.Valid()
+}
+
+func (x *roleIterator) Next() {
+	x.iter.Next()
 }
 
 func (x *RoleBinding) APIDefinition() *meta.APIDefinition {
@@ -109,6 +146,7 @@ func (x *RoleBinding) NewStateObject() meta.StateObject {
 
 type RoleBindingClient interface {
 	Get(subject string, opts ...client.GetOption) (*RoleBinding, error)
+	List(opts ...client.ListOption) (RoleBindingIterator, error)
 	Create(roleBinding *RoleBinding, opts ...client.CreateOption) error
 	Delete(roleBinding *RoleBinding, opts ...client.DeleteOption) error
 	Update(roleBinding *RoleBinding, opts ...client.UpdateOption) error
@@ -128,6 +166,14 @@ func (x *roleBindingClient) Get(subject string, opts ...client.GetOption) (*Role
 	return _spfGenO, nil
 }
 
+func (x *roleBindingClient) List(opts ...client.ListOption) (RoleBindingIterator, error) {
+	iter, err := x.client.List(new(RoleBinding), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &roleBindingIterator{iter: iter}, nil
+}
+
 func (x *roleBindingClient) Create(roleBinding *RoleBinding, opts ...client.CreateOption) error {
 	return x.client.Create(roleBinding, opts...)
 }
@@ -138,6 +184,34 @@ func (x *roleBindingClient) Delete(roleBinding *RoleBinding, opts ...client.Dele
 
 func (x *roleBindingClient) Update(roleBinding *RoleBinding, opts ...client.UpdateOption) error {
 	return x.client.Update(roleBinding, opts...)
+}
+
+type RoleBindingIterator interface {
+	Get() (*RoleBinding, error)
+	Delete() error
+	Valid() bool
+	Next()
+}
+
+type roleBindingIterator struct {
+	iter client.ObjectIterator
+}
+
+func (x *roleBindingIterator) Get() (*RoleBinding, error) {
+	obj := new(RoleBinding)
+	err := x.iter.Get(obj)
+	return obj, err
+}
+func (x *roleBindingIterator) Delete() error {
+	return x.iter.Delete()
+}
+
+func (x *roleBindingIterator) Valid() bool {
+	return x.iter.Valid()
+}
+
+func (x *roleBindingIterator) Next() {
+	x.iter.Next()
 }
 
 func (x *MsgCreateRole) APIDefinition() *meta.APIDefinition {

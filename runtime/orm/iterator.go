@@ -29,5 +29,13 @@ func (i Iterator) Close() {
 	i.iter.Close()
 }
 
-// TODO implement fast delete function currently to delete you need to get object and delete it
-// when we can skip the unmarshalling part and go straight to deletion of the key.
+// Delete deletes the current iterator object.
+// TODO(fdymylja): implement fast deletion path, as this one unmarshals the object which is not needed since we know the key.
+func (i Iterator) Delete() error {
+	obj := i.schema.NewStateObject()
+	err := i.Get(obj)
+	if err != nil {
+		return err
+	}
+	return i.store.Delete(obj)
+}

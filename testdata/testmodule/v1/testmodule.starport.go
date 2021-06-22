@@ -32,6 +32,7 @@ func (x *Post) NewStateObject() meta.StateObject {
 
 type PostClient interface {
 	Get(id string, opts ...client.GetOption) (*Post, error)
+	List(opts ...client.ListOption) (PostIterator, error)
 	Create(post *Post, opts ...client.CreateOption) error
 	Delete(post *Post, opts ...client.DeleteOption) error
 	Update(post *Post, opts ...client.UpdateOption) error
@@ -51,6 +52,14 @@ func (x *postClient) Get(id string, opts ...client.GetOption) (*Post, error) {
 	return _spfGenO, nil
 }
 
+func (x *postClient) List(opts ...client.ListOption) (PostIterator, error) {
+	iter, err := x.client.List(new(Post), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &postIterator{iter: iter}, nil
+}
+
 func (x *postClient) Create(post *Post, opts ...client.CreateOption) error {
 	return x.client.Create(post, opts...)
 }
@@ -61,6 +70,34 @@ func (x *postClient) Delete(post *Post, opts ...client.DeleteOption) error {
 
 func (x *postClient) Update(post *Post, opts ...client.UpdateOption) error {
 	return x.client.Update(post, opts...)
+}
+
+type PostIterator interface {
+	Get() (*Post, error)
+	Delete() error
+	Valid() bool
+	Next()
+}
+
+type postIterator struct {
+	iter client.ObjectIterator
+}
+
+func (x *postIterator) Get() (*Post, error) {
+	obj := new(Post)
+	err := x.iter.Get(obj)
+	return obj, err
+}
+func (x *postIterator) Delete() error {
+	return x.iter.Delete()
+}
+
+func (x *postIterator) Valid() bool {
+	return x.iter.Valid()
+}
+
+func (x *postIterator) Next() {
+	x.iter.Next()
 }
 
 func (x *Params) APIDefinition() *meta.APIDefinition {
