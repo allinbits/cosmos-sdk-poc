@@ -98,7 +98,6 @@ func (x *accountClient) Update(account *Account, opts ...client.UpdateOption) er
 
 type AccountIterator interface {
 	Get() (*Account, error)
-	Delete() error
 	Valid() bool
 	Next()
 }
@@ -112,10 +111,6 @@ func (x *accountIterator) Get() (*Account, error) {
 	err := x.iter.Get(obj)
 	return obj, err
 }
-func (x *accountIterator) Delete() error {
-	return x.iter.Delete()
-}
-
 func (x *accountIterator) Valid() bool {
 	return x.iter.Valid()
 }

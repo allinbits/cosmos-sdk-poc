@@ -74,7 +74,6 @@ func (x *postClient) Update(post *Post, opts ...client.UpdateOption) error {
 
 type PostIterator interface {
 	Get() (*Post, error)
-	Delete() error
 	Valid() bool
 	Next()
 }
@@ -88,10 +87,6 @@ func (x *postIterator) Get() (*Post, error) {
 	err := x.iter.Get(obj)
 	return obj, err
 }
-func (x *postIterator) Delete() error {
-	return x.iter.Delete()
-}
-
 func (x *postIterator) Valid() bool {
 	return x.iter.Valid()
 }

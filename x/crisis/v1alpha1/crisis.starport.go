@@ -62,7 +62,6 @@ func (x *invariantHandlerClient) Update(invariantHandler *InvariantHandler, opts
 
 type InvariantHandlerIterator interface {
 	Get() (*InvariantHandler, error)
-	Delete() error
 	Valid() bool
 	Next()
 }
@@ -76,10 +75,6 @@ func (x *invariantHandlerIterator) Get() (*InvariantHandler, error) {
 	err := x.iter.Get(obj)
 	return obj, err
 }
-func (x *invariantHandlerIterator) Delete() error {
-	return x.iter.Delete()
-}
-
 func (x *invariantHandlerIterator) Valid() bool {
 	return x.iter.Valid()
 }

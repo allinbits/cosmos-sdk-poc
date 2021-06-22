@@ -106,7 +106,6 @@ func (x *roleClient) Update(role *Role, opts ...client.UpdateOption) error {
 
 type RoleIterator interface {
 	Get() (*Role, error)
-	Delete() error
 	Valid() bool
 	Next()
 }
@@ -120,10 +119,6 @@ func (x *roleIterator) Get() (*Role, error) {
 	err := x.iter.Get(obj)
 	return obj, err
 }
-func (x *roleIterator) Delete() error {
-	return x.iter.Delete()
-}
-
 func (x *roleIterator) Valid() bool {
 	return x.iter.Valid()
 }
@@ -188,7 +183,6 @@ func (x *roleBindingClient) Update(roleBinding *RoleBinding, opts ...client.Upda
 
 type RoleBindingIterator interface {
 	Get() (*RoleBinding, error)
-	Delete() error
 	Valid() bool
 	Next()
 }
@@ -202,10 +196,6 @@ func (x *roleBindingIterator) Get() (*RoleBinding, error) {
 	err := x.iter.Get(obj)
 	return obj, err
 }
-func (x *roleBindingIterator) Delete() error {
-	return x.iter.Delete()
-}
-
 func (x *roleBindingIterator) Valid() bool {
 	return x.iter.Valid()
 }

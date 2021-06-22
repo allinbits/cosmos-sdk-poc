@@ -86,7 +86,6 @@ func (x *balanceClient) Update(balance *Balance, opts ...client.UpdateOption) er
 
 type BalanceIterator interface {
 	Get() (*Balance, error)
-	Delete() error
 	Valid() bool
 	Next()
 }
@@ -100,10 +99,6 @@ func (x *balanceIterator) Get() (*Balance, error) {
 	err := x.iter.Get(obj)
 	return obj, err
 }
-func (x *balanceIterator) Delete() error {
-	return x.iter.Delete()
-}
-
 func (x *balanceIterator) Valid() bool {
 	return x.iter.Valid()
 }
