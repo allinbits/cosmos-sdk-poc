@@ -3,7 +3,6 @@ package authn
 import (
 	"fmt"
 
-	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	abciv1alpha1 "github.com/fdymylja/tmos/core/abci/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -113,16 +112,16 @@ func (s sigCount) Validate(reqTx authentication.Tx) error {
 }
 
 func (s sigCount) countSubKeys(pk crypto2.PubKey) int {
-	v, ok := pk.(*kmultisig.LegacyAminoPubKey)
-	if !ok {
-		return 1
-	}
-
-	numKeys := 0
-	for _, subkey := range v.GetPubKeys() {
-		numKeys += s.countSubKeys(subkey)
-	}
-	return numKeys
+	//v, ok := pk.(*kmultisig.LegacyAminoPubKey)
+	//if !ok {
+	//	return 1
+	//}
+	//
+	//numKeys := 0
+	//for _, subkey := range v.GetPubKeys() {
+	//	numKeys += s.countSubKeys(subkey)
+	//}
+	return 1
 }
 
 func newConsumeGasForTxSize(c module.Client) consumeGasForTxSize {
