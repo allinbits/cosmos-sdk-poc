@@ -57,9 +57,10 @@ func (d Descriptor) Raw() *module.Descriptor {
 
 func getDeps(file protoreflect.FileDescriptor) []*descriptorpb.FileDescriptorProto {
 	deps := desc.Dependencies(file)
-	rawDeps := make([]*descriptorpb.FileDescriptorProto, len(deps))
+	rawDeps := make([]*descriptorpb.FileDescriptorProto, len(deps)+1)
+	rawDeps[0] = protodesc.ToFileDescriptorProto(file)
 	for i, x := range deps {
-		rawDeps[i] = protodesc.ToFileDescriptorProto(x)
+		rawDeps[i+1] = protodesc.ToFileDescriptorProto(x)
 	}
 	return rawDeps
 }
