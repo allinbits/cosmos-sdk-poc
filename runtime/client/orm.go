@@ -7,10 +7,10 @@ import (
 	"github.com/fdymylja/tmos/runtime/orm"
 )
 
-var _ RuntimeClient = &ORMClient{}
+var _ Client = &ORMClient{}
 
 // NewORMClient instantiates a new ReadOnlyClient from an orm.Store
-func NewORMClient(store orm.Store, identifier string) RuntimeClient {
+func NewORMClient(store orm.Store, identifier string) Client {
 	return &ORMClient{
 		identifier: identifier,
 		store:      store,
@@ -41,7 +41,7 @@ func (o *ORMClient) Deliver(_ meta.StateTransition, _ ...DeliverOption) error {
 	return fmt.Errorf("%s is not allowed to Deliver", o.identifier)
 }
 
-// Get implements RuntimeClient
+// Get implements Client
 func (o *ORMClient) Get(id meta.ID, object meta.StateObject, opts ...GetOption) error {
 	opt := new(GetOptionsRaw)
 	for _, o := range opts {
@@ -61,7 +61,7 @@ func (o *ORMClient) Get(id meta.ID, object meta.StateObject, opts ...GetOption) 
 	return store.Get(id, object)
 }
 
-// List implements RuntimeClient
+// List implements Client
 func (o *ORMClient) List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error) {
 	opt := new(ListOptionsRaw)
 	for _, o := range opts {

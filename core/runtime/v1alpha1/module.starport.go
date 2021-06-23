@@ -26,7 +26,7 @@ type ModuleDescriptorsClient interface {
 }
 
 type moduleDescriptorsClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *moduleDescriptorsClient) Get(opts ...client.GetOption) (*ModuleDescriptors, error) {
@@ -71,7 +71,7 @@ type ClientSet interface {
 	ExecCreateModuleDescriptors(msg *CreateModuleDescriptors) error
 }
 
-func NewClientSet(client client.RuntimeClient) ClientSet {
+func NewClientSet(client client.Client) ClientSet {
 	return &clientSet{
 		client:                  client,
 		moduleDescriptorsClient: &moduleDescriptorsClient{client: client},
@@ -79,7 +79,7 @@ func NewClientSet(client client.RuntimeClient) ClientSet {
 }
 
 type clientSet struct {
-	client client.RuntimeClient
+	client client.Client
 	// moduleDescriptorsClient is the client used to interact with ModuleDescriptors
 	moduleDescriptorsClient ModuleDescriptorsClient
 }

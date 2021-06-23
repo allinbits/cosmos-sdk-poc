@@ -9,9 +9,8 @@ import (
 // ObjectIterator aliases orm.Iterator
 type ObjectIterator = orm.Iterator
 
-// RuntimeClient is the client that modules use to interact
-// with the RuntimeServer and talk with the store and other modules.
-type RuntimeClient interface {
+// Client defines an interface that can be used by any entity to interact with runtime.Runtime
+type Client interface {
 	Get(id meta.ID, object meta.StateObject, opts ...GetOption) error
 	List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error)
 	Create(object meta.StateObject, opts ...CreateOption) error

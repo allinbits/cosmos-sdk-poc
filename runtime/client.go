@@ -8,7 +8,7 @@ import (
 	"github.com/fdymylja/tmos/runtime/client"
 )
 
-// NewModuleClient instantiates a RuntimeClient that can only be used by modules.
+// NewModuleClient instantiates a client.Client that can only be used by modules.
 func NewModuleClient(runtime *Runtime) *ModuleClient {
 	return &ModuleClient{
 		runtime: runtime,

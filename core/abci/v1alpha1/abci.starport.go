@@ -26,7 +26,7 @@ type CurrentBlockClient interface {
 }
 
 type currentBlockClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *currentBlockClient) Get(opts ...client.GetOption) (*CurrentBlock, error) {
@@ -70,7 +70,7 @@ type StageClient interface {
 }
 
 type stageClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *stageClient) Get(opts ...client.GetOption) (*Stage, error) {
@@ -114,7 +114,7 @@ type InitChainInfoClient interface {
 }
 
 type initChainInfoClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *initChainInfoClient) Get(opts ...client.GetOption) (*InitChainInfo, error) {
@@ -158,7 +158,7 @@ type BeginBlockStateClient interface {
 }
 
 type beginBlockStateClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *beginBlockStateClient) Get(opts ...client.GetOption) (*BeginBlockState, error) {
@@ -202,7 +202,7 @@ type CheckTxStateClient interface {
 }
 
 type checkTxStateClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *checkTxStateClient) Get(opts ...client.GetOption) (*CheckTxState, error) {
@@ -246,7 +246,7 @@ type DeliverTxStateClient interface {
 }
 
 type deliverTxStateClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *deliverTxStateClient) Get(opts ...client.GetOption) (*DeliverTxState, error) {
@@ -290,7 +290,7 @@ type ValidatorUpdatesClient interface {
 }
 
 type validatorUpdatesClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *validatorUpdatesClient) Get(opts ...client.GetOption) (*ValidatorUpdates, error) {
@@ -334,7 +334,7 @@ type EndBlockStateClient interface {
 }
 
 type endBlockStateClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *endBlockStateClient) Get(opts ...client.GetOption) (*EndBlockState, error) {
@@ -479,7 +479,7 @@ type ClientSet interface {
 	ExecMsgSetValidatorUpdates(msg *MsgSetValidatorUpdates) error
 }
 
-func NewClientSet(client client.RuntimeClient) ClientSet {
+func NewClientSet(client client.Client) ClientSet {
 	return &clientSet{
 		client:                 client,
 		currentBlockClient:     &currentBlockClient{client: client},
@@ -494,7 +494,7 @@ func NewClientSet(client client.RuntimeClient) ClientSet {
 }
 
 type clientSet struct {
-	client client.RuntimeClient
+	client client.Client
 	// currentBlockClient is the client used to interact with CurrentBlock
 	currentBlockClient CurrentBlockClient
 	// stageClient is the client used to interact with Stage

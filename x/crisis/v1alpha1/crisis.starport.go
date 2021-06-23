@@ -27,7 +27,7 @@ type InvariantHandlerClient interface {
 }
 
 type invariantHandlerClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *invariantHandlerClient) Get(stateTransition string, opts ...client.GetOption) (*InvariantHandler, error) {
@@ -92,7 +92,7 @@ type ClientSet interface {
 	InvariantHandlers() InvariantHandlerClient
 }
 
-func NewClientSet(client client.RuntimeClient) ClientSet {
+func NewClientSet(client client.Client) ClientSet {
 	return &clientSet{
 		client:                 client,
 		invariantHandlerClient: &invariantHandlerClient{client: client},
@@ -100,7 +100,7 @@ func NewClientSet(client client.RuntimeClient) ClientSet {
 }
 
 type clientSet struct {
-	client client.RuntimeClient
+	client client.Client
 	// invariantHandlerClient is the client used to interact with InvariantHandler
 	invariantHandlerClient InvariantHandlerClient
 }

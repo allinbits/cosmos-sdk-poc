@@ -39,7 +39,7 @@ type PostClient interface {
 }
 
 type postClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *postClient) Get(id string, opts ...client.GetOption) (*Post, error) {
@@ -115,7 +115,7 @@ type ParamsClient interface {
 }
 
 type paramsClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *paramsClient) Get(opts ...client.GetOption) (*Params, error) {
@@ -154,7 +154,7 @@ type ClientSet interface {
 	ExecMsgCreatePost(msg *MsgCreatePost) error
 }
 
-func NewClientSet(client client.RuntimeClient) ClientSet {
+func NewClientSet(client client.Client) ClientSet {
 	return &clientSet{
 		client:       client,
 		postClient:   &postClient{client: client},
@@ -163,7 +163,7 @@ func NewClientSet(client client.RuntimeClient) ClientSet {
 }
 
 type clientSet struct {
-	client client.RuntimeClient
+	client client.Client
 	// postClient is the client used to interact with Post
 	postClient PostClient
 	// paramsClient is the client used to interact with Params

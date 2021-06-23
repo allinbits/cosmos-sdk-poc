@@ -33,9 +33,9 @@ type apiServer struct {
 	server  *http.Server
 }
 
-func (a *apiServer) SetClient(client client.RuntimeClient) {
+func (a *apiServer) SetClient(client client.Client) {
 	a.runtime = runtimev1alpha1.NewClientSet(client)
-	a.RuntimeClient = client
+	a.Client = client
 }
 
 func (a *apiServer) Name() string {
@@ -43,7 +43,7 @@ func (a *apiServer) Name() string {
 }
 
 func (a *apiServer) Start() error {
-	builder := router.NewBuilder(a.RuntimeClient)
+	builder := router.NewBuilder(a.Client)
 	// we get the available state objects
 	desc, err := a.runtime.ModuleDescriptors().Get()
 	if err != nil {
