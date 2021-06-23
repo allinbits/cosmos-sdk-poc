@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	meta "github.com/fdymylja/tmos/core/meta"
+	module2 "github.com/fdymylja/tmos/core/module"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/orm"
+	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"k8s.io/klog/v2"
 
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -63,29 +65,29 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as Authorizer can have access to it.
 	klog.Infof("initializing runtime handler default state")
-	var modules []*runtimev1alpha1.ModuleDescriptor
+	var modules []*module2.Descriptor
 	for _, m := range r.modules {
-		stateObjects := make([]*runtimev1alpha1.StateObject, len(m.StateObjects))
+		stateObjects := make([]*module2.StateObject, len(m.StateObjects))
 		for i, so := range m.StateObjects {
-			stateObjects[i] = &runtimev1alpha1.StateObject{
+			stateObjects[i] = &module2.StateObject{
 				ApiDefinition:    so.StateObject.APIDefinition(),
 				ProtobufFullname: (string)(so.StateObject.ProtoReflect().Descriptor().FullName()),
-				SchemaDefinition: &runtimev1alpha1.SchemaDefinition{
+				SchemaDefinition: &schema.Definition{
 					Singleton:     so.Options.Singleton,
 					PrimaryKey:    so.Options.PrimaryKey,
 					SecondaryKeys: so.Options.SecondaryKeys,
 				},
 			}
 		}
-		stateTransitions := make([]*runtimev1alpha1.StateTransition, len(m.StateTransitionExecutionHandlers))
+		stateTransitions := make([]*module2.StateTransition, len(m.StateTransitionExecutionHandlers))
 		for i, st := range m.StateTransitionExecutionHandlers {
-			stateTransitions[i] = &runtimev1alpha1.StateTransition{
+			stateTransitions[i] = &module2.StateTransition{
 				ApiDefinition:    st.StateTransition.APIDefinition(),
 				ProtobufFullname: (string)(st.StateTransition.ProtoReflect().Descriptor().FullName()),
 			}
 		}
 
-		modules = append(modules, &runtimev1alpha1.ModuleDescriptor{
+		modules = append(modules, &module2.Descriptor{
 			Name:             m.Name,
 			StateObjects:     stateObjects,
 			StateTransitions: stateTransitions,

@@ -45,7 +45,7 @@ type Store struct {
 	schemas *schema.Registry
 }
 
-func (s Store) RegisterObject(object meta.StateObject, options schema.Definition) error {
+func (s Store) RegisterObject(object meta.StateObject, options *schema.Definition) error {
 	err := s.schemas.AddObject(object, options)
 	if err != nil {
 		return err

@@ -24,7 +24,7 @@ type Descriptor struct {
 
 type StateObject struct {
 	StateObject meta.StateObject
-	Options     schema.Definition
+	Options     *schema.Definition
 }
 
 type stateTransitionAdmissionHandler struct {
@@ -76,7 +76,7 @@ func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ct
 	return b
 }
 
-func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject, options schema.Definition) *DescriptorBuilder {
+func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject, options *schema.Definition) *DescriptorBuilder {
 	b.descriptor.StateObjects = append(b.descriptor.StateObjects, StateObject{
 		StateObject: object,
 		Options:     options,

@@ -25,7 +25,7 @@ func genSchema(g *protogen.GeneratedFile, object *protogen.Message) error {
 	}
 
 	// write the schema
-	g.P("var ", object.GoIdent, "Schema = ", schemaDefinition, "{")
+	g.P("var ", object.GoIdent, "Schema = &", schemaDefinition, "{")
 	if stateObjectDesc.PrimaryKey != "" {
 		g.P("PrimaryKey: \"", stateObjectDesc.PrimaryKey, "\"", ",")
 	}

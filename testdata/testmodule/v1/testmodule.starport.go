@@ -139,12 +139,12 @@ func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error
 	return x.client.Update(params, opts...)
 }
 
-var PostSchema = schema.Definition{
+var PostSchema = &schema.Definition{
 	PrimaryKey:    "id",
 	SecondaryKeys: []string{"creator"},
 }
 
-var ParamsSchema = schema.Definition{
+var ParamsSchema = &schema.Definition{
 	Singleton: true,
 }
 

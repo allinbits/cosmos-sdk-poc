@@ -83,7 +83,7 @@ func (x *invariantHandlerIterator) Next() {
 	x.iter.Next()
 }
 
-var InvariantHandlerSchema = schema.Definition{
+var InvariantHandlerSchema = &schema.Definition{
 	PrimaryKey:    "stateTransition",
 	SecondaryKeys: []string{"module", "route"},
 }

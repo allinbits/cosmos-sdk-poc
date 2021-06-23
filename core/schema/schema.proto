@@ -1,0 +1,21 @@
+syntax="proto3";
+
+package tmos.core.schema.v1;
+
+option go_package = "github.com/fdymylja/tmos/core/schema";
+
+// Definition describes the orm.Schema of a state object
+message Definition {
+  // singleton marks if there can exist only one instance of this object
+  // it's invalid to use primary key alongside a Singleton
+  bool singleton = 1;
+  // primary_key indicates the field to use as a primary key
+  // it must be the json name of the protobuf object
+  // NOTE: primary_key must not be set if Singleton is true
+  string primary_key = 2;
+  // secondary_key indicates the protobuf json names of fields
+  // of the object to use as secondary keys, the ones that can be
+  // passed to the List endpoints
+  // NOTE: secondary_keys must not be set if singleton is true
+  repeated string secondary_keys = 3;
+}

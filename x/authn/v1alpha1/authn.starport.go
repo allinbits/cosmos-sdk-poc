@@ -207,16 +207,16 @@ func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error
 	return x.client.Update(params, opts...)
 }
 
-var AccountSchema = schema.Definition{
+var AccountSchema = &schema.Definition{
 	PrimaryKey:    "address",
 	SecondaryKeys: []string{"accountNumber"},
 }
 
-var CurrentAccountNumberSchema = schema.Definition{
+var CurrentAccountNumberSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var ParamsSchema = schema.Definition{
+var ParamsSchema = &schema.Definition{
 	Singleton: true,
 }
 

@@ -4,14 +4,14 @@ package tmos.runtime.v1alpha1;
 option go_package = "github.com/fdymylja/tmos/core/runtime/v1alpha1";
 
 import "core/modulegen/modulegen.proto";
-import "core/meta/meta.proto";
+import "core/module/module.proto";
 
 message ModuleDescriptors {
   option (tmos.core.modulegen.state_object) = {
     singleton: true,
   };
 
-  repeated ModuleDescriptor modules = 1;
+  repeated tmos.core.module.v1.Descriptor modules = 1;
 }
 
 message CreateModuleDescriptors {
@@ -19,44 +19,5 @@ message CreateModuleDescriptors {
     external: false,
   };
 
-  repeated ModuleDescriptor modules = 1;
-}
-
-
-// TODO(fdymylja): i'm not sure if this is the right place for this kind of things
-
-// StateObject describes a state object
-message StateObject {
-  meta.v1alpha1.APIDefinition api_definition = 1;
-  string protobuf_fullname = 2;
-  SchemaDefinition schema_definition = 3;
-}
-
-// StateTransition describes a state transition
-message StateTransition {
-  meta.v1alpha1.APIDefinition api_definition = 1;
-  string protobuf_fullname = 2;
-}
-
-// SchemaDefinition describes the orm.Schema of a state object
-message SchemaDefinition {
-  // singleton marks if there can exist only one instance of this object
-  // it's invalid to use primary key alongside a Singleton
-  bool singleton = 1;
-  // primary_key indicates the field to use as a primary key
-  // it must be the json name of the protobuf object
-  // NOTE: primary_key must not be set if Singleton is true
-  string primary_key = 2;
-  // secondary_key indicates the protobuf json names of fields
-  // of the object to use as secondary keys, the ones that can be
-  // passed to the List() endpoints
-  // NOTE: secondary_keys must not be set if Singleton is true
-  repeated string secondary_keys = 3;
-}
-
-// ModuleDescriptor describes a module
-message ModuleDescriptor {
-  string name = 1;
-  repeated StateObject state_objects = 2;
-  repeated StateTransition state_transitions = 3;
+  repeated tmos.core.module.v1.Descriptor modules = 1;
 }
