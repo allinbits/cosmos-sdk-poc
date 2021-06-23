@@ -22,17 +22,17 @@ type RuntimeClient interface {
 
 // ----------------------- deliver options -----------------------
 
-// RawDeliverOptions ..
-type RawDeliverOptions struct {
+// DeliverOptionsRaw ..
+type DeliverOptionsRaw struct {
 	Impersonate user.Users
 }
 
-type DeliverOption func(opt *RawDeliverOptions)
+type DeliverOption func(opt *DeliverOptionsRaw)
 
 // DeliverImpersonating is a client.Exec option which allows the client
 // to deliver a meta.StateTransition impersonating another subject(s).
 func DeliverImpersonating(subjects ...string) DeliverOption {
-	return func(opt *RawDeliverOptions) {
+	return func(opt *DeliverOptionsRaw) {
 		opt.Impersonate = user.NewUsersFromString(subjects...)
 	}
 }

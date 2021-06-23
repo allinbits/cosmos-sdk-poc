@@ -45,7 +45,7 @@ func (c *ModuleClient) Delete(object meta.StateObject, _ ...client.DeleteOption)
 }
 
 func (c *ModuleClient) Deliver(transition meta.StateTransition, opts ...client.DeliverOption) error {
-	o := new(client.RawDeliverOptions)
+	o := new(client.DeliverOptionsRaw)
 	// apply options
 	for _, opt := range opts {
 		opt(o)
