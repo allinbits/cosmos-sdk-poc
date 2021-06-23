@@ -13,7 +13,7 @@ import (
 )
 
 func TestStore(t *testing.T) {
-	sch, err := schema.NewSchema(&testpb.SimpleMessage{}, schema.Definition{PrimaryKey: "a"})
+	sch, err := schema.NewSchema(&testpb.SimpleMessage{}, &schema.Definition{PrimaryKey: "a"})
 	require.NoError(t, err)
 	s := kv.NewBadger()
 	store := NewStore(s)

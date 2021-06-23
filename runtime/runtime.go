@@ -63,33 +63,9 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as Authorizer can have access to it.
 	klog.Infof("initializing runtime handler default state")
-	var modules []*runtimev1alpha1.ModuleDescriptor
+	var modules []*module.RawDescriptor
 	for _, m := range r.modules {
-		stateObjects := make([]*runtimev1alpha1.StateObject, len(m.StateObjects))
-		for i, so := range m.StateObjects {
-			stateObjects[i] = &runtimev1alpha1.StateObject{
-				ApiDefinition:    so.StateObject.APIDefinition(),
-				ProtobufFullname: (string)(so.StateObject.ProtoReflect().Descriptor().FullName()),
-				SchemaDefinition: &runtimev1alpha1.SchemaDefinition{
-					Singleton:     so.Options.Singleton,
-					PrimaryKey:    so.Options.PrimaryKey,
-					SecondaryKeys: so.Options.SecondaryKeys,
-				},
-			}
-		}
-		stateTransitions := make([]*runtimev1alpha1.StateTransition, len(m.StateTransitionExecutionHandlers))
-		for i, st := range m.StateTransitionExecutionHandlers {
-			stateTransitions[i] = &runtimev1alpha1.StateTransition{
-				ApiDefinition:    st.StateTransition.APIDefinition(),
-				ProtobufFullname: (string)(st.StateTransition.ProtoReflect().Descriptor().FullName()),
-			}
-		}
-
-		modules = append(modules, &runtimev1alpha1.ModuleDescriptor{
-			Name:             m.Name,
-			StateObjects:     stateObjects,
-			StateTransitions: stateTransitions,
-		})
+		modules = append(modules, m.Raw())
 	}
 
 	klog.Infof("initializing default genesis state for modules")

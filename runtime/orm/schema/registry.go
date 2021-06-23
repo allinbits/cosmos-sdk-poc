@@ -38,7 +38,7 @@ func (s *Registry) Add(sch *Schema) error {
 	return nil
 }
 
-func (s *Registry) AddObject(o meta.StateObject, options Definition) error {
+func (s *Registry) AddObject(o meta.StateObject, options *Definition) error {
 	sch, err := NewSchema(o, options)
 	if err != nil {
 		return err

@@ -62,7 +62,7 @@ func (x *CreateModuleDescriptors) NewStateTransition() meta.StateTransition {
 	return new(CreateModuleDescriptors)
 }
 
-var ModuleDescriptorsSchema = schema.Definition{
+var ModuleDescriptorsSchema = &schema.Definition{
 	Singleton: true,
 }
 

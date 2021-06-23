@@ -228,15 +228,15 @@ func (x *MsgBindRole) NewStateTransition() meta.StateTransition {
 	return new(MsgBindRole)
 }
 
-var ParamsSchema = schema.Definition{
+var ParamsSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var RoleSchema = schema.Definition{
+var RoleSchema = &schema.Definition{
 	PrimaryKey: "id",
 }
 
-var RoleBindingSchema = schema.Definition{
+var RoleBindingSchema = &schema.Definition{
 	PrimaryKey:    "subject",
 	SecondaryKeys: []string{"roleRef"},
 }

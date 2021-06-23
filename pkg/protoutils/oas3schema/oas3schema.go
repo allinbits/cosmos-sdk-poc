@@ -76,14 +76,19 @@ func (g *OpenAPIv3Generator) AddRequiredMessage(message protoreflect.MessageDesc
 		return nil
 	}
 	// check if it has msg field
+	nestedMsgs := map[protoreflect.FullName]protoreflect.MessageDescriptor{}
 	for i := 0; i < message.Fields().Len(); i++ {
 		fd := message.Fields().Get(i)
 		if fd.Kind() == protoreflect.MessageKind || fd.Kind() == protoreflect.GroupKind {
-			err := g.AddRequiredMessage(fd.Message())
-			if err != nil {
-				return err
-			}
+			nestedMsgs[fd.Message().FullName()] = fd.Message()
 		}
+	}
+	for _, req := range nestedMsgs {
+		err := g.AddRequiredMessage(req)
+		if err != nil {
+			return err
+		}
+		g.requiredObjectsSet[message.FullName()] = struct{}{}
 	}
 	g.requiredObjectsSet[message.FullName()] = struct{}{}
 	g.requiredObjects = append(g.requiredObjects, message)

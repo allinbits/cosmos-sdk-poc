@@ -28,7 +28,7 @@ func TestServer(t *testing.T) {
 	store := orm.NewStore(obj, idx)
 	desc := (testmodule.Module{}).Initialize(nil)
 	for _, stateObject := range desc.StateObjects {
-		require.NoError(t, store.RegisterObject(stateObject.StateObject, stateObject.Options))
+		require.NoError(t, store.RegisterObject(stateObject.StateObject, stateObject.SchemaDefinition))
 	}
 
 	srvBuilder := NewBuilder(client.NewORMClient(store, "test"))

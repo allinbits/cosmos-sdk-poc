@@ -107,7 +107,7 @@ func (x *balanceIterator) Next() {
 	x.iter.Next()
 }
 
-var BalanceSchema = schema.Definition{
+var BalanceSchema = &schema.Definition{
 	PrimaryKey: "address",
 }
 

@@ -430,35 +430,35 @@ func (x *MsgSetValidatorUpdates) NewStateTransition() meta.StateTransition {
 	return new(MsgSetValidatorUpdates)
 }
 
-var CurrentBlockSchema = schema.Definition{
+var CurrentBlockSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var StageSchema = schema.Definition{
+var StageSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var InitChainInfoSchema = schema.Definition{
+var InitChainInfoSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var BeginBlockStateSchema = schema.Definition{
+var BeginBlockStateSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var CheckTxStateSchema = schema.Definition{
+var CheckTxStateSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var DeliverTxStateSchema = schema.Definition{
+var DeliverTxStateSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var ValidatorUpdatesSchema = schema.Definition{
+var ValidatorUpdatesSchema = &schema.Definition{
 	Singleton: true,
 }
 
-var EndBlockStateSchema = schema.Definition{
+var EndBlockStateSchema = &schema.Definition{
 	Singleton: true,
 }
 

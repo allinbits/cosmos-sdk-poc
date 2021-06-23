@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/fdymylja/tmos/core/meta"
-	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/pkg/protoutils/forge"
 	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -45,11 +44,7 @@ func (s *Builder) CreateModuleHandlers(module module.Descriptor) error {
 	}
 	// register object handler
 	for _, obj := range module.StateObjects {
-		err := s.CreateStateObjectHandler(obj.StateObject, &runtimev1alpha1.SchemaDefinition{
-			Singleton:     obj.Options.Singleton,
-			PrimaryKey:    obj.Options.PrimaryKey,
-			SecondaryKeys: obj.Options.SecondaryKeys,
-		})
+		err := s.CreateStateObjectHandler(obj.StateObject, obj.SchemaDefinition)
 		if err != nil {
 			return fmt.Errorf("api: unable to register %s for module %s", meta.Name(obj.StateObject), module.Name)
 		}
@@ -58,13 +53,9 @@ func (s *Builder) CreateModuleHandlers(module module.Descriptor) error {
 }
 
 // CreateStateObjectHandler creates a state object handler given the state object and its definition
-func (s *Builder) CreateStateObjectHandler(object meta.StateObject, definition *runtimev1alpha1.SchemaDefinition) error {
+func (s *Builder) CreateStateObjectHandler(object meta.StateObject, definition *schema.Definition) error {
 	// get schema for the object
-	sch, err := schema.NewSchema(object, schema.Definition{
-		Singleton:     definition.Singleton,
-		PrimaryKey:    definition.PrimaryKey,
-		SecondaryKeys: definition.SecondaryKeys,
-	})
+	sch, err := schema.NewSchema(object, definition)
 	if err != nil {
 		return err
 	}
@@ -151,7 +142,7 @@ func newSingletonGetHandler(c client.RuntimeClient, schema *schema.Schema) http.
 }
 
 // newGetHandler creates an http.HandlerFunc that can be used to fetch a state object
-func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *runtimev1alpha1.SchemaDefinition) http.HandlerFunc {
+func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *schema.Definition) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		height, err := getHeight(req)
 		if err != nil {

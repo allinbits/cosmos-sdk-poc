@@ -4,40 +4,25 @@ import (
 	"fmt"
 
 	meta "github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/schema"
+	"github.com/fdymylja/tmos/pkg/protoutils/desc"
 	"github.com/fdymylja/tmos/pkg/protoutils/kindencoder"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Definition defines an object *Schema
-// TODO(fdymylja): this should be part of a schema protobuf package.
-type Definition struct {
-	// Singleton marks if there can exist only one instance of this object
-	// it's invalid to use primary key alongside a Singleton
-	Singleton bool
-	// PrimaryKey indicates the field to use as a primary key
-	// it must be the json name of the protobuf object
-	// NOTE: PrimaryKey must not be set if Singleton is true
-	PrimaryKey string
-	// SecondaryKeys indicates the protobuf json names of fields
-	// of the object to use as secondary keys, the ones that can be
-	// passed to the List() endpoints
-	// NOTE: SecondaryKeys must not be set if Singleton is true
-	SecondaryKeys []string
+var UnsupportedKinds = []protoreflect.Kind{
+	protoreflect.Sint32Kind,
+	protoreflect.Sint64Kind,
+	protoreflect.Sfixed32Kind,
+	protoreflect.Fixed32Kind,
+	protoreflect.FloatKind,
+	protoreflect.Sfixed64Kind,
+	protoreflect.Fixed64Kind,
+	protoreflect.DoubleKind,
+	protoreflect.GroupKind,
 }
 
-// Validate verifies a Definition
-func (d Definition) Validate() error {
-	if d.Singleton && d.PrimaryKey != "" {
-		return fmt.Errorf("a StateObject can not be singleton and have a primary key at the same time")
-	}
-	if d.Singleton && len(d.SecondaryKeys) != 0 {
-		return fmt.Errorf("a StateObject can not be singleton and have secondary keys at the same time")
-	}
-	if !d.Singleton && d.PrimaryKey == "" {
-		return fmt.Errorf("a StateObject must be a singleton or have a primary key")
-	}
-	return nil
-}
+type Definition = schema.Definition
 
 // Schema represents how a meta.StateObject is saved and indexed into the store
 // and provides all the required functionalities to index the fields of the object
@@ -103,13 +88,21 @@ func (s *Schema) Indexes() []*Indexer {
 	return s.secondaryKeys
 }
 
-func NewSchema(o meta.StateObject, options Definition) (*Schema, error) {
+func NewSchema(o meta.StateObject, options *Definition) (*Schema, error) {
 	return parseObjectSchema(o, options)
 }
 
-func parseObjectSchema(o meta.StateObject, options Definition) (*Schema, error) {
+func parseObjectSchema(o meta.StateObject, options *Definition) (*Schema, error) {
 	if err := options.Validate(); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrBadDefinition, err)
+	}
+
+	// check if message is valid
+	if desc.HasMap(o.ProtoReflect().Descriptor()) {
+		return nil, fmt.Errorf("%w: %s has a map field which is not supported", ErrBadDefinition, meta.Name(o))
+	}
+	if desc.HasKinds(o.ProtoReflect().Descriptor(), UnsupportedKinds...) {
+		return nil, fmt.Errorf("%w: %s has an unsupported kind %s", ErrBadDefinition, meta.Name(o), UnsupportedKinds)
 	}
 	schema := &Schema{mType: o, apiDefinition: o.APIDefinition()}
 	fds := o.ProtoReflect().Descriptor().Fields()

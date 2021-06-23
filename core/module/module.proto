@@ -1,0 +1,34 @@
+syntax="proto3";
+
+package tmos.core.module.v1;
+
+option go_package = "github.com/fdymylja/tmos/core/module";
+
+import "core/meta/meta.proto";
+import "core/schema/schema.proto";
+import "google/protobuf/descriptor.proto";
+
+message Descriptor {
+  // name represents the module name
+  string name = 1;
+  // StateObjects represents a list of StateObjects defined by the module
+  repeated StateObject state_objects = 2;
+  // StateTransitions represents a list of StateTransitions defined by the module
+  repeated StateTransition state_transitions = 3;
+
+}
+
+// StateObject describes a state object
+message StateObject {
+  meta.v1alpha1.APIDefinition api_definition = 1;
+  tmos.core.schema.v1.Definition schema_definition = 2;
+  string protobuf_fullname = 3;
+  repeated google.protobuf.FileDescriptorProto proto_dependencies = 4;
+}
+
+// StateTransition describes a state transition
+message StateTransition {
+  meta.v1alpha1.APIDefinition api_definition = 1;
+  string protobuf_fullname = 2;
+  repeated google.protobuf.FileDescriptorProto proto_dependencies = 3;
+}
