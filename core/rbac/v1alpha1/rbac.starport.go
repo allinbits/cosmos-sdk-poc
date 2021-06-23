@@ -8,7 +8,7 @@ import (
 
 func (x *Params) APIDefinition() *meta.APIDefinition {
 	return &meta.APIDefinition{
-		Group:   "tmos.rbac.v1alpha1",
+		Group:   "tmos.core.rbac.v1alpha1",
 		Kind:    "Params",
 		ApiType: meta.APIType_StateObject,
 	}
@@ -52,7 +52,7 @@ func (x *paramsClient) Update(params *Params, opts ...client.UpdateOption) error
 
 func (x *Role) APIDefinition() *meta.APIDefinition {
 	return &meta.APIDefinition{
-		Group:   "tmos.rbac.v1alpha1",
+		Group:   "tmos.core.rbac.v1alpha1",
 		Kind:    "Role",
 		ApiType: meta.APIType_StateObject,
 	}
@@ -129,7 +129,7 @@ func (x *roleIterator) Next() {
 
 func (x *RoleBinding) APIDefinition() *meta.APIDefinition {
 	return &meta.APIDefinition{
-		Group:   "tmos.rbac.v1alpha1",
+		Group:   "tmos.core.rbac.v1alpha1",
 		Kind:    "RoleBinding",
 		ApiType: meta.APIType_StateObject,
 	}
@@ -206,7 +206,7 @@ func (x *roleBindingIterator) Next() {
 
 func (x *MsgCreateRole) APIDefinition() *meta.APIDefinition {
 	return &meta.APIDefinition{
-		Group:   "tmos.rbac.v1alpha1",
+		Group:   "tmos.core.rbac.v1alpha1",
 		Kind:    "MsgCreateRole",
 		ApiType: meta.APIType_StateTransition,
 	}
@@ -218,7 +218,7 @@ func (x *MsgCreateRole) NewStateTransition() meta.StateTransition {
 
 func (x *MsgBindRole) APIDefinition() *meta.APIDefinition {
 	return &meta.APIDefinition{
-		Group:   "tmos.rbac.v1alpha1",
+		Group:   "tmos.core.rbac.v1alpha1",
 		Kind:    "MsgBindRole",
 		ApiType: meta.APIType_StateTransition,
 	}

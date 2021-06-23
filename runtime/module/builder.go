@@ -64,6 +64,15 @@ func (b *DescriptorBuilder) WithPostAuthenticationHandler(ctrl authentication.Po
 	return b
 }
 
+func (b *DescriptorBuilder) WithPostStateTransitionHandler(st statetransition.StateTransition, ctrl statetransition.PostExecutionHandler) *DescriptorBuilder {
+	b.descriptor.StateTransitionPostExecutionHandlers = append(b.descriptor.StateTransitionPostExecutionHandlers, stateTransitionPostExecutionHandler{
+		StateTransition: st,
+		Handler:         ctrl,
+	})
+
+	return b
+}
+
 func (b *DescriptorBuilder) WithExtensionService(xt ExtensionService) *DescriptorBuilder {
 	b.descriptor.Services = append(b.descriptor.Services, xt)
 	return b

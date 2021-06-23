@@ -36,6 +36,7 @@ func (m *Module) Initialize(client module.Client) module.Descriptor {
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionHandler(client)).
 		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleHandler(client), false).
 		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client)).
+		// WithPostStateTransitionHandler(&runtimev1alpha1.CreateModuleDescriptors{}, NewInitRoleCreator(client)).
 		WithGenesis(m.genesis).
 		Build()
 }

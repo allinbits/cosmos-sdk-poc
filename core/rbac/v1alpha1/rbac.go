@@ -36,12 +36,14 @@ func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {
 	}
 }
 
-func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
-	if x.hasResourceForVerb(verb, resource) {
-		return fmt.Errorf("role %s has already resource %s", x, meta.Name(resource))
+func (x *Role) ExtendRaw(verb runtimev1alpha1.Verb, apiDefinition *meta.APIDefinition) error {
+	apiDef := apiDefinition.Name()
+
+	if x.hasResourceForVerb(verb, apiDef) {
+		return fmt.Errorf("role %s has already resource %s", x, apiDef)
 	}
 
-	err := x.appendResourceToVerb(verb, resource)
+	err := x.appendResourceToVerb(verb, apiDef)
 	if err != nil {
 		return err
 	}
@@ -49,36 +51,39 @@ func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error 
 	return nil
 }
 
-func (x *Role) hasResourceForVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) bool {
+func (x *Role) Extend(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
+	return x.ExtendRaw(verb, resource.APIDefinition())
+}
+
+func (x *Role) hasResourceForVerb(verb runtimev1alpha1.Verb, resourceRaw string) bool {
 	res := x.GetResourcesForVerb(verb)
 	set := strset.New(res...)
-	if len(res) != 0 && set.Has(meta.Name(resource)) {
+	if len(res) != 0 && set.Has(resourceRaw) {
 		return true
 	}
 
 	return false
 }
 
-func (x *Role) appendResourceToVerb(verb runtimev1alpha1.Verb, resource meta.APIObject) error {
-	name := meta.Name(resource)
+func (x *Role) appendResourceToVerb(verb runtimev1alpha1.Verb, resourceRaw string) error {
 	switch verb {
 	case runtimev1alpha1.Verb_Get:
-		x.Gets = append(x.Gets, name)
+		x.Gets = append(x.Gets, resourceRaw)
 		return nil
 	case runtimev1alpha1.Verb_List:
-		x.Lists = append(x.Lists, name)
+		x.Lists = append(x.Lists, resourceRaw)
 		return nil
 	case runtimev1alpha1.Verb_Create:
-		x.Creates = append(x.Creates, name)
+		x.Creates = append(x.Creates, resourceRaw)
 		return nil
 	case runtimev1alpha1.Verb_Delete:
-		x.Deletes = append(x.Deletes, name)
+		x.Deletes = append(x.Deletes, resourceRaw)
 		return nil
 	case runtimev1alpha1.Verb_Update:
-		x.Updates = append(x.Updates, name)
+		x.Updates = append(x.Updates, resourceRaw)
 		return nil
 	case runtimev1alpha1.Verb_Deliver:
-		x.Delivers = append(x.Delivers, name)
+		x.Delivers = append(x.Delivers, resourceRaw)
 		return nil
 	default:
 		return fmt.Errorf("unknown verb %s", verb)
