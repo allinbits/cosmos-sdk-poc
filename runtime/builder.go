@@ -188,7 +188,7 @@ func (b *Builder) initEmptyRoles() error {
 			return fmt.Errorf("module already registered %s", m.Name)
 		}
 
-		b.moduleRoles[m.Name] = rbacv1alpha1.NewEmptyRole(m.Name)
+		b.moduleRoles[m.Name] = rbacv1alpha1.NewRoleNameForModule(m.Name)
 	}
 
 	return nil

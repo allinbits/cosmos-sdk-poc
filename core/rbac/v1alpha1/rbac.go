@@ -13,8 +13,12 @@ import (
 // access to Exec on external handlers.
 const ExternalAccountRoleID = "external_account"
 
-func NewEmptyRole(name string) *Role {
-	return &Role{Id: roleNameForModule(name)}
+func NewRoleNameForModule(moduleName string) *Role {
+	return &Role{Id: roleNameForModule(moduleName)}
+}
+
+func NewExternalAccountRole() *Role {
+	return &Role{Id: ExternalAccountRoleID}
 }
 
 func (x *Role) GetResourcesForVerb(verb runtimev1alpha1.Verb) []string {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	abciv1alpha1 "github.com/fdymylja/tmos/core/abci/v1alpha1"
+	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/module"
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
@@ -42,48 +43,67 @@ func (i initGenesisRoleCreator) PostExec(req statetransition.PostExecutionReques
 
 	msg := req.Transition.(*runtimev1alpha1.CreateModuleDescriptors)
 
+	userRole := v1alpha1.NewExternalAccountRole()
 	for _, m := range msg.Modules {
-		for _, st := range m.StateTransitions {
-			acl, err := i.isExternal(st)
+		externalTransitions, err := i.handleModule(m)
+		if err != nil {
+			return fmt.Errorf("failed processing module %s: %w", m.Name, err)
+		}
+
+		for _, st := range externalTransitions {
+			err = userRole.ExtendRaw(runtimev1alpha1.Verb_Deliver, st)
 			if err != nil {
 				return err
 			}
-			panic(acl)
 		}
+
 	}
 
 	return nil
 }
 
-func (i initGenesisRoleCreator) handleModule(m *module.Descriptor) error {
-	moduleRole := new(v1alpha1.Role)
-	userRole := new(v1alpha1.Role)
+func (i initGenesisRoleCreator) handleModule(m *module.Descriptor) ([]*meta.APIDefinition, error) {
+	moduleRole := v1alpha1.NewRoleNameForModule(m.Name)
 
+	externalTransitions := make([]*meta.APIDefinition, 0)
 	// handle state transitions
 	for _, st := range m.StateTransitions {
-		acl, err := i.isExternal(st)
+		acl, err := i.getACL(st)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = moduleRole.ExtendRaw(runtimev1alpha1.Verb_Deliver, st.ApiDefinition)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !acl.External {
 			continue
 		}
 
-		err = userRole.ExtendRaw(runtimev1alpha1.Verb_Deliver, st.ApiDefinition)
-		if err != nil {
-			return err
-		}
+		externalTransitions = append(externalTransitions, st.ApiDefinition)
 	}
 	// handle state objects role
-	return nil
+	for _, so := range m.StateObjects {
+		err := extendRoleForStateObject(moduleRole, so.ApiDefinition)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// now we go and create the role for the module
+	err := i.client.ExecMsgCreateRole(&v1alpha1.MsgCreateRole{NewRole: moduleRole})
+	if err != nil {
+		return nil, err
+	}
+	err = i.client.ExecMsgBindRole(&v1alpha1.MsgBindRole{
+		RoleId:  moduleRole.Id,
+		Subject: m.Name,
+	})
+
+	return externalTransitions, nil
 }
 
-func (i initGenesisRoleCreator) isExternal(std *module.StateTransition) (*v1alpha1.StateTransitionAccessControl, error) {
+func (i initGenesisRoleCreator) getACL(std *module.StateTransition) (*v1alpha1.StateTransitionAccessControl, error) {
 	// we search for the file descriptor which contains the given state transition
 	fileRegistry := new(protoregistry.Files)
 
@@ -119,4 +139,28 @@ func (i initGenesisRoleCreator) isExternal(std *module.StateTransition) (*v1alph
 	}
 
 	return xt, nil
+}
+
+func extendRoleForStateObject(role *v1alpha1.Role, def *meta.APIDefinition) (err error) {
+	err = role.ExtendRaw(runtimev1alpha1.Verb_Create, def)
+	if err != nil {
+		return err
+	}
+	err = role.ExtendRaw(runtimev1alpha1.Verb_Delete, def)
+	if err != nil {
+		return err
+	}
+	err = role.ExtendRaw(runtimev1alpha1.Verb_Update, def)
+	if err != nil {
+		return err
+	}
+	err = role.ExtendRaw(runtimev1alpha1.Verb_Get, def)
+	if err != nil {
+		return err
+	}
+	err = role.ExtendRaw(runtimev1alpha1.Verb_List, def)
+	if err != nil {
+		return err
+	}
+	return nil
 }
