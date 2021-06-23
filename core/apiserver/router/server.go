@@ -44,11 +44,7 @@ func (s *Builder) CreateModuleHandlers(module module.Descriptor) error {
 	}
 	// register object handler
 	for _, obj := range module.StateObjects {
-		err := s.CreateStateObjectHandler(obj.StateObject, &schema.Definition{
-			Singleton:     obj.Options.Singleton,
-			PrimaryKey:    obj.Options.PrimaryKey,
-			SecondaryKeys: obj.Options.SecondaryKeys,
-		})
+		err := s.CreateStateObjectHandler(obj.StateObject, obj.SchemaDefinition)
 		if err != nil {
 			return fmt.Errorf("api: unable to register %s for module %s", meta.Name(obj.StateObject), module.Name)
 		}

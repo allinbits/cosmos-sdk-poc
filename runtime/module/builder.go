@@ -7,47 +7,6 @@ import (
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
 
-// Descriptor describes the full functionality set of a Module
-type Descriptor struct {
-	Name                                 string
-	GenesisHandler                       GenesisHandler
-	StateTransitionAdmissionHandlers     []stateTransitionAdmissionHandler
-	StateTransitionPreExecHandlers       []stateTransitionPreExecutionHandler
-	StateTransitionExecutionHandlers     []stateTransitionExecutionHandler
-	StateTransitionPostExecutionHandlers []stateTransitionPostExecutionHandler
-	StateObjects                         []StateObject
-	Needs                                []meta.StateTransition
-	AuthAdmissionHandlers                []authentication.AdmissionHandler
-	PostAuthenticationHandler            []authentication.PostAuthenticationHandler
-	Services                             []ExtensionService
-}
-
-type StateObject struct {
-	StateObject meta.StateObject
-	Options     *schema.Definition
-}
-
-type stateTransitionAdmissionHandler struct {
-	StateTransition  meta.StateTransition
-	AdmissionHandler statetransition.AdmissionHandler
-}
-
-type stateTransitionPreExecutionHandler struct {
-	StateTransition meta.StateTransition
-	Handler         statetransition.PreExecutionHandler
-}
-
-type stateTransitionExecutionHandler struct {
-	StateTransition meta.StateTransition
-	Handler         statetransition.ExecutionHandler
-	External        bool
-}
-
-type stateTransitionPostExecutionHandler struct {
-	StateTransition statetransition.StateTransition
-	Handler         statetransition.PostExecutionHandler
-}
-
 func NewDescriptorBuilder() *DescriptorBuilder {
 	return &DescriptorBuilder{descriptor: Descriptor{}}
 }
@@ -77,9 +36,9 @@ func (b *DescriptorBuilder) HandlesAdmission(transition meta.StateTransition, ct
 }
 
 func (b *DescriptorBuilder) OwnsStateObject(object meta.StateObject, options *schema.Definition) *DescriptorBuilder {
-	b.descriptor.StateObjects = append(b.descriptor.StateObjects, StateObject{
-		StateObject: object,
-		Options:     options,
+	b.descriptor.StateObjects = append(b.descriptor.StateObjects, stateObject{
+		StateObject:      object,
+		SchemaDefinition: options,
 	})
 	return b
 }

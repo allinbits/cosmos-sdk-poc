@@ -154,7 +154,7 @@ func (b *Builder) registerAdmissionHandlers(m module.Descriptor) error {
 
 func (b *Builder) registerStateObjects(md module.Descriptor) error {
 	for _, so := range md.StateObjects {
-		err := b.store.RegisterObject(so.StateObject, so.Options)
+		err := b.store.RegisterObject(so.StateObject, so.SchemaDefinition)
 		if err != nil {
 			return err
 		}

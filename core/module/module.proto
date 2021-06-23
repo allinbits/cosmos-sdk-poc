@@ -30,4 +30,5 @@ message StateObject {
 message StateTransition {
   meta.v1alpha1.APIDefinition api_definition = 1;
   string protobuf_fullname = 2;
+  repeated google.protobuf.FileDescriptorProto proto_dependencies = 3;
 }

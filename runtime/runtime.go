@@ -5,12 +5,10 @@ import (
 	"fmt"
 
 	meta "github.com/fdymylja/tmos/core/meta"
-	module2 "github.com/fdymylja/tmos/core/module"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/orm"
-	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"k8s.io/klog/v2"
 
 	"github.com/fdymylja/tmos/runtime/authentication"
@@ -65,33 +63,9 @@ func (r *Runtime) InitGenesis() error {
 	// initialize the initial runtime components information
 	// so that modules such as Authorizer can have access to it.
 	klog.Infof("initializing runtime handler default state")
-	var modules []*module2.Descriptor
+	var modules []*module.RawDescriptor
 	for _, m := range r.modules {
-		stateObjects := make([]*module2.StateObject, len(m.StateObjects))
-		for i, so := range m.StateObjects {
-			stateObjects[i] = &module2.StateObject{
-				ApiDefinition:    so.StateObject.APIDefinition(),
-				ProtobufFullname: (string)(so.StateObject.ProtoReflect().Descriptor().FullName()),
-				SchemaDefinition: &schema.Definition{
-					Singleton:     so.Options.Singleton,
-					PrimaryKey:    so.Options.PrimaryKey,
-					SecondaryKeys: so.Options.SecondaryKeys,
-				},
-			}
-		}
-		stateTransitions := make([]*module2.StateTransition, len(m.StateTransitionExecutionHandlers))
-		for i, st := range m.StateTransitionExecutionHandlers {
-			stateTransitions[i] = &module2.StateTransition{
-				ApiDefinition:    st.StateTransition.APIDefinition(),
-				ProtobufFullname: (string)(st.StateTransition.ProtoReflect().Descriptor().FullName()),
-			}
-		}
-
-		modules = append(modules, &module2.Descriptor{
-			Name:             m.Name,
-			StateObjects:     stateObjects,
-			StateTransitions: stateTransitions,
-		})
+		modules = append(modules, m.Raw())
 	}
 
 	klog.Infof("initializing default genesis state for modules")
