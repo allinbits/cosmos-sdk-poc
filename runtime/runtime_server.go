@@ -9,7 +9,7 @@ import (
 
 var _ client.RuntimeServer = server{}
 
-func newRuntimeAsServer(rt *Runtime) server {
+func NewRuntimeServer(rt *Runtime) client.RuntimeServer {
 	return server{
 		rt: rt,
 	}

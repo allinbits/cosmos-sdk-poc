@@ -56,6 +56,7 @@ func (x *Account) NewStateObject() meta.StateObject {
 
 type AccountClient interface {
 	Get(address string, opts ...client.GetOption) (*Account, error)
+	List(opts ...client.ListOption) (AccountIterator, error)
 	Create(account *Account, opts ...client.CreateOption) error
 	Delete(account *Account, opts ...client.DeleteOption) error
 	Update(account *Account, opts ...client.UpdateOption) error
@@ -75,6 +76,14 @@ func (x *accountClient) Get(address string, opts ...client.GetOption) (*Account,
 	return _spfGenO, nil
 }
 
+func (x *accountClient) List(opts ...client.ListOption) (AccountIterator, error) {
+	iter, err := x.client.List(new(Account), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &accountIterator{iter: iter}, nil
+}
+
 func (x *accountClient) Create(account *Account, opts ...client.CreateOption) error {
 	return x.client.Create(account, opts...)
 }
@@ -85,6 +94,29 @@ func (x *accountClient) Delete(account *Account, opts ...client.DeleteOption) er
 
 func (x *accountClient) Update(account *Account, opts ...client.UpdateOption) error {
 	return x.client.Update(account, opts...)
+}
+
+type AccountIterator interface {
+	Get() (*Account, error)
+	Valid() bool
+	Next()
+}
+
+type accountIterator struct {
+	iter client.ObjectIterator
+}
+
+func (x *accountIterator) Get() (*Account, error) {
+	obj := new(Account)
+	err := x.iter.Get(obj)
+	return obj, err
+}
+func (x *accountIterator) Valid() bool {
+	return x.iter.Valid()
+}
+
+func (x *accountIterator) Next() {
+	x.iter.Next()
 }
 
 func (x *CurrentAccountNumber) APIDefinition() *meta.APIDefinition {

@@ -28,6 +28,3 @@ func (i Iterator) Valid() bool {
 func (i Iterator) Close() {
 	i.iter.Close()
 }
-
-// TODO implement fast delete function currently to delete you need to get object and delete it
-// when we can skip the unmarshalling part and go straight to deletion of the key.

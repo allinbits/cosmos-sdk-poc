@@ -227,6 +227,7 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 		g.P("Get(opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error)")
 	case false:
 		g.P("Get(", primaryKey, " ", primaryKeyGoType, ", opts ...", clientImportPackage.Ident("GetOption"), ") (*", message.GoIdent, ", error)")
+		g.P("List(opts ...", clientImportPackage.Ident("ListOption"), ") (", message.GoIdent, "Iterator, error)")
 	}
 	g.P("Create(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("CreateOption"), ") error")
 	g.P("Delete(", toLowerCamelCase(message.GoIdent), " *", message.GoIdent, ", opts ...", clientImportPackage.Ident("DeleteOption"), ") error")
@@ -261,6 +262,12 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 		g.P("}")
 		g.P("return _spfGenO, nil")
 		g.P("}")
+		g.P()
+		g.P("func (x *", unexportedClient, ") List(opts ...", clientImportPackage.Ident("ListOption"), ") (", message.GoIdent, "Iterator, error) {")
+		g.P("iter, err := x.client.List(new(", message.GoIdent, "), opts...)")
+		g.P("if err != nil { return nil, err }")
+		g.P("return &", toLowerCamelCase(message.GoIdent)+"Iterator", "{iter: iter}, nil")
+		g.P("}")
 	}
 	// gen create
 	g.P()
@@ -278,6 +285,43 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 	g.P("return x.client.Update(", toLowerCamelCase(message.GoIdent), ", opts...)")
 	g.P("}")
 	g.P()
+
+	// skip object iterator creation
+	if singleTon {
+		return
+	}
+
+	// create object iterator interface
+	g.P("type ", message.GoIdent, "Iterator interface {")
+	g.P("Get() (*", message.GoIdent, ", error)")
+	g.P("Valid() bool")
+	g.P("Next()")
+	g.P("}")
+	g.P()
+
+	// write implementation
+	structName := toLowerCamelCase(message.GoIdent) + "Iterator"
+	g.P("type ", structName, " struct {")
+	g.P("iter ", clientImportPackage.Ident("ObjectIterator"))
+	g.P("}")
+	g.P()
+
+	g.P("func (x *", structName, ") Get() (*", message.GoIdent, ", error) {")
+	g.P("obj := new(", message.GoIdent, ")")
+	g.P("err := x.iter.Get(obj)")
+	g.P("return obj, err")
+	g.P("}")
+
+	g.P("func (x *", structName, ") Valid() bool {")
+	g.P("return x.iter.Valid()")
+	g.P("}")
+	g.P()
+
+	g.P("func (x *", structName, ") Next() {")
+	g.P("x.iter.Next()")
+	g.P("}")
+	g.P()
+
 }
 
 func parseSaveInfo(m *protogen.Message) (bool, string, string, error) {
