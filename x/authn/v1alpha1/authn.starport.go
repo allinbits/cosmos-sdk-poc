@@ -63,7 +63,7 @@ type AccountClient interface {
 }
 
 type accountClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *accountClient) Get(address string, opts ...client.GetOption) (*Account, error) {
@@ -139,7 +139,7 @@ type CurrentAccountNumberClient interface {
 }
 
 type currentAccountNumberClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *currentAccountNumberClient) Get(opts ...client.GetOption) (*CurrentAccountNumber, error) {
@@ -183,7 +183,7 @@ type ParamsClient interface {
 }
 
 type paramsClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *paramsClient) Get(opts ...client.GetOption) (*Params, error) {
@@ -229,7 +229,7 @@ type ClientSet interface {
 	ExecMsgDeleteAccount(msg *MsgDeleteAccount) error
 }
 
-func NewClientSet(client client.RuntimeClient) ClientSet {
+func NewClientSet(client client.Client) ClientSet {
 	return &clientSet{
 		client:                     client,
 		accountClient:              &accountClient{client: client},
@@ -239,7 +239,7 @@ func NewClientSet(client client.RuntimeClient) ClientSet {
 }
 
 type clientSet struct {
-	client client.RuntimeClient
+	client client.Client
 	// accountClient is the client used to interact with Account
 	accountClient AccountClient
 	// currentAccountNumberClient is the client used to interact with CurrentAccountNumber

@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-func NewBuilder(c client.RuntimeClient) *Builder {
+func NewBuilder(c client.Client) *Builder {
 	return &Builder{
 		client:     c,
 		mux:        mux.NewRouter(),
@@ -29,7 +29,7 @@ func NewBuilder(c client.RuntimeClient) *Builder {
 }
 
 type Builder struct {
-	client     client.RuntimeClient
+	client     client.Client
 	mux        *mux.Router
 	modules    map[string]module.Descriptor
 	knownPaths map[string]string // maps known paths of objects
@@ -120,7 +120,7 @@ func (s *Builder) Build() (*mux.Router, error) {
 	return s.mux, nil
 }
 
-func newSingletonGetHandler(c client.RuntimeClient, schema *schema.Schema) http.HandlerFunc {
+func newSingletonGetHandler(c client.Client, schema *schema.Schema) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		height, err := getHeight(r)
 		if err != nil {
@@ -142,7 +142,7 @@ func newSingletonGetHandler(c client.RuntimeClient, schema *schema.Schema) http.
 }
 
 // newGetHandler creates an http.HandlerFunc that can be used to fetch a state object
-func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *schema.Definition) http.HandlerFunc {
+func newGetHandler(c client.Client, schema *schema.Schema, definition *schema.Definition) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		height, err := getHeight(req)
 		if err != nil {
@@ -177,7 +177,7 @@ func newGetHandler(c client.RuntimeClient, schema *schema.Schema, definition *sc
 }
 
 // newListHandler creates an http.HandlerFunc that can be used to fetch a list of state objects of the same kind
-func newListHandler(c client.RuntimeClient, schema *schema.Schema) http.HandlerFunc {
+func newListHandler(c client.Client, schema *schema.Schema) http.HandlerFunc {
 	listObject, err := forge.List(schema.NewStateObject(), protoregistry.GlobalFiles)
 	if err != nil {
 		panic(err)

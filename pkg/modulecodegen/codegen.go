@@ -109,7 +109,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	// gen client set concrete type
 
 	// gen constructor
-	g.P("func NewClientSet(client ", clientImportPackage.Ident("RuntimeClient"), ") ClientSet {")
+	g.P("func NewClientSet(client ", clientImportPackage.Ident("Client"), ") ClientSet {")
 	g.P("return &clientSet{")
 	g.P("client: client", ",") // the normal module client
 	// add other clients
@@ -123,7 +123,7 @@ func genClientSet(g *protogen.GeneratedFile, objects []*protogen.Message, transi
 	g.P()
 	// gen client type
 	g.P("type clientSet struct {")
-	g.P("client ", clientImportPackage.Ident("RuntimeClient"))
+	g.P("client ", clientImportPackage.Ident("Client"))
 	// include state objects clients
 	for _, obj := range objects {
 		unexportedClient := toLowerCamelCase(obj.GoIdent) + "Client"
@@ -239,7 +239,7 @@ func genStateObjectClient(g *protogen.GeneratedFile, message *protogen.Message) 
 	// gen concrete client
 	g.Import(clientImportPackage)
 	g.P("type ", unexportedClient, " struct {")
-	g.P("client ", clientImportPackage.Ident("RuntimeClient"))
+	g.P("client ", clientImportPackage.Ident("Client"))
 	g.P("}")
 	g.P()
 	switch singleTon {

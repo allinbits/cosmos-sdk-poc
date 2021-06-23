@@ -51,7 +51,7 @@ type BalanceClient interface {
 }
 
 type balanceClient struct {
-	client client.RuntimeClient
+	client client.Client
 }
 
 func (x *balanceClient) Get(address string, opts ...client.GetOption) (*Balance, error) {
@@ -117,7 +117,7 @@ type ClientSet interface {
 	ExecMsgSetBalance(msg *MsgSetBalance) error
 }
 
-func NewClientSet(client client.RuntimeClient) ClientSet {
+func NewClientSet(client client.Client) ClientSet {
 	return &clientSet{
 		client:        client,
 		balanceClient: &balanceClient{client: client},
@@ -125,7 +125,7 @@ func NewClientSet(client client.RuntimeClient) ClientSet {
 }
 
 type clientSet struct {
-	client client.RuntimeClient
+	client client.Client
 	// balanceClient is the client used to interact with Balance
 	balanceClient BalanceClient
 }
