@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
+	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/module"
 )
@@ -36,7 +37,7 @@ func (m *Module) Initialize(client module.Client) module.Descriptor {
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionHandler(client)).
 		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleHandler(client), false).
 		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client)).
-		// WithPostStateTransitionHandler(&runtimev1alpha1.CreateModuleDescriptors{}, NewInitRoleCreator(client)).
+		WithPostStateTransitionHandler(&runtimev1alpha1.CreateModuleDescriptors{}, NewInitRoleCreator(client)).
 		WithGenesis(m.genesis).
 		Build()
 }

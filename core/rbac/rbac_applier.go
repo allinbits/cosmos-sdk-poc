@@ -30,17 +30,22 @@ type initGenesisRoleCreator struct {
 }
 
 func (i initGenesisRoleCreator) PostExec(req statetransition.PostExecutionRequest) error {
-	// this operation runs only at init genesis level
-	// if this is not init genesis we skip.
-	stage, err := i.abci.Stage().Get()
-	if err != nil {
-		return err
-	}
+	/*
+		NOTE(fdymylja): this check is currently disabled for different reasons:
+		- requires ABCI to initialize before runtime (we're getting ABCI stage which is unset yet)
+		- in theory since the message we're executing after is CreateModuleDescriptors, it will be executed once.
 
-	if stage.Stage != abciv1alpha1.ABCIStage_InitChain {
-		return nil
-	}
+		// this operation runs only at init genesis level
+		// if this is not init genesis we skip.
+		stage, err := i.abci.Stage().Get()
+		if err != nil {
+			return err
+		}
 
+		if stage.Stage != abciv1alpha1.ABCIStage_InitChain {
+			return nil
+		}
+	*/
 	msg := req.Transition.(*runtimev1alpha1.CreateModuleDescriptors)
 
 	userRole := v1alpha1.NewExternalAccountRole()
@@ -56,7 +61,12 @@ func (i initGenesisRoleCreator) PostExec(req statetransition.PostExecutionReques
 				return err
 			}
 		}
+	}
 
+	// create external account role
+	err := i.client.ExecMsgCreateRole(&v1alpha1.MsgCreateRole{NewRole: userRole})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -116,6 +126,10 @@ func (i initGenesisRoleCreator) getACL(std *module.StateTransition) (*v1alpha1.S
 			return nil, err
 		}
 		fds = append(fds, fd)
+		err = fileRegistry.RegisterFile(fd)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var md protoreflect.MessageDescriptor

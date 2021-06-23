@@ -5,12 +5,10 @@ import (
 
 	"github.com/fdymylja/tmos/core/abci"
 	"github.com/fdymylja/tmos/core/meta"
-	"github.com/fdymylja/tmos/core/rbac"
-	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/core/runtime"
-	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
+	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -28,9 +26,6 @@ var (
 func NewBuilder() *Builder {
 	b := &Builder{
 		moduleDescriptors: nil,
-		moduleRoles:       map[string]*rbacv1alpha1.Role{},
-		externalRole:      &rbacv1alpha1.Role{Id: rbacv1alpha1.ExternalAccountRoleID},
-		rbac:              rbac.NewModule(),
 		decoder:           nil,
 		store:             orm.Store{},
 		rt: &Runtime{
@@ -39,12 +34,8 @@ func NewBuilder() *Builder {
 		},
 	}
 
-	// we already add the core modules in order
-	// in theory we could add a dependency system
-	// for genesis initialization, but for now lets keep it simple.
 	b.AddModule(runtime.NewModule()) // needs to be first as it has state transitions/state object info
-	b.AddModule(b.rbac)              // needs to be second as it provides the authorization layer
-	b.AddModule(abci.NewModule())    // abci third so other modules can have access to this information
+	b.AddModule(abci.NewModule())    // abci second so other modules can have access to this information
 
 	return b
 }
@@ -52,11 +43,7 @@ func NewBuilder() *Builder {
 // Builder is used to create a new runtime from scratch
 type Builder struct {
 	moduleDescriptors []module.Descriptor
-
-	moduleRoles  map[string]*rbacv1alpha1.Role
-	externalRole *rbacv1alpha1.Role
-	rbac         *rbac.Module
-	decoder      authentication.TxDecoder
+	decoder           authentication.TxDecoder
 
 	router *Router
 	store  orm.Store
@@ -88,18 +75,12 @@ func (b *Builder) Build() (*Runtime, error) {
 		return nil, fmt.Errorf("unable to install modules: %w", err)
 	}
 
-	for moduleName, moduleRole := range b.moduleRoles {
-		b.rbac.AddInitialRole(moduleRole, &rbacv1alpha1.RoleBinding{
-			Subject: moduleName,
-			RoleRef: moduleRole.Id,
-		})
-	}
-
-	// add external role to rbac with no binding
-	b.rbac.AddInitialRole(b.externalRole, nil)
 	b.rt.store = b.store
 	b.rt.modules = b.moduleDescriptors
-	b.rt.authorizer = b.rbac.AsAuthorizer()
+	b.rt.authorizer, err = b.installAuthorizer()
+	if err != nil {
+		return nil, err
+	}
 	b.rt.user = user.NewUsersFromString(user.Runtime)
 	switch b.decoder {
 	case nil:
@@ -115,18 +96,6 @@ func (b *Builder) registerStateTransitionHandlers(m module.Descriptor) error {
 		err := b.rt.router.AddStateTransitionExecutionHandler(handler.StateTransition, handler.Handler)
 		if err != nil {
 			return err
-		}
-
-		err = b.moduleRoles[m.Name].Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
-		if err != nil {
-			return err
-		}
-
-		if handler.External {
-			err = b.externalRole.Extend(runtimev1alpha1.Verb_Deliver, handler.StateTransition)
-			if err != nil {
-				return err
-			}
 		}
 
 		klog.Infof("registered state transition %s for module %s", meta.Name(handler.StateTransition), m.Name)
@@ -155,11 +124,6 @@ func (b *Builder) registerStateObjects(md module.Descriptor) error {
 			return err
 		}
 
-		err = extendRoleForStateObject(b.moduleRoles[md.Name], so.StateObject)
-		if err != nil {
-			return err
-		}
-
 		klog.Infof("registered state object %s for module %s", meta.Name(so.StateObject), md.Name)
 	}
 
@@ -175,28 +139,6 @@ func (b *Builder) installStateObjects() error {
 	}
 
 	return nil
-}
-
-// initEmptyRoles creates an empty role by every module descriptor.
-func (b *Builder) initEmptyRoles() error {
-	for _, m := range b.moduleDescriptors {
-		if isModuleNameEmpty(m.Name) {
-			return errEmptyModuleName
-		}
-
-		if b.roleExists(m.Name) {
-			return fmt.Errorf("module already registered %s", m.Name)
-		}
-
-		b.moduleRoles[m.Name] = rbacv1alpha1.NewRoleNameForModule(m.Name)
-	}
-
-	return nil
-}
-
-func (b *Builder) roleExists(name string) bool {
-	_, exists := b.moduleRoles[name]
-	return exists
 }
 
 func (b *Builder) installStateTransitions() error {
@@ -257,9 +199,6 @@ func (b *Builder) installStateTransitionPostExecHandlers() error {
 }
 
 func (b *Builder) installModules() error {
-	if err := b.initEmptyRoles(); err != nil {
-		return fmt.Errorf("unable to initialize module roles: %w", err)
-	}
 
 	if err := b.installStateObjects(); err != nil {
 		return fmt.Errorf("unable to install state objects: %w", err)
@@ -328,16 +267,10 @@ func (b *Builder) installPostAuthenticationHandlers() error {
 
 func (b *Builder) installDependencies() error {
 	for _, md := range b.moduleDescriptors {
-		role := b.moduleRoles[md.Name]
 		for _, st := range md.Needs {
 			_, err := b.rt.router.GetStateTransitionExecutionHandler(st)
 			if err != nil {
 				return fmt.Errorf("dependency cannot be accomplished: %w", err)
-			}
-
-			err = role.Extend(runtimev1alpha1.Verb_Deliver, st)
-			if err != nil {
-				return fmt.Errorf("error while registering module dependency %s: %w", meta.Name(st), err)
 			}
 		}
 	}
@@ -362,30 +295,25 @@ func (b *Builder) installExtensions() error {
 	return nil
 }
 
-func isModuleNameEmpty(name string) bool {
-	return name == ""
+func (b *Builder) installAuthorizer() (authorization.Authorizer, error) {
+	var authz authorization.Authorizer
+	for _, m := range b.moduleDescriptors {
+		if authz != nil {
+			return nil, fmt.Errorf("authorizer was already set, module %s defines another authorizer", m.Name) // TODO(fdymylja): support multiple authorizers by creating a chain authz
+		}
+		if m.Authorizer != nil {
+			authz = m.Authorizer
+		}
+	}
+
+	if authz == nil {
+		klog.Warningf("no authorizer set, using an always allowing authorizer")
+		authz = authorization.NewAlwaysAllowAuthorizer()
+	}
+
+	return authz, nil
 }
 
-func extendRoleForStateObject(role *rbacv1alpha1.Role, so meta.StateObject) (err error) {
-	err = role.Extend(runtimev1alpha1.Verb_Create, so)
-	if err != nil {
-		return err
-	}
-	err = role.Extend(runtimev1alpha1.Verb_Delete, so)
-	if err != nil {
-		return err
-	}
-	err = role.Extend(runtimev1alpha1.Verb_Update, so)
-	if err != nil {
-		return err
-	}
-	err = role.Extend(runtimev1alpha1.Verb_Get, so)
-	if err != nil {
-		return err
-	}
-	err = role.Extend(runtimev1alpha1.Verb_List, so)
-	if err != nil {
-		return err
-	}
-	return nil
+func isModuleNameEmpty(name string) bool {
+	return name == ""
 }

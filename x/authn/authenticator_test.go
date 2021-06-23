@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/fdymylja/tmos/core/coin/v1alpha1"
+	"github.com/fdymylja/tmos/core/rbac"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	authn2 "github.com/fdymylja/tmos/x/authn"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
@@ -24,6 +25,7 @@ func TestAuthenticator(t *testing.T) {
 	rtb := runtime.NewBuilder()
 	auth := authn2.NewModule()
 	rtb.AddModule(bank2.NewModule())
+	rtb.AddModule(rbac.NewModule())
 	rtb.AddModule(auth)
 	rtb.SetDecoder(auth.GetTxDecoder())
 	rt, err := rtb.Build()

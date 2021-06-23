@@ -3,6 +3,7 @@ package module
 import (
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
@@ -75,6 +76,11 @@ func (b *DescriptorBuilder) WithPostStateTransitionHandler(st statetransition.St
 
 func (b *DescriptorBuilder) WithExtensionService(xt ExtensionService) *DescriptorBuilder {
 	b.descriptor.Services = append(b.descriptor.Services, xt)
+	return b
+}
+
+func (b *DescriptorBuilder) IsAuthorizer(authz authorization.Authorizer) *DescriptorBuilder {
+	b.descriptor.Authorizer = authz
 	return b
 }
 

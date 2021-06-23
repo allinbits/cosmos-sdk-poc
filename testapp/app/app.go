@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/fdymylja/tmos/core/apiserver"
+	"github.com/fdymylja/tmos/core/rbac"
 	"github.com/fdymylja/tmos/runtime"
 	testmodule "github.com/fdymylja/tmos/testapp/module"
 	"github.com/fdymylja/tmos/x/authn"
@@ -34,6 +35,7 @@ func NewApp() abci.Application {
 	rtb := runtime.NewBuilder()
 	authentication := authn.NewModule()
 	rtb.AddModule(authentication)
+	rtb.AddModule(rbac.NewModule())
 	rtb.SetDecoder(authentication.GetTxDecoder())
 	rtb.AddModule(bank.NewModule())
 	rtb.AddModule(distribution.NewModule())
