@@ -41,10 +41,8 @@ func TestRBAC(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		c := client.NewModuleClient(runtime.NewRuntimeServer(rt))
-		c.(interface {
-			SetUser(users user.Users)
-		}).SetUser(user.NewUsersFromString("rbac"))
+		c := runtime.NewModuleClient(rt)
+		c.SetUser(user.NewUsersFromString("rbac"))
 
 		rbacClient := rbacv1alpha1.NewClientSet(c)
 		iter, err := rbacClient.RoleBindings().List(client.ListMatchFieldString("roleRef", "a-role"))

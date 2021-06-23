@@ -43,7 +43,7 @@ func (o *ORMClient) Deliver(_ meta.StateTransition, _ ...DeliverOption) error {
 
 // Get implements RuntimeClient
 func (o *ORMClient) Get(id meta.ID, object meta.StateObject, opts ...GetOption) error {
-	opt := new(getOptions)
+	opt := new(GetOptionsRaw)
 	for _, o := range opts {
 		o(opt)
 	}
@@ -63,7 +63,7 @@ func (o *ORMClient) Get(id meta.ID, object meta.StateObject, opts ...GetOption) 
 
 // List implements RuntimeClient
 func (o *ORMClient) List(object meta.StateObject, opts ...ListOption) (ObjectIterator, error) {
-	opt := new(listOptions)
+	opt := new(ListOptionsRaw)
 	for _, o := range opts {
 		o(opt)
 	}

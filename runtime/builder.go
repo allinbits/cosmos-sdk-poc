@@ -11,7 +11,6 @@ import (
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/authentication"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
-	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/errors"
 	"github.com/fdymylja/tmos/runtime/kv"
 	"github.com/fdymylja/tmos/runtime/module"
@@ -66,13 +65,10 @@ type Builder struct {
 
 // AddModule adds a new module.Module to the list of modules to install
 func (b *Builder) AddModule(m module.Module) {
-	type userSetter interface {
-		SetUser(users user.Users)
-	}
 
-	mc := client.NewModuleClient(NewRuntimeServer(b.rt))
+	mc := NewModuleClient(b.rt)
 	descriptor := m.Initialize(mc)
-	mc.(userSetter).SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
+	mc.SetUser(user.NewUsersFromString(descriptor.Name)) // set the authentication name for the module TODO: we should do this a lil better
 	b.moduleDescriptors = append(b.moduleDescriptors, descriptor)
 }
 
