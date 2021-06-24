@@ -304,7 +304,7 @@ func (b *Builder) installExtensions() error {
 func (b *Builder) installAuthorizer() (authorization.Authorizer, error) {
 	var authz authorization.Authorizer
 	for _, m := range b.moduleDescriptors {
-		if authz != nil {
+		if authz != nil && m.Authorizer != nil {
 			return nil, fmt.Errorf("authorizer was already set, module %s defines another authorizer", m.Name) // TODO(fdymylja): support multiple authorizers by creating a chain authz
 		}
 		if m.Authorizer != nil {

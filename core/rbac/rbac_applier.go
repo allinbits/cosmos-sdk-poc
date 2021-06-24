@@ -7,6 +7,7 @@ import (
 	"github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/core/module"
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
+	"github.com/fdymylja/tmos/core/rbac/xt"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
 	"github.com/fdymylja/tmos/runtime/client"
 	"github.com/fdymylja/tmos/runtime/statetransition"
@@ -113,7 +114,7 @@ func (i initGenesisRoleCreator) handleModule(m *module.Descriptor) ([]*meta.APID
 	return externalTransitions, nil
 }
 
-func (i initGenesisRoleCreator) getACL(std *module.StateTransition) (*v1alpha1.StateTransitionAccessControl, error) {
+func (i initGenesisRoleCreator) getACL(std *module.StateTransition) (*xt.StateTransitionAccessControl, error) {
 	// we search for the file descriptor which contains the given state transition
 	fileRegistry := new(protoregistry.Files)
 
@@ -123,12 +124,12 @@ func (i initGenesisRoleCreator) getACL(std *module.StateTransition) (*v1alpha1.S
 	for _, rawFD := range std.ProtoDependencies {
 		fd, err := protodesc.NewFile(rawFD, fileRegistry)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create file descriptor %s for state transition %s: %w", *rawFD.Name, std.ApiDefinition.Name(), err)
 		}
 		fds = append(fds, fd)
 		err = fileRegistry.RegisterFile(fd)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to register file %s for state transition %s: %w", *rawFD.Name, std.ApiDefinition.Name(), err)
 		}
 	}
 
@@ -147,7 +148,7 @@ func (i initGenesisRoleCreator) getACL(std *module.StateTransition) (*v1alpha1.S
 	}
 
 	opt := md.Options().(*descriptorpb.MessageOptions)
-	xt := proto.GetExtension(opt, v1alpha1.E_StateTransitionAcl).(*v1alpha1.StateTransitionAccessControl)
+	xt := proto.GetExtension(opt, xt.E_StateTransitionAcl).(*xt.StateTransitionAccessControl)
 	if xt == nil {
 		return nil, fmt.Errorf("state transition %s has no RBAC options set", std.ProtobufFullname)
 	}

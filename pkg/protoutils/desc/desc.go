@@ -79,16 +79,16 @@ func hasMap(inspected map[protoreflect.FullName]struct{}, desc protoreflect.Mess
 // recursively and in order of required registration.
 // It assumes the protoreflect.FileDescriptor is correctly formed.
 func Dependencies(desc protoreflect.FileDescriptor) []protoreflect.FileDescriptor {
-	return dependencies(map[protoreflect.FullName]struct{}{}, desc)
+	return dependencies(map[string]struct{}{}, desc)
 }
 
-func dependencies(knownDeps map[protoreflect.FullName]struct{}, desc protoreflect.FileDescriptor) []protoreflect.FileDescriptor {
+func dependencies(knownDeps map[string]struct{}, desc protoreflect.FileDescriptor) []protoreflect.FileDescriptor {
 	var deps []protoreflect.FileDescriptor
 
 	for i := 0; i < desc.Imports().Len(); i++ {
 		dep := desc.Imports().Get(i)
 		// if it's known we skip the parsing
-		if _, known := knownDeps[dep.FullName()]; known {
+		if _, known := knownDeps[dep.Path()]; known {
 			continue
 		}
 
@@ -97,7 +97,7 @@ func dependencies(knownDeps map[protoreflect.FullName]struct{}, desc protoreflec
 		deps = append(deps, depDeps...)
 		deps = append(deps, dep)
 
-		knownDeps[dep.FullName()] = struct{}{}
+		knownDeps[dep.Path()] = struct{}{}
 	}
 
 	return deps

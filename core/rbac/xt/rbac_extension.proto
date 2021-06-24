@@ -1,10 +1,10 @@
 syntax="proto3";
 
-package tmos.core.rbac.v1alpha1;
+package tmos.core.rbac.xt;
 
 import "google/protobuf/descriptor.proto";
 
-option go_package = "github.com/fdymylja/tmos/core/rbac/v1alpha1";
+option go_package = "github.com/fdymylja/tmos/core/rbac/xt";
 
 extend google.protobuf.MessageOptions {
   StateTransitionAccessControl state_transition_acl = 12000000;

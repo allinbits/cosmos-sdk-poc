@@ -5,7 +5,7 @@ package tmos.core.rbac.v1alpha1;
 option go_package = "github.com/fdymylja/tmos/core/rbac/v1alpha1";
 
 import "core/modulegen/modulegen.proto";
-import "core/rbac/v1alpha1/rbac_extension.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 message Params {
   option (tmos.core.modulegen.state_object) = {
@@ -57,7 +57,7 @@ message MsgCreateRole {
     external: false,
   };
 
-  option (tmos.core.rbac.v1alpha1.state_transition_acl) = {
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
@@ -69,6 +69,11 @@ message MsgBindRole {
   option (tmos.core.modulegen.state_transition) = {
     external: false,
   };
+
+  option (tmos.core.rbac.xt.state_transition_acl) = {
+    external: false,
+  };
+
   string role_id = 1;
   string subject = 2;
 }

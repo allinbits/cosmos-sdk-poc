@@ -5,6 +5,7 @@ option go_package = "github.com/fdymylja/tmos/core/runtime/v1alpha1";
 
 import "core/modulegen/modulegen.proto";
 import "core/module/module.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 message ModuleDescriptors {
   option (tmos.core.modulegen.state_object) = {
@@ -16,6 +17,10 @@ message ModuleDescriptors {
 
 message CreateModuleDescriptors {
   option (tmos.core.modulegen.state_transition) = {
+    external: false,
+  };
+
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
