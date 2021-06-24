@@ -37,8 +37,8 @@ type Runtime struct {
 
 	txDecoder authentication.TxDecoder
 
-	authorizer  authorization.Authorizer
-	rbacEnabled bool
+	authorizer        authorization.Authorizer
+	authorizerEnabled bool
 
 	router *Router
 	store  orm.Store
@@ -46,12 +46,12 @@ type Runtime struct {
 	services *ServiceGroup
 }
 
-func (r *Runtime) EnableRBAC() {
-	r.rbacEnabled = true
+func (r *Runtime) EnableAuthorization() {
+	r.authorizerEnabled = true
 }
 
-func (r *Runtime) DisableRBAC() {
-	r.rbacEnabled = false
+func (r *Runtime) DisableAuthorization() {
+	r.authorizerEnabled = false
 }
 
 // InitGenesis initializes the runtime with default state from modules which have genesis
@@ -262,7 +262,7 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 }
 
 func (r *Runtime) authorized(attributes authorization.Attributes) error {
-	if !r.rbacEnabled {
+	if !r.authorizerEnabled {
 		return nil
 	}
 	decision, err := r.authorizer.Authorize(attributes)

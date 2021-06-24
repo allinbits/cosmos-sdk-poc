@@ -84,7 +84,7 @@ func (a ABCIApplication) InitChain(chain types.RequestInitChain) types.ResponseI
 		panic(err)
 	}
 	// enable role based access control
-	a.rt.EnableRBAC()
+	a.rt.EnableAuthorization()
 	return types.ResponseInitChain{
 		ConsensusParams: nil,
 		Validators:      chain.Validators,

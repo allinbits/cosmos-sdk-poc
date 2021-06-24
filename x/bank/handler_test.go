@@ -25,7 +25,7 @@ func TestSendCoins(t *testing.T) {
 	require.NoError(t, err)
 	err = rt.InitGenesis()
 	require.NoError(t, err)
-	rt.EnableRBAC()
+	rt.EnableAuthorization()
 
 	err = rt.Create(user.NewUsersFromString("bank"), &v1alpha12.Balance{
 		Address: "frojdi",

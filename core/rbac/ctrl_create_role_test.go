@@ -18,7 +18,7 @@ func TestRBAC(t *testing.T) {
 	rt, err := builder.Build()
 	require.NoError(t, err)
 	require.NoError(t, rt.InitGenesis())
-	rt.EnableRBAC()
+	rt.EnableAuthorization()
 
 	t.Run("unauthorized", func(t *testing.T) {
 		id := user.NewUsersFromString("no-authorizations")
