@@ -101,6 +101,18 @@ func (i initGenesisRoleCreator) handleModule(m *module.Descriptor) ([]*meta.APID
 			return nil, err
 		}
 	}
+	// handle needed resources
+	for _, res := range m.RequiredResources {
+		switch res.Resource.ApiType {
+		case meta.APIType_StateObject:
+			return nil, fmt.Errorf("not supported apitype.stateobject") // TODO(fdymylja): when issue arises
+		case meta.APIType_StateTransition:
+			err := moduleRole.ExtendRaw(runtimev1alpha1.Verb_Deliver, res.Resource)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	// now we go and create the role for the module
 	err := i.client.ExecMsgCreateRole(&v1alpha1.MsgCreateRole{NewRole: moduleRole})
 	if err != nil {

@@ -54,6 +54,11 @@ func (d Descriptor) Raw() *module.Descriptor {
 		}
 	}
 
+	x.RequiredResources = make([]*module.Dependency, len(d.Needs))
+	for i, st := range d.Needs {
+		x.RequiredResources[i] = &module.Dependency{Resource: st.APIDefinition()}
+	}
+
 	return x
 }
 

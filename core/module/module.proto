@@ -11,11 +11,12 @@ import "google/protobuf/descriptor.proto";
 message Descriptor {
   // name represents the module name
   string name = 1;
-  // StateObjects represents a list of StateObjects defined by the module
+  // state_objects represents a list of StateObjects defined by the module
   repeated StateObject state_objects = 2;
-  // StateTransitions represents a list of StateTransitions defined by the module
+  // state_transitions represents a list of StateTransitions defined by the module
   repeated StateTransition state_transitions = 3;
-
+  // required_resources keeps track of module's required resources
+  repeated Dependency required_resources = 4;
 }
 
 // StateObject describes a state object
@@ -31,4 +32,9 @@ message StateTransition {
   meta.v1alpha1.APIDefinition api_definition = 1;
   string protobuf_fullname = 2;
   repeated google.protobuf.FileDescriptorProto proto_dependencies = 3;
+}
+
+// Dependency represents a module dependency
+message Dependency {
+  meta.v1alpha1.APIDefinition resource = 1;
 }
