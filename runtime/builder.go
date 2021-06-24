@@ -200,6 +200,12 @@ func (b *Builder) installStateTransitionPostExecHandlers() error {
 
 func (b *Builder) installModules() error {
 
+	for _, b := range b.moduleDescriptors {
+		if isModuleNameEmpty(b.Name) {
+			return fmt.Errorf("empty module name for")
+		}
+	}
+
 	if err := b.installStateObjects(); err != nil {
 		return fmt.Errorf("unable to install state objects: %w", err)
 	}

@@ -85,7 +85,6 @@ type stateTransitionPreExecutionHandler struct {
 type stateTransitionExecutionHandler struct {
 	StateTransition meta.StateTransition
 	Handler         statetransition.ExecutionHandler
-	External        bool
 }
 
 type stateTransitionPostExecutionHandler struct {

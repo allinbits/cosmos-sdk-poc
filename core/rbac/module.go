@@ -5,40 +5,27 @@ import (
 
 	"github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	runtimev1alpha1 "github.com/fdymylja/tmos/core/runtime/v1alpha1"
-	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/module"
 )
 
 func NewModule() *Module { return &Module{} }
 
-type Module struct {
-	authorizer authorization.Authorizer
-	genesis    *genesis
-}
-
-func (m *Module) AsAuthorizer() authorization.Authorizer {
-	return m.authorizer
-}
-
-func (m *Module) AddInitialRole(role *v1alpha1.Role, binding *v1alpha1.RoleBinding) {
-	m.genesis.addInitialRole(role, binding)
-}
+type Module struct{}
 
 func (m *Module) Initialize(client module.Client) module.Descriptor {
-	m.authorizer = NewAuthorizer(client)
-	m.genesis = newGenesis(client)
 
 	return module.NewDescriptorBuilder().
 		Named("rbac").
 		OwnsStateObject(&v1alpha1.Role{}, v1alpha1.RoleSchema).
 		OwnsStateObject(&v1alpha1.RoleBinding{}, v1alpha1.RoleBindingSchema).
 		OwnsStateObject(&v1alpha1.Params{}, v1alpha1.ParamsSchema).
-		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgCreateRole{}, NewCreateRoleHandler(client)).
 		HandlesAdmission(&v1alpha1.MsgCreateRole{}, NewCreateRoleAdmissionHandler(client)).
-		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleHandler(client), false).
+		HandlesStateTransition(&v1alpha1.MsgBindRole{}, NewBindRoleHandler(client)).
 		HandlesAdmission(&v1alpha1.MsgBindRole{}, NewBindRoleAdmission(client)).
 		WithPostStateTransitionHandler(&runtimev1alpha1.CreateModuleDescriptors{}, NewInitRoleCreator(client)).
-		WithGenesis(m.genesis).
+		WithGenesis(newGenesis(client)).
+		IsAuthorizer(NewAuthorizer(client)).
 		Build()
 }
 

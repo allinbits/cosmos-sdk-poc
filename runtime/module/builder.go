@@ -22,11 +22,10 @@ func (b *DescriptorBuilder) Named(name string) *DescriptorBuilder {
 	return b
 }
 
-func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.ExecutionHandler, external bool) *DescriptorBuilder {
+func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.ExecutionHandler) *DescriptorBuilder {
 	b.descriptor.StateTransitionExecutionHandlers = append(b.descriptor.StateTransitionExecutionHandlers, stateTransitionExecutionHandler{
 		StateTransition: transition,
 		Handler:         ctrl,
-		External:        external,
 	})
 	return b
 }

@@ -3,6 +3,7 @@ package rbac_test
 import (
 	"testing"
 
+	"github.com/fdymylja/tmos/core/rbac"
 	rbacv1alpha1 "github.com/fdymylja/tmos/core/rbac/v1alpha1"
 	"github.com/fdymylja/tmos/runtime"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
@@ -13,6 +14,7 @@ import (
 
 func TestRBAC(t *testing.T) {
 	builder := runtime.NewBuilder()
+	builder.AddModule(rbac.NewModule())
 	rt, err := builder.Build()
 	require.NoError(t, err)
 	require.NoError(t, rt.InitGenesis())

@@ -16,7 +16,7 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		Named("test").
 		OwnsStateObject(&v1.Post{}, v1.PostSchema).
 		OwnsStateObject(&v1.Params{}, v1.ParamsSchema).
-		HandlesStateTransition(&v1.MsgCreatePost{}, newMsgCreatePost(client), true).
+		HandlesStateTransition(&v1.MsgCreatePost{}, newMsgCreatePost(client)).
 		HandlesAdmission(&v1.MsgCreatePost{}, newMsgCreatePostAdmission(client)).
 		WithGenesis(genesis{client: v1.NewClientSet(client)}).
 		Build()

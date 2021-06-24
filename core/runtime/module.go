@@ -16,7 +16,7 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 	return module.NewDescriptorBuilder().
 		Named(user.Runtime).
 		OwnsStateObject(&v1alpha1.ModuleDescriptors{}, v1alpha1.ModuleDescriptorsSchema).
-		HandlesStateTransition(&v1alpha1.CreateModuleDescriptors{}, newCreateModuleDescriptorsHandler(client), false).
+		HandlesStateTransition(&v1alpha1.CreateModuleDescriptors{}, newCreateModuleDescriptorsHandler(client)).
 		Build()
 }
 
