@@ -53,9 +53,7 @@ message RoleBinding {
 
 // MsgCreateRole creates a new role
 message MsgCreateRole {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
+  option (tmos.core.modulegen.state_transition) = {};
 
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
@@ -66,10 +64,7 @@ message MsgCreateRole {
 
 // MsgBindRole binds subject to role_id
 message MsgBindRole {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };

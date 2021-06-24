@@ -3,11 +3,13 @@ syntax="proto3";
 package testmodule.v1;
 
 import "core/modulegen/modulegen.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 option go_package = "github.com/fdymylja/tmos/testdata/testmodule/v1";
 
 message MsgCreatePost {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: true,
   };
 

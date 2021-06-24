@@ -82,10 +82,7 @@ message EndBlockState {
 }
 
 message MsgSetBeginBlockState {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
@@ -94,10 +91,7 @@ message MsgSetBeginBlockState {
 }
 
 message MsgSetCheckTxState {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
@@ -106,10 +100,7 @@ message MsgSetCheckTxState {
 }
 
 message MsgSetDeliverTxState {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
@@ -118,10 +109,7 @@ message MsgSetDeliverTxState {
 }
 
 message MsgSetEndBlockState {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
@@ -130,10 +118,7 @@ message MsgSetEndBlockState {
 }
 
 message MsgSetInitChain {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
@@ -142,10 +127,7 @@ message MsgSetInitChain {
 }
 
 message MsgSetValidatorUpdates {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };

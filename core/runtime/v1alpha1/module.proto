@@ -16,10 +16,7 @@ message ModuleDescriptors {
 }
 
 message CreateModuleDescriptors {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };

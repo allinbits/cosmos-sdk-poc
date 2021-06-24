@@ -10,10 +10,7 @@ import "core/rbac/xt/rbac_extension.proto";
 option go_package = "github.com/fdymylja/tmos/x/bank/v1alpha1";
 
 message MsgSendCoins {
-  option (tmos.core.modulegen.state_transition) = {
-    external: true,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
     external: true,
   };
@@ -24,12 +21,9 @@ message MsgSendCoins {
 }
 
 message MsgSetBalance {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false,
-  };
-
+  option (tmos.core.modulegen.state_transition) = {};
   option (tmos.core.rbac.xt.state_transition_acl) = {
-    external: true,
+    external: false,
   };
 
   string address = 1;
