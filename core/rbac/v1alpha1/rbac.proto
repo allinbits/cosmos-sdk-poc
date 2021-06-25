@@ -1,10 +1,11 @@
 syntax="proto3";
 
-package tmos.rbac.v1alpha1;
+package tmos.core.rbac.v1alpha1;
 
 option go_package = "github.com/fdymylja/tmos/core/rbac/v1alpha1";
 
 import "core/modulegen/modulegen.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 message Params {
   option (tmos.core.modulegen.state_object) = {
@@ -52,7 +53,9 @@ message RoleBinding {
 
 // MsgCreateRole creates a new role
 message MsgCreateRole {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
@@ -61,9 +64,11 @@ message MsgCreateRole {
 
 // MsgBindRole binds subject to role_id
 message MsgBindRole {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
+
   string role_id = 1;
   string subject = 2;
 }

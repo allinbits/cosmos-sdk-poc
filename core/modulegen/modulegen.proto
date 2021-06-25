@@ -12,9 +12,7 @@ extend google.protobuf.MessageOptions {
 }
 
 // StateTransitionDescriptor describes a state transition
-message StateTransitionDescriptor {
-  bool external = 1;
-}
+message StateTransitionDescriptor {}
 
 message StateObjectDescriptor {
   bool singleton = 1;

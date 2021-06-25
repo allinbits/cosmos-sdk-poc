@@ -1,0 +1,18 @@
+syntax="proto3";
+
+package tmos.core.rbac.xt;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/fdymylja/tmos/core/rbac/xt";
+
+extend google.protobuf.MessageOptions {
+  StateTransitionAccessControl state_transition_acl = 12000000;
+}
+
+// StateTransitionAccessControl allows to define
+// access control for a state transition in its protobuf message option.
+message StateTransitionAccessControl {
+  // external marks if the state transition can be called externally or not.
+  bool external = 1;
+}

@@ -17,5 +17,6 @@ func (m Module) Initialize(client module.Client) module.Descriptor {
 		Named("distribution").
 		WithAuthAdmissionHandler(NewFeeChecker(client)).
 		WithPostAuthenticationHandler(NewFeeDeduction(client)).
-		NeedsStateTransition(&v1alpha1.MsgSendCoins{}).Build()
+		NeedsStateTransition(&v1alpha1.MsgSendCoins{}).
+		Build()
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func TestRole_Extend(t *testing.T) {
-	role := NewEmptyRole("bank")
+	role := NewRoleNameForModule("bank")
 
 	resources := role.GetResourcesForVerb(v1alpha1.Verb_Get)
 	require.Len(t, resources, 0)
@@ -22,7 +22,7 @@ func TestRole_Extend(t *testing.T) {
 }
 
 func TestRole_Extend_FailsWhenAlreadyExtendedWithSameResource(t *testing.T) {
-	role := NewEmptyRole("bank")
+	role := NewRoleNameForModule("bank")
 
 	resources := role.GetResourcesForVerb(v1alpha1.Verb_Get)
 	require.Len(t, resources, 0)

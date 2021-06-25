@@ -5,6 +5,7 @@ import (
 	"github.com/fdymylja/tmos/core/module"
 	"github.com/fdymylja/tmos/pkg/protoutils/desc"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 	"google.golang.org/protobuf/reflect/protodesc"
@@ -28,6 +29,7 @@ type Descriptor struct {
 	AuthAdmissionHandlers                []authentication.AdmissionHandler
 	PostAuthenticationHandler            []authentication.PostAuthenticationHandler
 	Services                             []ExtensionService
+	Authorizer                           authorization.Authorizer
 }
 
 func (d Descriptor) Raw() *module.Descriptor {
@@ -50,6 +52,11 @@ func (d Descriptor) Raw() *module.Descriptor {
 			ProtobufFullname:  (string)(st.StateTransition.ProtoReflect().Descriptor().FullName()),
 			ProtoDependencies: getDeps(st.StateTransition.ProtoReflect().Descriptor().ParentFile()),
 		}
+	}
+
+	x.RequiredResources = make([]*module.Dependency, len(d.Needs))
+	for i, st := range d.Needs {
+		x.RequiredResources[i] = &module.Dependency{Resource: st.APIDefinition()}
 	}
 
 	return x
@@ -83,7 +90,6 @@ type stateTransitionPreExecutionHandler struct {
 type stateTransitionExecutionHandler struct {
 	StateTransition meta.StateTransition
 	Handler         statetransition.ExecutionHandler
-	External        bool
 }
 
 type stateTransitionPostExecutionHandler struct {

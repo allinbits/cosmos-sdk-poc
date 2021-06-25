@@ -3,6 +3,7 @@ package module
 import (
 	meta "github.com/fdymylja/tmos/core/meta"
 	"github.com/fdymylja/tmos/runtime/authentication"
+	"github.com/fdymylja/tmos/runtime/authorization"
 	"github.com/fdymylja/tmos/runtime/orm/schema"
 	"github.com/fdymylja/tmos/runtime/statetransition"
 )
@@ -21,11 +22,10 @@ func (b *DescriptorBuilder) Named(name string) *DescriptorBuilder {
 	return b
 }
 
-func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.ExecutionHandler, external bool) *DescriptorBuilder {
+func (b *DescriptorBuilder) HandlesStateTransition(transition meta.StateTransition, ctrl statetransition.ExecutionHandler) *DescriptorBuilder {
 	b.descriptor.StateTransitionExecutionHandlers = append(b.descriptor.StateTransitionExecutionHandlers, stateTransitionExecutionHandler{
 		StateTransition: transition,
 		Handler:         ctrl,
-		External:        external,
 	})
 	return b
 }
@@ -64,8 +64,22 @@ func (b *DescriptorBuilder) WithPostAuthenticationHandler(ctrl authentication.Po
 	return b
 }
 
+func (b *DescriptorBuilder) WithPostStateTransitionHandler(st statetransition.StateTransition, ctrl statetransition.PostExecutionHandler) *DescriptorBuilder {
+	b.descriptor.StateTransitionPostExecutionHandlers = append(b.descriptor.StateTransitionPostExecutionHandlers, stateTransitionPostExecutionHandler{
+		StateTransition: st,
+		Handler:         ctrl,
+	})
+
+	return b
+}
+
 func (b *DescriptorBuilder) WithExtensionService(xt ExtensionService) *DescriptorBuilder {
 	b.descriptor.Services = append(b.descriptor.Services, xt)
+	return b
+}
+
+func (b *DescriptorBuilder) IsAuthorizer(authz authorization.Authorizer) *DescriptorBuilder {
+	b.descriptor.Authorizer = authz
 	return b
 }
 

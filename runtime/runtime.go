@@ -37,8 +37,8 @@ type Runtime struct {
 
 	txDecoder authentication.TxDecoder
 
-	authorizer  authorization.Authorizer
-	rbacEnabled bool
+	authorizer        authorization.Authorizer
+	authorizerEnabled bool
 
 	router *Router
 	store  orm.Store
@@ -46,12 +46,12 @@ type Runtime struct {
 	services *ServiceGroup
 }
 
-func (r *Runtime) EnableRBAC() {
-	r.rbacEnabled = true
+func (r *Runtime) EnableAuthorization() {
+	r.authorizerEnabled = true
 }
 
-func (r *Runtime) DisableRBAC() {
-	r.rbacEnabled = false
+func (r *Runtime) DisableAuthorization() {
+	r.authorizerEnabled = false
 }
 
 // InitGenesis initializes the runtime with default state from modules which have genesis
@@ -176,13 +176,24 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 	if err = r.authorized(authorization.NewAttributes(runtimev1alpha1.Verb_Deliver, stateTransition, users)); err != nil {
 		return err
 	}
+	// get pre exec handlers
+	preExecs, err := r.router.GetStateTransitionPreExecutionHandlers(stateTransition)
+	for _, ex := range preExecs {
+		err = ex.PreExec(statetransition.PreExecutionRequest{
+			Users:      users,
+			Transition: stateTransition,
+		})
+		if err != nil {
+			return err
+		}
+	}
 	// get the handler
 	handler, err := r.router.GetStateTransitionExecutionHandler(stateTransition)
 	if err != nil {
 		return err
 	}
 	// deliver the request
-	_, err = handler.Exec(statetransition.ExecutionRequest{
+	resp, err := handler.Exec(statetransition.ExecutionRequest{
 		Users:      users,
 		Transition: stateTransition,
 	})
@@ -190,6 +201,21 @@ func (r *Runtime) deliver(users user.Users, stateTransition meta.StateTransition
 		return err
 	}
 
+	// run post exec chain
+	postExecs, err := r.router.GetStateTransitionPostExecutionHandlers(stateTransition)
+	if err != nil {
+		return err
+	}
+	for _, ex := range postExecs {
+		err = ex.PostExec(statetransition.PostExecutionRequest{
+			Users:      users,
+			Transition: stateTransition,
+			Response:   resp,
+		})
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -236,7 +262,7 @@ func (r *Runtime) runTxPostAuthenticationChain(tx authentication.Tx) error {
 }
 
 func (r *Runtime) authorized(attributes authorization.Attributes) error {
-	if !r.rbacEnabled {
+	if !r.authorizerEnabled {
 		return nil
 	}
 	decision, err := r.authorizer.Authorize(attributes)

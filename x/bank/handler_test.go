@@ -5,6 +5,7 @@ import (
 
 	"github.com/fdymylja/tmos/core/coin/v1alpha1"
 	"github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/rbac"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	authn2 "github.com/fdymylja/tmos/x/authn"
 	bank2 "github.com/fdymylja/tmos/x/bank"
@@ -19,11 +20,12 @@ func TestSendCoins(t *testing.T) {
 	rtb := runtime.NewBuilder()
 	rtb.AddModule(bank2.NewModule())
 	rtb.AddModule(authn2.NewModule())
+	rtb.AddModule(rbac.NewModule())
 	rt, err := rtb.Build()
 	require.NoError(t, err)
 	err = rt.InitGenesis()
 	require.NoError(t, err)
-	rt.EnableRBAC()
+	rt.EnableAuthorization()
 
 	err = rt.Create(user.NewUsersFromString("bank"), &v1alpha12.Balance{
 		Address: "frojdi",

@@ -6,20 +6,24 @@ import "google/protobuf/any.proto";
 option go_package = "github.com/fdymylja/tmos/x/authn/v1alpha1";
 
 import "core/modulegen/modulegen.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 // - STATE TRANSITIONS -
 // MsgCreateAccount is used to create a new account
 message MsgCreateAccount {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false;
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
+    external: true,
   };
+
   Account account = 1;
 }
 
 // MsgUpdateAccount is used to update an existing account
 message MsgUpdateAccount {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false;
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
+    external: false
   };
 
   Account account = 2;
@@ -27,8 +31,10 @@ message MsgUpdateAccount {
 
 // MsgDeleteAccount is used to remove an account
 message MsgDeleteAccount {
-  option (tmos.core.modulegen.state_transition) = {
-    external: false;
+  option (tmos.core.modulegen.state_transition) = {};
+
+  option (tmos.core.rbac.xt.state_transition_acl) = {
+    external: false,
   };
 
   Account account = 2;

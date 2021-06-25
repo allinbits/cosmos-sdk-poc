@@ -4,6 +4,7 @@ package tmos.abci.v1alpha1;
 
 import "core/abci/tendermint/abci/types.proto";
 import "core/modulegen/modulegen.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 option go_package = "github.com/fdymylja/tmos/core/abci/v1alpha1";
 
@@ -81,7 +82,8 @@ message EndBlockState {
 }
 
 message MsgSetBeginBlockState {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
@@ -89,7 +91,8 @@ message MsgSetBeginBlockState {
 }
 
 message MsgSetCheckTxState {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
@@ -97,14 +100,17 @@ message MsgSetCheckTxState {
 }
 
 message MsgSetDeliverTxState {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
+
   tendermint.abci.RequestDeliverTx deliver_tx = 1;
 }
 
 message MsgSetEndBlockState {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
@@ -112,7 +118,8 @@ message MsgSetEndBlockState {
 }
 
 message MsgSetInitChain {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 
@@ -120,7 +127,8 @@ message MsgSetInitChain {
 }
 
 message MsgSetValidatorUpdates {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
   };
 

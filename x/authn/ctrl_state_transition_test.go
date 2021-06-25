@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/fdymylja/tmos/core/meta"
+	"github.com/fdymylja/tmos/core/rbac"
 	"github.com/fdymylja/tmos/runtime/authentication/user"
 	v1alpha12 "github.com/fdymylja/tmos/x/authn/v1alpha1"
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,7 @@ import (
 func TestCreateAccountController(t *testing.T) {
 	rtb := runtime.NewBuilder()
 	rtb.AddModule(NewModule())
+	rtb.AddModule(rbac.NewModule())
 	rt, err := rtb.Build()
 	require.NoError(t, err)
 

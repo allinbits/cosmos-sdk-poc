@@ -5,11 +5,13 @@ package tmos.x.bank.v1alpha1;
 
 import "core/coin/v1alpha1/coin.proto";
 import "core/modulegen/modulegen.proto";
+import "core/rbac/xt/rbac_extension.proto";
 
 option go_package = "github.com/fdymylja/tmos/x/bank/v1alpha1";
 
 message MsgSendCoins {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: true,
   };
 
@@ -19,9 +21,10 @@ message MsgSendCoins {
 }
 
 message MsgSetBalance {
-  option (tmos.core.modulegen.state_transition) = {
+  option (tmos.core.modulegen.state_transition) = {};
+  option (tmos.core.rbac.xt.state_transition_acl) = {
     external: false,
-  };;
+  };
 
   string address = 1;
   repeated core.coin.v1alpha1.Coin amount = 2;
